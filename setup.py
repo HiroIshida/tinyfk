@@ -15,5 +15,5 @@ setup(
     license="MIT",
     packages=["pytinyfk"],
     package_dir={'': 'python'},
-    #cmake_install_dir='./uhouho_pytinyfk/', 
+    cmake_install_dir='python/pytinyfk/'
     )
