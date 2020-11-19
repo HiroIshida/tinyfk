@@ -1,3 +1,9 @@
+/*
+Copyright (c) 2020 Hirokazu Ishida
+This software is released under the MIT License, see LICENSE.
+tinyfk: https://github.com/HiroIshida/tinyfk
+*/
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>

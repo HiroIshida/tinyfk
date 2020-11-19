@@ -1,3 +1,9 @@
+/*
+Copyright (c) 2020 Hirokazu Ishida
+This software is released under the MIT License, see LICENSE.
+tinyfk: https://github.com/HiroIshida/tinyfk
+*/
+
 #include "core.hpp"
 
 void RobotModel::get_link_point_withcache(

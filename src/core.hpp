@@ -1,3 +1,9 @@
+/*
+Copyright (c) 2020 Hirokazu Ishida
+This software is released under the MIT License, see LICENSE.
+tinyfk: https://github.com/HiroIshida/tinyfk
+*/
+
 #include "urdf_parser/urdf_parser.h"
 #include "urdf_model/pose.h"
 #include "urdf_model/joint.h"
