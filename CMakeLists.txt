@@ -19,10 +19,10 @@ target_link_libraries(out tinyfk)
 
 option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
 if(BUILD_PYTHON_INTERFACE)
-    set(LIBRARY_NAME pytinyfk)
+    set(LIBRARY_NAME fuck)
     add_subdirectory(pybind11)
-    pybind11_add_module(pytinyfk py_api.cpp)
-    target_link_libraries(pytinyfk PRIVATE tinyfk)
+    pybind11_add_module(fuck py_api.cpp)
+    target_link_libraries(fuck PRIVATE tinyfk)
 
     option(PYTHON_GLOBAL_SITE_PKG 
         "install into global site package. if OFF, or by default, will be installed into per-user site-packages" 
@@ -32,7 +32,7 @@ if(BUILD_PYTHON_INTERFACE)
     else(PYTHON_GLOBAL_SITE_PKG)
         set(CMD_SITE_PKG "import site; import sys;sys.stdout.write(site.getusersitepackages())")
     endif(PYTHON_GLOBAL_SITE_PKG)
-    install(TARGETS pytinyfk DESTINATION .)
+    install(TARGETS fuck DESTINATION .)
 
     #[[ only for debugging
     execute_process(

@@ -75,7 +75,7 @@ class RobotModelPyWrapper
 
 };
 
-PYBIND11_MODULE(pytinyfk, m) {
+PYBIND11_MODULE(fuck, m) {
     m.doc() = "tiny fast forward kinematics solver"; // optional module docstring
     py::class_<RobotModelPyWrapper>(m, "RobotModel")
             .def(py::init<std::string &>())

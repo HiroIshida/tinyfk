@@ -18,6 +18,6 @@ include_directories("external/tinyxml")
 include_directories("include")
 link_directories("external/tinyxml")
 
-add_library(urdfdom_model SHARED src/pose.cpp src/model.cpp src/link.cpp src/joint.cpp)
+add_library(urdfdom_model STATIC src/pose.cpp src/model.cpp src/link.cpp src/joint.cpp)
 target_link_libraries(urdfdom_model tinyxml ${console_bridge_LIBRARIES})
 set_target_properties(urdfdom_model PROPERTIES SOVERSION ${URDF_MAJOR_MINOR_VERSION})
