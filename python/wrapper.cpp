@@ -59,7 +59,7 @@ class RobotModelPyWrapper
         J_trajectory.block(i * (n_links * n_pose_dim), 0, n_links * n_pose_dim, n_dof) = J;
         P_trajectory.block(i * n_links, 0, n_links, n_pose_dim) = P;
       }
-      std::array<Eigen::MatrixXd, 2> ret = {J_trajectory, P_trajectory};
+      std::array<Eigen::MatrixXd, 2> ret = {P_trajectory, J_trajectory};
       return ret;
     }
 
