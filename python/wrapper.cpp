@@ -1,7 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
-#include "core.hpp"
+#include "../core.hpp"
 #include <Eigen/Dense>
 
 namespace py = pybind11;
@@ -75,7 +75,7 @@ class RobotModelPyWrapper
 
 };
 
-PYBIND11_MODULE(pytinyfk, m) {
+PYBIND11_MODULE(_tinyfk, m) {
     m.doc() = "tiny fast forward kinematics solver"; // optional module docstring
     py::class_<RobotModelPyWrapper>(m, "RobotModel")
             .def(py::init<std::string &>())

@@ -19,10 +19,10 @@ target_link_libraries(out tinyfk)
 
 option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
 if(BUILD_PYTHON_INTERFACE)
-    set(LIBRARY_NAME pytinyfk)
+    set(LIBRARY_NAME _tinyfk)
     add_subdirectory(pybind11)
-    pybind11_add_module(pytinyfk py_api.cpp)
-    target_link_libraries(pytinyfk PRIVATE tinyfk)
+    pybind11_add_module(_tinyfk python/wrapper.cpp)
+    target_link_libraries(_tinyfk PRIVATE tinyfk)
 
     option(PYTHON_GLOBAL_SITE_PKG 
         "install into global site package. if OFF, or by default, will be installed into per-user site-packages" 
@@ -32,11 +32,14 @@ if(BUILD_PYTHON_INTERFACE)
     else(PYTHON_GLOBAL_SITE_PKG)
         set(CMD_SITE_PKG "import site; import sys;sys.stdout.write(site.getusersitepackages())")
     endif(PYTHON_GLOBAL_SITE_PKG)
+    install(TARGETS _tinyfk DESTINATION .)
 
+    #[[ only for debugging
     execute_process(
         COMMAND ${PYTHON_EXECUTABLE} -c "${CMD_SITE_PKG}"
         OUTPUT_VARIABLE PYTHON_SITE_PACKAGES_INSTALL_DIR
         )
-    install(TARGETS pytinyfk DESTINATION ${PYTHON_SITE_PACKAGES_INSTALL_DIR})
+    install(TARGETS tinyfk DESTINATION ${PYTHON_SITE_PACKAGES_INSTALL_DIR})
     message("destination site-packages:" ${PYTHON_SITE_PACKAGES_INSTALL_DIR})
+    ]]#
 endif(BUILD_PYTHON_INTERFACE)
