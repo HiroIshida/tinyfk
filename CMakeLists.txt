@@ -32,11 +32,14 @@ if(BUILD_PYTHON_INTERFACE)
     else(PYTHON_GLOBAL_SITE_PKG)
         set(CMD_SITE_PKG "import site; import sys;sys.stdout.write(site.getusersitepackages())")
     endif(PYTHON_GLOBAL_SITE_PKG)
+    install(TARGETS pytinyfk DESTINATION .)
 
+    #[[ only for debugging
     execute_process(
         COMMAND ${PYTHON_EXECUTABLE} -c "${CMD_SITE_PKG}"
         OUTPUT_VARIABLE PYTHON_SITE_PACKAGES_INSTALL_DIR
         )
     install(TARGETS pytinyfk DESTINATION ${PYTHON_SITE_PACKAGES_INSTALL_DIR})
     message("destination site-packages:" ${PYTHON_SITE_PACKAGES_INSTALL_DIR})
+    ]]#
 endif(BUILD_PYTHON_INTERFACE)
