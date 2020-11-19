@@ -1,7 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
-#include "../core.hpp"
+#include "../src/core.hpp"
 #include <Eigen/Dense>
 
 namespace py = pybind11;

@@ -1,4 +1,8 @@
 /pybind11
 /build
+/_skbuild
+/dist
+*.egg/
+*.egg-info/
 action.sh
 example.py

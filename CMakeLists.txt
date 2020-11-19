@@ -10,12 +10,12 @@ find_package(Eigen3 REQUIRED)
 ADD_DEFINITIONS(-DEIGEN_NO_DEBUG)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-set(TINYFK_SRC core.cpp kinematics.cpp ${TDS_HRDS})
+set(TINYFK_SRC src/core.cpp src/kinematics.cpp)
 add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk urdfdom_model)
 
-add_executable(out main.cpp)
-target_link_libraries(out tinyfk)
+add_executable(test src/test.cpp)
+target_link_libraries(test tinyfk)
 
 option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
 if(BUILD_PYTHON_INTERFACE)
