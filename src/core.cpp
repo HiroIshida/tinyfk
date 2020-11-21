@@ -41,22 +41,20 @@ RobotModel::RobotModel(const std::string& urdf_file){
   for(auto& map_pair: robot_urdf_interface->joints_){
     auto& jname = map_pair.first;
     auto& joint = map_pair.second;
-    joints.push_back(joint);
-
     auto& jtype = joint->type;
 
     if(
-        jtype!=urdf::Joint::REVOLUTE &&
-        jtype!=urdf::Joint::CONTINUOUS &&
-        jtype!=urdf::Joint::PRISMATIC &&
-        jtype!=urdf::Joint::FIXED
+        jtype==urdf::Joint::REVOLUTE || 
+        jtype==urdf::Joint::CONTINUOUS ||
+        jtype==urdf::Joint::PRISMATIC 
       ){
+      joints.push_back(joint);
+      joint_ids[jname] =  jid;
+      joint->id = jid;
+      jid ++;
+    }else if(jtype!=urdf::Joint::FIXED){
       throw std::invalid_argument("unsuported joint type is detected");
     }
-
-    joint_ids[jname] =  jid;
-    joint->id = jid;
-    jid ++;
   }
 
   // set joint->_child_link. 
