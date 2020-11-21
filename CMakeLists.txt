@@ -11,11 +11,15 @@ ADD_DEFINITIONS(-DEIGEN_NO_DEBUG)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 set(TINYFK_SRC src/core.cpp src/kinematics.cpp)
+include_directories(src/)
 add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk urdfdom_model)
 
-add_executable(test src/test.cpp)
+# testing
+set(nlohmann_json_INCLUDE_DIRS json/include)
+add_executable(test test/test.cpp)
 target_link_libraries(test tinyfk)
+target_include_directories(test PRIVATE ${nlohmann_json_INCLUDE_DIRS})
 
 option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
 if(BUILD_PYTHON_INTERFACE)
