@@ -41,22 +41,20 @@ RobotModel::RobotModel(const std::string& urdf_file){
   for(auto& map_pair: robot_urdf_interface->joints_){
     auto& jname = map_pair.first;
     auto& joint = map_pair.second;
-    joints.push_back(joint);
-
     auto& jtype = joint->type;
 
     if(
-        jtype!=urdf::Joint::REVOLUTE &&
-        jtype!=urdf::Joint::CONTINUOUS &&
-        jtype!=urdf::Joint::PRISMATIC &&
-        jtype!=urdf::Joint::FIXED
+        jtype==urdf::Joint::REVOLUTE || 
+        jtype==urdf::Joint::CONTINUOUS ||
+        jtype==urdf::Joint::PRISMATIC 
       ){
+      joints.push_back(joint);
+      joint_ids[jname] =  jid;
+      joint->id = jid;
+      jid ++;
+    }else if(jtype!=urdf::Joint::FIXED){
       throw std::invalid_argument("unsuported joint type is detected");
     }
-
-    joint_ids[jname] =  jid;
-    joint->id = jid;
-    jid ++;
   }
 
   // set joint->_child_link. 
@@ -70,6 +68,21 @@ RobotModel::RobotModel(const std::string& urdf_file){
   int num_dof = joint_ids.size();
   std::vector<double> joint_angles(num_dof, 0.0);
 
+  // consturct abtable
+  auto abtable = AncestorBitTable(N_link, num_dof);
+  for(auto& joint : joints){
+    int joint_id = joint_ids[joint->name];
+    auto clink = joint->getChildLink();
+    // do backward track. 
+    while(true){
+      clink = clink->getParent();
+      if(clink==nullptr)
+        break;
+      int clink_id = link_ids[clink->name];
+      abtable._table[joint_id][clink_id] = true;
+    }
+  }
+
   _urdf_file = urdf_file;
   _nasty_stack = NastyStack(N_link);
   _tf_cache = TransformCache(N_link);
@@ -80,6 +93,7 @@ RobotModel::RobotModel(const std::string& urdf_file){
   _joint_ids = std::move(joint_ids);
   _num_dof = std::move(num_dof);
   _joint_angles = std::move(joint_angles);
+  _abtable = abtable;
 }
 
 void RobotModel::set_joint_angles(

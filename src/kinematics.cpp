@@ -136,64 +136,67 @@ std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
   urdf::Pose tf_rlink_to_elink;
 
   for(unsigned int j=0; j<elink_ids.size(); j++){
-    this->get_link_point_withcache(elink_ids[j], tf_rlink_to_elink, basealso); // TODO rmeove
+    int elink_id = elink_ids[j];
+    this->get_link_point_withcache(elink_id, tf_rlink_to_elink, basealso); 
     auto& epos = tf_rlink_to_elink.position;
     auto& erot = tf_rlink_to_elink.rotation;
 
     for(unsigned int i=0; i<joint_ids.size(); i++){
       auto jid = joint_ids[i];
-      auto& hjoint = _joints[jid];
-      auto& type = hjoint->type;
-      if(type == urdf::Joint::FIXED){
-          throw std::invalid_argument("fixed type is not accepted");
-      }
-      auto clink = hjoint->getChildLink(); // rotation of clink and hlink is same. so clink is ok.
-
-      urdf::Pose tf_rlink_to_clink;
-      this->get_link_point_withcache(clink->id, tf_rlink_to_clink, basealso);
-
-
-      auto& crot = tf_rlink_to_clink.rotation;
-      auto&& world_axis = crot * hjoint->axis; // axis w.r.t root link
-      if(type == urdf::Joint::PRISMATIC){
-        dpos = world_axis;
-      }else{//revolute or continuous
-        auto& cpos = tf_rlink_to_clink.position;
-        urdf::Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y, epos.z - cpos.z};
-        cross_product(world_axis, vec_clink_to_elink, dpos);
-      }
-      J(n_pose_dim*j+0, i) = dpos.x;
-      J(n_pose_dim*j+1, i) = dpos.y;
-      J(n_pose_dim*j+2, i) = dpos.z;
-      elink_points(j, 0) = epos.x; elink_points(j, 1) = epos.y; elink_points(j, 2) = epos.z;
-
-      if(rotalso){ // (compute rpy jacobian)
-        if(type == urdf::Joint::PRISMATIC){
-            for(int i=3; i<=6; i++){
-                J(n_pose_dim*j + i) = 0.0;
-            }
-        }else{
-            J(n_pose_dim*j+3, i) = world_axis.x;
-            J(n_pose_dim*j+4, i) = world_axis.y;
-            J(n_pose_dim*j+5, i) = world_axis.z;
+      if(!_abtable.isAncestorLink(jid, elink_id)){
+        auto& hjoint = _joints[jid];
+        auto& type = hjoint->type;
+        if(type == urdf::Joint::FIXED){
+            throw std::invalid_argument("fixed type is not accepted");
         }
-        auto erpy = erot.getRPY();
-        elink_points(j, 3) = erpy.x; elink_points(j, 4) = erpy.y; elink_points(j, 5) = erpy.z;
-      }
+        auto clink = hjoint->getChildLink(); // rotation of clink and hlink is same. so clink is ok.
 
-      if(basealso){
-        // NOTE that epos is wrt global not wrt root link!
-        // so we first compute epos w.r.t root link then take a 
-        // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
-        auto& basepose3d = _base_pose._pose3d;
-        urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
+        urdf::Pose tf_rlink_to_clink;
+        this->get_link_point_withcache(clink->id, tf_rlink_to_clink, basealso);
 
-        J(n_pose_dim*j+0, joint_ids.size() + 0) = 1.0; // dx/dx
-        J(n_pose_dim*j+0, joint_ids.size() + 2) = -epos_local.y; // dx/dtheta
-        J(n_pose_dim*j+1, joint_ids.size() + 1) = 1.0; // dy/dy
-        J(n_pose_dim*j+1, joint_ids.size() + 2) = epos_local.x; //dy/dtheta
-        if(rotalso){
-          J(n_pose_dim*j+5, joint_ids.size() + 2) = 1.0; // world_axis = [0, 0, 1]
+
+        auto& crot = tf_rlink_to_clink.rotation;
+        auto&& world_axis = crot * hjoint->axis; // axis w.r.t root link
+        if(type == urdf::Joint::PRISMATIC){
+          dpos = world_axis;
+        }else{//revolute or continuous
+          auto& cpos = tf_rlink_to_clink.position;
+          urdf::Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y, epos.z - cpos.z};
+          cross_product(world_axis, vec_clink_to_elink, dpos);
+        }
+        J(n_pose_dim*j+0, i) = dpos.x;
+        J(n_pose_dim*j+1, i) = dpos.y;
+        J(n_pose_dim*j+2, i) = dpos.z;
+        elink_points(j, 0) = epos.x; elink_points(j, 1) = epos.y; elink_points(j, 2) = epos.z;
+
+        if(rotalso){ // (compute rpy jacobian)
+          if(type == urdf::Joint::PRISMATIC){
+              for(int i=3; i<=6; i++){
+                  J(n_pose_dim*j + i) = 0.0;
+              }
+          }else{
+              J(n_pose_dim*j+3, i) = world_axis.x;
+              J(n_pose_dim*j+4, i) = world_axis.y;
+              J(n_pose_dim*j+5, i) = world_axis.z;
+          }
+          auto erpy = erot.getRPY();
+          elink_points(j, 3) = erpy.x; elink_points(j, 4) = erpy.y; elink_points(j, 5) = erpy.z;
+        }
+
+        if(basealso){
+          // NOTE that epos is wrt global not wrt root link!
+          // so we first compute epos w.r.t root link then take a 
+          // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
+          auto& basepose3d = _base_pose._pose3d;
+          urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
+
+          J(n_pose_dim*j+0, joint_ids.size() + 0) = 1.0; // dx/dx
+          J(n_pose_dim*j+0, joint_ids.size() + 2) = -epos_local.y; // dx/dtheta
+          J(n_pose_dim*j+1, joint_ids.size() + 1) = 1.0; // dy/dy
+          J(n_pose_dim*j+1, joint_ids.size() + 2) = epos_local.x; //dy/dtheta
+          if(rotalso){
+            J(n_pose_dim*j+5, joint_ids.size() + 2) = 1.0; // world_axis = [0, 0, 1]
+          }
         }
       }
     }
