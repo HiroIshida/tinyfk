@@ -68,6 +68,21 @@ RobotModel::RobotModel(const std::string& urdf_file){
   int num_dof = joint_ids.size();
   std::vector<double> joint_angles(num_dof, 0.0);
 
+  // consturct abtable
+  auto abtable = AncestorBitTable(N_link, num_dof);
+  for(auto& joint : joints){
+    int joint_id = joint_ids[joint->name];
+    auto clink = joint->getChildLink();
+    // do backward track. 
+    while(true){
+      clink = clink->getParent();
+      if(clink==nullptr)
+        break;
+      int clink_id = link_ids[clink->name];
+      abtable._table[joint_id][clink_id] = true;
+    }
+  }
+
   _urdf_file = urdf_file;
   _nasty_stack = NastyStack(N_link);
   _tf_cache = TransformCache(N_link);
@@ -78,6 +93,7 @@ RobotModel::RobotModel(const std::string& urdf_file){
   _joint_ids = std::move(joint_ids);
   _num_dof = std::move(num_dof);
   _joint_angles = std::move(joint_angles);
+  _abtable = abtable;
 }
 
 void RobotModel::set_joint_angles(

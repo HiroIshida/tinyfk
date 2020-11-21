@@ -49,6 +49,21 @@ struct NastyStack
   _hid_stack(std::vector<unsigned int>(N_link)) {} 
 };
 
+
+struct AncestorBitTable
+{
+  std::vector<std::vector<bool>> _table;
+  AncestorBitTable(){};
+  AncestorBitTable(int N_link, int N_joint){ 
+    for(int i=0; i<N_joint; i++){
+      _table.push_back(std::vector<bool>(N_link));
+    }
+  }
+  bool isAncestorLink(int joint_id, int link_id) const{
+    return _table[joint_id][link_id];
+  }
+};
+
 struct BasePose
 {
   std::array<double, 3> _pose3d;
@@ -76,6 +91,7 @@ class RobotModel
     std::vector<urdf::JointSharedPtr> _joints;
     std::unordered_map<std::string, int> _joint_ids;
     std::vector<double> _joint_angles;
+    AncestorBitTable _abtable;
     BasePose _base_pose;
     int _num_dof;
 
