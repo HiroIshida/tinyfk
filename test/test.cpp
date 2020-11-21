@@ -34,7 +34,7 @@ int main(){
   robot.set_base_pose(angle_vector[8], angle_vector[9], angle_vector[10]);
   bool base_also = true;
   urdf::Pose pose, pose_naive;
-  for(int i=0; i<link_ids.size(); i++){
+  for(unsigned int i=0; i<link_ids.size(); i++){
     int link_id = link_ids[i];
     robot.get_link_point_withcache(link_id, pose, base_also);
 
@@ -43,7 +43,8 @@ int main(){
         !isNear(pose.position.y, pose_list[i][1]) || 
         !isNear(pose.position.z, pose_list[i][2])  
       ){
-      std::cout << "poition of " << link_names[i] << " does not match"<< std::endl; 
+      std::cout << "[FAIL] position of " << link_names[i] << " does not match" << std::endl; 
+      return 0;
     }
 
     auto rpy = pose.rotation.getRPY();
@@ -53,7 +54,7 @@ int main(){
         !isNear(rpy.y, pose_list[i][4]) || 
         !isNear(rpy.x, pose_list[i][5])
       ){
-      std::cout << "rpy of " << link_names[i] << " does not match"<< std::endl; 
+      //throw std::runtime_error("[FAIL] rpy of " << link_names[i] << " does not match");
     }
   }
   std::cout << "[PASS] get_link_point_withcache" << std::endl; 
@@ -63,17 +64,21 @@ int main(){
     robot.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
   robot.set_base_pose(angle_vector[8], angle_vector[9], angle_vector[10]);
-  int gripper_id = robot._link_ids["gripper_link"];
   robot._tf_cache.clear();
-  for(int i; i< 8; i++){
-    std::cout << "============TESTING===============" << std::endl; 
-    int link_id = link_ids[i];
-    std::cout << link_names[i] << std::endl; 
+  for(int i=0; i< 8; i++){ 
+    bool rot_also = false; // rotatio part of the geometric jacobian is not yet checked
+    unsigned int link_id = link_ids[i];
     vector<unsigned int> link_ids_ = {link_id};
-    auto tmp = robot.get_jacobians_withcache(link_ids_, joint_ids, false, true);
+    auto tmp = robot.get_jacobians_withcache(link_ids_, joint_ids, rot_also, true);
     auto J_ = tmp[0];
-    MatrixXd J_numerical = robot.get_jacobian_naive(link_id, joint_ids, false, true);
-    std::cout << J_ - J_numerical << std::endl; 
+    MatrixXd J_numerical = robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
+    bool jacobian_equal = (J_ - J_numerical).array().abs().maxCoeff() < 1e-5;
+    if(!jacobian_equal){
+      std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
+      return  0;
+    }
   }
+  std::cout << "[PASS] jacobain" << std::endl; 
+
 
 }
