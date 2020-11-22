@@ -6,19 +6,20 @@ By using pip (currently supports only linux),
 ```bash
 pip install tinyfk --user
 ```
-or you can also, install by locally building:
+or you can also, install by locally building (probably works for mac):
 ```bash
 git clone https://github.com/HiroIshida/tinyfk.git
 cd tinyfk
-git clone https://github.com/pybind/pybind11.git
+git submodule update --init --depth=1
 pip install . --user 
 ```
 
+### For debugging
 For debugging or developing please use: 
 ```bash
 git clone https://github.com/HiroIshida/tinyfk.git
 cd tinyfk
-git clone https://github.com/pybind/pybind11.git
+git submodule update --init --depth=1
 mkdir build
 cd build
 cmake --DCMAKE_BUILD_TYPE=Debug --DINSTALL_VIA_PIP=OFF ..

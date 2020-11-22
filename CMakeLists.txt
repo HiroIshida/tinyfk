@@ -20,7 +20,7 @@ add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk urdfdom_model)
 
 # testing
-set(nlohmann_json_INCLUDE_DIRS json/include)
+set(nlohmann_json_INCLUDE_DIRS third_party/json/include)
 add_executable(test test/test.cpp)
 target_link_libraries(test tinyfk)
 target_include_directories(test PRIVATE ${nlohmann_json_INCLUDE_DIRS})
@@ -30,7 +30,7 @@ if(BUILD_PYTHON_INTERFACE)
     option(INSTALL_VIA_PIP "if you install via pip install . " ON)
 
     set(LIBRARY_NAME _tinyfk)
-    add_subdirectory(pybind11)
+    add_subdirectory(third_party/pybind11)
     pybind11_add_module(_tinyfk python/wrapper.cpp)
     target_link_libraries(_tinyfk PRIVATE tinyfk)
 
