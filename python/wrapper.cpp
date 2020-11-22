@@ -7,7 +7,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
-#include "../src/core.hpp"
+#include "../src/tinyfk.hpp"
 #include <Eigen/Dense>
 
 namespace py = pybind11;

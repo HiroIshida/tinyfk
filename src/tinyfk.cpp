@@ -6,7 +6,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 #include <fstream>
 #include <cmath>
-#include "core.hpp"
+#include "tinyfk.hpp"
 
 RobotModel::RobotModel(const std::string& urdf_file){
   std::string xml_string;

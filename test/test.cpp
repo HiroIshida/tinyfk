@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
-#include "core.hpp"
+#include "tinyfk.hpp"
 
 using namespace std;
 using namespace Eigen;

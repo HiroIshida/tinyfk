@@ -4,7 +4,7 @@ This software is released under the MIT License, see LICENSE.
 tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
-#include "core.hpp"
+#include "tinyfk.hpp"
 
 void RobotModel::get_link_point_withcache(
     unsigned int link_id, urdf::Pose& out_tf_rlink_to_elink,
