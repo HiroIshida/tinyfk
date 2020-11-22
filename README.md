@@ -21,8 +21,9 @@ cd tinyfk
 git clone https://github.com/pybind/pybind11.git
 mkdir build
 cd build
-cmake ..
+cmake --DCMAKE_BUILD_TYPE=Debug --DINSTALL_VIA_PIP=OFF ..
 make -j4
+# make install # please read the CMakeLists.txt before doing this
 ```
 
 ### Usage 
