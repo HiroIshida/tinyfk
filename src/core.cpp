@@ -46,13 +46,14 @@ RobotModel::RobotModel(const std::string& urdf_file){
     if(
         jtype==urdf::Joint::REVOLUTE || 
         jtype==urdf::Joint::CONTINUOUS ||
-        jtype==urdf::Joint::PRISMATIC 
+        jtype==urdf::Joint::PRISMATIC ||
+        jtype==urdf::Joint::FIXED 
       ){
       joints.push_back(joint);
       joint_ids[jname] =  jid;
       joint->id = jid;
       jid ++;
-    }else if(jtype!=urdf::Joint::FIXED){
+    }else{
       throw std::invalid_argument("unsuported joint type is detected");
     }
   }
