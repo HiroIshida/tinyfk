@@ -18,15 +18,15 @@ RobotModel::RobotModel(const std::string& urdf_file){
     xml_string += (line + "\n");
   }
   xml_file.close();
-  auto robot_urdf_interface = urdf::parseURDF(xml_string);
+  urdf::ModelInterfaceSharedPtr robot_urdf_interface = urdf::parseURDF(xml_string);
 
   // numbering link id 
   std::vector<urdf::LinkSharedPtr> links;
   std::unordered_map<std::string, int> link_ids;
   int lid = 0;
   for(const auto& map_pair: robot_urdf_interface->links_){
-    auto& name = map_pair.first;
-    auto& link = map_pair.second;
+    std::string name = map_pair.first;
+    urdf::LinkSharedPtr link = map_pair.second;
     link_ids[name] = lid;
     link->id = lid;
     links.push_back(link);
@@ -39,9 +39,9 @@ RobotModel::RobotModel(const std::string& urdf_file){
   std::unordered_map<std::string, int> joint_ids;
   int jid = 0;
   for(auto& map_pair: robot_urdf_interface->joints_){
-    auto& jname = map_pair.first;
-    auto& joint = map_pair.second;
-    auto& jtype = joint->type;
+    std::string jname = map_pair.first;
+    urdf::JointSharedPtr joint = map_pair.second;
+    unsigned int jtype = joint->type;
 
     if(
         jtype==urdf::Joint::REVOLUTE || 
@@ -59,10 +59,10 @@ RobotModel::RobotModel(const std::string& urdf_file){
   }
 
   // set joint->_child_link. 
-  for(auto& joint : joints){
-    auto& clink_name = joint->child_link_name;
-    auto clink_id = link_ids[clink_name];
-    auto& clink = links[clink_id];
+  for(urdf::JointSharedPtr joint : joints){
+    std::string clink_name = joint->child_link_name;
+    int clink_id = link_ids[clink_name];
+    urdf::LinkSharedPtr clink = links[clink_id];
     joint->setChildLink(clink);
   }
 
@@ -71,9 +71,9 @@ RobotModel::RobotModel(const std::string& urdf_file){
 
   // consturct abtable
   auto abtable = AncestorBitTable(N_link, num_dof);
-  for(auto& joint : joints){
+  for(urdf::JointSharedPtr joint : joints){
     int joint_id = joint_ids[joint->name];
-    auto clink = joint->getChildLink();
+    urdf::LinkSharedPtr clink = joint->getChildLink();
     // do backward track. 
     while(true){
       clink = clink->getParent();
@@ -88,12 +88,12 @@ RobotModel::RobotModel(const std::string& urdf_file){
   _nasty_stack = NastyStack(N_link);
   _tf_cache = TransformCache(N_link);
   _root_link = robot_urdf_interface->root_link_;
-  _links = std::move(links);
-  _link_ids = std::move(link_ids);
-  _joints = std::move(joints);
-  _joint_ids = std::move(joint_ids);
-  _num_dof = std::move(num_dof);
-  _joint_angles = std::move(joint_angles);
+  _links = links;
+  _link_ids = link_ids;
+  _joints = joints;
+  _joint_ids = joint_ids;
+  _num_dof = num_dof;
+  _joint_angles = joint_angles;
   _abtable = abtable;
 }
 
