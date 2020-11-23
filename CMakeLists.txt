@@ -21,9 +21,9 @@ target_link_libraries(tinyfk urdfdom_model)
 
 # testing
 set(nlohmann_json_INCLUDE_DIRS third_party/json/include)
-add_executable(test test/test.cpp)
-target_link_libraries(test tinyfk)
-target_include_directories(test PRIVATE ${nlohmann_json_INCLUDE_DIRS})
+add_executable(test_kinematics test/test.cpp)
+target_link_libraries(test_kinematics tinyfk)
+target_include_directories(test_kinematics PRIVATE ${nlohmann_json_INCLUDE_DIRS})
 
 option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
 if(BUILD_PYTHON_INTERFACE)
