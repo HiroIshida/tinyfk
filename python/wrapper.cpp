@@ -25,6 +25,11 @@ class RobotModelPyWrapper
       _rtree.set_joint_angles(joint_ids, joint_angles);
     }
 
+    void set_base_pose(const std::vector<double>& xytheta)
+    {
+      _rtree.set_base_pose(xytheta[0], xytheta[1], xytheta[2]);
+    }
+
     std::array<Eigen::MatrixXd, 2> solve_forward_kinematics(
         const std::vector<std::vector<double>> joint_angles_sequence,
         const std::vector<unsigned int>& elink_ids,
@@ -106,5 +111,6 @@ PYBIND11_MODULE(_tinyfk, m) {
             .def("solve_forward_kinematics", &RobotModelPyWrapper::solve_forward_kinematics)
             .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)
             .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
+            .def("set_base_pose", &RobotModelPyWrapper::set_base_pose)
             .def("get_link_ids", &RobotModelPyWrapper::get_link_ids);
 }
