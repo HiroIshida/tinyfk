@@ -29,7 +29,7 @@ class RobotModelPyWrapper
         const std::vector<std::vector<double>> joint_angles_sequence,
         const std::vector<unsigned int>& elink_ids,
         const std::vector<unsigned int>& joint_ids,
-        bool rotalso, bool basealso)
+        bool rotalso, bool basealso, bool with_jacobian)
     {
 
       unsigned int n_pose_dim = (rotalso ? 6 : 3); // 7 if rot enabled
@@ -43,9 +43,10 @@ class RobotModelPyWrapper
         // TODO this check try to prevent the potentionally buggy procedure below
       }
 
-      Eigen::MatrixXd J_trajectory = Eigen::MatrixXd::Zero(n_wp * (n_links * n_pose_dim), n_dof);
+      Eigen::MatrixXd J_trajectory = with_jacobian ? 
+        Eigen::MatrixXd::Zero(n_wp * (n_links * n_pose_dim), n_dof) : 
+        Eigen::MatrixXd::Zero(0, 0);
       Eigen::MatrixXd P_trajectory = Eigen::MatrixXd::Zero(n_wp * n_links, n_pose_dim);
-
 
       for(unsigned int i=0; i<n_wp; i++){
         if(basealso){
@@ -59,11 +60,28 @@ class RobotModelPyWrapper
         }else{
           _rtree.set_joint_angles(joint_ids, joint_angles_sequence[i]);
         }
-        auto tmp = _rtree.get_jacobians_withcache(elink_ids, joint_ids, rotalso, basealso);
-        auto& J = tmp[0];
-        auto& P = tmp[1];
-        J_trajectory.block(i * (n_links * n_pose_dim), 0, n_links * n_pose_dim, n_dof) = J;
-        P_trajectory.block(i * n_links, 0, n_links, n_pose_dim) = P;
+
+        if(with_jacobian){
+          auto tmp = _rtree.get_jacobians_withcache(elink_ids, joint_ids, rotalso, basealso);
+          auto& J = tmp[0];
+          auto& P = tmp[1];
+          J_trajectory.block(i * (n_links * n_pose_dim), 0, n_links * n_pose_dim, n_dof) = J;
+          P_trajectory.block(i * n_links, 0, n_links, n_pose_dim) = P;
+        }else{
+          urdf::Pose pose;
+          for(int j=0; j<elink_ids.size(); j++){
+            _rtree.get_link_point_withcache(elink_ids[j], pose, basealso);
+            P_trajectory(i * n_links + j, 0) = pose.position.x;
+            P_trajectory(i * n_links + j, 1) = pose.position.y;
+            P_trajectory(i * n_links + j, 2) = pose.position.z;
+            if(rotalso){
+              urdf::Vector3&& rpy = pose.rotation.getRPY(); 
+              P_trajectory(i * n_links + j, 3) = rpy.x;
+              P_trajectory(i * n_links + j, 4) = rpy.y;
+              P_trajectory(i * n_links + j, 5) = rpy.z;
+            }
+          }
+        }
       }
       std::array<Eigen::MatrixXd, 2> ret = {P_trajectory, J_trajectory};
       return ret;
