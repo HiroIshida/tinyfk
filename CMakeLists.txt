@@ -25,6 +25,14 @@ add_executable(test_kinematics test/test.cpp)
 target_link_libraries(test_kinematics tinyfk)
 target_include_directories(test_kinematics PRIVATE ${nlohmann_json_INCLUDE_DIRS})
 
+# bench
+find_package(orocos_kdl REQUIRED)
+message(${orocos_kdl_INCLUDE_DIRS})
+include_directories(${orocos_kdl_INCLUDE_DIRS})
+add_library(kdl_parser bench/kdl_parser.cpp)
+add_executable(bench bench/bench.cpp)
+target_link_libraries(bench urdfdom_model ${orocos_kdl_LIBRARIES} kdl_parser tinyfk)
+
 option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
 if(BUILD_PYTHON_INTERFACE)
     option(INSTALL_VIA_PIP "if you install via pip install . " ON)
