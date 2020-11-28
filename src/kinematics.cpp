@@ -37,16 +37,24 @@ void RobotModel::get_link_point_withcache(
     if(plink == nullptr){break;} // hit the root link
 
     urdf::Pose* tf_rlink_to_blink_ptr = _tf_cache.get_cache(hlink->id); 
-    if(tf_rlink_to_blink_ptr){ 
+    if(tf_rlink_to_blink_ptr){
       tf_rlink_to_blink = *tf_rlink_to_blink_ptr;
       break;
     }
 
-    const urdf::JointSharedPtr& pjoint = hlink->parent_joint;
-    double angle = _joint_angles[pjoint->id];
-    urdf::Pose tf_pjoint_to_hlink = pjoint->transform(angle);
-    const urdf::Pose& tf_plink_to_pjoint = pjoint->parent_to_joint_origin_transform;
-    urdf::Pose tf_plink_to_hlink = pose_transform(tf_plink_to_pjoint, tf_pjoint_to_hlink);
+    urdf::Pose tf_plink_to_hlink;
+    {// compute tf_plink_to_hlink
+      const urdf::JointSharedPtr& pjoint = hlink->parent_joint;
+      const urdf::Pose& tf_plink_to_pjoint = pjoint->parent_to_joint_origin_transform;
+
+      if(pjoint->type==urdf::Joint::FIXED){
+        tf_plink_to_hlink = tf_plink_to_pjoint;
+      }else{
+        double angle = _joint_angles[pjoint->id];
+        urdf::Pose tf_pjoint_to_hlink = pjoint->transform(angle);
+        tf_plink_to_hlink = pose_transform(tf_plink_to_pjoint, tf_pjoint_to_hlink);
+      }
+    }
 
     // update
     counter++; //counter must be here
@@ -93,12 +101,17 @@ void RobotModel::get_link_point(
       if(basealso){tf_hlink_to_elink = pose_transform(_base_pose._pose, tf_hlink_to_elink);}
         break;
     }
-    double angle = _joint_angles[pjoint->id];
-    urdf::Pose tf_pjoint_to_hlink = pjoint->transform(angle);
 
+    urdf::Pose tf_plink_to_hlink;
     const urdf::Pose& tf_plink_to_pjoint = pjoint->parent_to_joint_origin_transform;
 
-    urdf::Pose tf_plink_to_hlink = pose_transform(tf_plink_to_pjoint, tf_pjoint_to_hlink);
+    if(pjoint->type==urdf::Joint::FIXED){
+      tf_plink_to_hlink = tf_plink_to_pjoint;
+    }else{
+      double angle = _joint_angles[pjoint->id];
+      urdf::Pose tf_pjoint_to_hlink = pjoint->transform(angle);
+      tf_plink_to_hlink = pose_transform(tf_plink_to_pjoint, tf_pjoint_to_hlink);
+    }
     urdf::Pose tf_plink_to_elink = pose_transform(tf_plink_to_hlink, tf_hlink_to_elink);
 
     // update here node
