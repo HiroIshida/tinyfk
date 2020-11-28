@@ -80,5 +80,20 @@ int main(){
   }
   std::cout << "[PASS] jacobain" << std::endl; 
 
+  // test add link points:
+  {
+    std::vector<std::string> strvec = {"l_gripper_finger_link"};
+    std::array<double, 3> pos = {0.1, 0.1, 0.1};
+    int parent_link_id = robot.get_link_ids(strvec)[0];
+    robot.add_new_link("hiro", parent_link_id, pos);
+
+    int hiro_link_id = robot._link_ids["hiro"];
+    std::vector<unsigned int> link_ids = {hiro_link_id};
+
+    robot.set_base_pose(0, 0.0, 0.0);
+    robot.set_init_angles();
+    auto ret = robot.get_jacobians_withcache(link_ids, joint_ids, false, false);
+    std::cout << ret[0] << std::endl; 
+  }
 
 }
