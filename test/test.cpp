@@ -27,7 +27,7 @@ int main(){
   auto robot = RobotModel(urdf_file);
 
   {// add new link to the robot
-    std::vector<std::string> strvec = {"l_gripper_finger_link"};
+    std::vector<std::string> strvec = {"gripper_link"};
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
     int parent_link_id = robot.get_link_ids(strvec)[0];
     robot.add_new_link("mylink", parent_link_id, pos);
@@ -43,6 +43,7 @@ int main(){
   bool base_also = true;
   urdf::Pose pose, pose_naive;
   for(unsigned int i=0; i<link_ids.size(); i++){
+    std::cout << "testing " << link_names[i] << std::endl; 
     int link_id = link_ids[i];
     robot.get_link_point_withcache(link_id, pose, base_also);
 
