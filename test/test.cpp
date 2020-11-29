@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <stdexcept>
 #include "tinyfk.hpp"
 
 using namespace std;
@@ -25,6 +26,27 @@ int main(){
   // test main
   std::string urdf_file = "../data/fetch_description/fetch.urdf";
   auto robot = RobotModel(urdf_file);
+
+  {// add new link to the robot
+    std::vector<std::string> strvec = {"gripper_link"};
+    std::array<double, 3> pos = {0.1, 0.1, 0.1};
+    int parent_link_id = robot.get_link_ids(strvec)[0];
+    robot.add_new_link("mylink", parent_link_id, pos);
+  }
+
+  {// must raise exception when add link with the same name 
+    std::vector<std::string> strvec = {"gripper_link"};
+    std::array<double, 3> pos = {0.1, 0.1, 0.1};
+    int parent_link_id = robot.get_link_ids(strvec)[0];
+    try{
+      robot.add_new_link("mylink", parent_link_id, pos);
+      std::cout << "[FAIL] must raise exception (add_new_link)" << std::endl;
+      return 0;
+    }catch (const std::exception& e){
+      std::cout << "[PASS] successfully raise exception in add_new_link" << std::endl; 
+    }
+  }
+
   auto joint_ids = robot.get_joint_ids(joint_names);
   auto link_ids = robot.get_link_ids(link_names);
 
@@ -35,6 +57,7 @@ int main(){
   bool base_also = true;
   urdf::Pose pose, pose_naive;
   for(unsigned int i=0; i<link_ids.size(); i++){
+    std::cout << "testing " << link_names[i] << std::endl; 
     int link_id = link_ids[i];
     robot.get_link_point_withcache(link_id, pose, base_also);
 
@@ -43,6 +66,8 @@ int main(){
         !isNear(pose.position.y, pose_list[i][1]) || 
         !isNear(pose.position.z, pose_list[i][2])  
       ){
+      std::cout << "expected : " << pose_list[i][0] << " " << pose_list[i][1] << " " << pose_list[i][2] << std::endl; 
+      std::cout << "computed : " << pose.position.x << " " << pose.position.y << " " << pose.position.z << std::endl; 
       std::cout << "[FAIL] position of " << link_names[i] << " does not match" << std::endl; 
       return 0;
     }
@@ -79,6 +104,4 @@ int main(){
     }
   }
   std::cout << "[PASS] jacobain" << std::endl; 
-
-
 }

@@ -37,6 +37,13 @@ struct TransformCache
     return &_data[link_id];
   }
 
+  void extend(){
+    _N_link++;
+    _data.push_back(urdf::Pose());
+    _isCachedVec.push_back(false);
+    this->clear();
+  }
+
   void clear(){std::fill(_isCachedVec.begin(), _isCachedVec.end(), false);}
 };
 
@@ -147,4 +154,59 @@ class RobotModel
     void get_link_point_withcache(
         unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 
         bool usebase) const;
+
+    void add_new_link(
+        std::string link_name, 
+        unsigned int parent_id,
+        std::array<double, 3> position){
+
+      bool link_name_exists = (_link_ids.find(link_name) != _link_ids.end());
+      if(link_name_exists){
+        std::string message = "link name " + link_name + " already exists";
+        throw std::invalid_argument("link name : " + link_name + " already exists");
+      }
+
+      auto fixed_joint = std::make_shared<urdf::Joint>();
+      auto&& vec = urdf::Vector3(position[0], position[1], position[2]);
+      // only these two infomation is used in kinematics computation 
+      fixed_joint->parent_to_joint_origin_transform.position = vec;
+      fixed_joint->type = urdf::Joint::FIXED;
+
+      int link_id = _links.size();
+      auto new_link = std::make_shared<urdf::Link>();
+      new_link->parent_joint = fixed_joint;
+      new_link->setParent(_links[parent_id]);
+      new_link->name = link_name;
+      new_link->id = link_id;
+
+      _link_ids[link_name] = link_id;
+      _links.push_back(new_link);
+      _tf_cache.extend();
+
+      this->_update_abtable(); // set _abtable
+    }
+
+  private:
+    void _update_abtable(){
+      // this function usually must come in the end of a function
+      
+      // we must recreate from scratch
+      int n_link = _link_ids.size();
+      int n_dof = _joint_ids.size();
+      auto abtable = AncestorBitTable(n_link, n_dof);
+
+      for(urdf::JointSharedPtr joint : _joints){
+        int joint_id = _joint_ids.at(joint->name);
+        urdf::LinkSharedPtr clink = joint->getChildLink();
+        // do backward track. 
+        while(true){
+          clink = clink->getParent();
+          if(clink==nullptr)
+            break;
+          int clink_id = _link_ids.at(clink->name);
+          abtable._table[joint_id][clink_id] = true;
+        }
+      }
+      _abtable = abtable;
+    }
 };
