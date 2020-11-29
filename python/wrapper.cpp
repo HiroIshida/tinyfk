@@ -102,6 +102,10 @@ class RobotModelPyWrapper
       return _rtree.get_link_ids(link_names);
     }
 
+    void add_new_link(std::string link_name, unsigned int parent_id, std::array<double, 3> position){ 
+      _rtree.add_new_link(link_name, parent_id, position);
+    }
+
 };
 
 PYBIND11_MODULE(_tinyfk, m) {
@@ -112,5 +116,6 @@ PYBIND11_MODULE(_tinyfk, m) {
             .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)
             .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
             .def("set_base_pose", &RobotModelPyWrapper::set_base_pose)
+            .def("add_new_link", &RobotModelPyWrapper::add_new_link)
             .def("get_link_ids", &RobotModelPyWrapper::get_link_ids);
 }
