@@ -160,6 +160,12 @@ class RobotModel
         unsigned int parent_id,
         std::array<double, 3> position){
 
+      bool link_name_exists = (_link_ids.find(link_name) != _link_ids.end());
+      if(link_name_exists){
+        std::string message = "link name " + link_name + " already exists";
+        throw std::invalid_argument("link name : " + link_name + " already exists");
+      }
+
       auto fixed_joint = std::make_shared<urdf::Joint>();
       auto&& vec = urdf::Vector3(position[0], position[1], position[2]);
       // only these two infomation is used in kinematics computation 

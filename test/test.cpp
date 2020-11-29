@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <stdexcept>
 #include "tinyfk.hpp"
 
 using namespace std;
@@ -31,6 +32,19 @@ int main(){
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
     int parent_link_id = robot.get_link_ids(strvec)[0];
     robot.add_new_link("mylink", parent_link_id, pos);
+  }
+
+  {// must raise exception when add link with the same name 
+    std::vector<std::string> strvec = {"gripper_link"};
+    std::array<double, 3> pos = {0.1, 0.1, 0.1};
+    int parent_link_id = robot.get_link_ids(strvec)[0];
+    try{
+      robot.add_new_link("mylink", parent_link_id, pos);
+      std::cout << "[FAIL] must raise exception (add_new_link)" << std::endl;
+      return 0;
+    }catch (const std::exception& e){
+      std::cout << "[PASS] successfully raise exception in add_new_link" << std::endl; 
+    }
   }
 
   auto joint_ids = robot.get_joint_ids(joint_names);
