@@ -92,6 +92,31 @@ class RobotModelPyWrapper
       return ret;
     }
 
+    void _solve_forward_kinematics(
+        const std::vector<std::vector<double>> joint_angles_sequence,
+        const std::vector<unsigned int>& elink_ids,
+        const std::vector<unsigned int>& joint_ids,
+        bool rotalso, bool basealso, bool with_jacobian)
+    {
+
+      unsigned int n_pose_dim = (rotalso ? 6 : 3); // 7 if rot enabled
+      auto n_wp = joint_angles_sequence.size();
+      std::cout << "n_wp: " << n_wp << std::endl; 
+      auto n_joints = joint_ids.size();
+
+      clock_t start = clock();
+      urdf::Pose pose;
+      auto av = joint_angles_sequence[0];
+      for(unsigned int i=0; i<n_wp; i++){
+        _rtree.set_joint_angles(joint_ids, av);
+        for(int lid : elink_ids){
+          _rtree.get_link_point_withcache(lid, pose, false);
+        }
+      }
+      clock_t end = clock();
+      std::cout << double(end - start)/1e6 << std::endl; 
+    }
+
     std::vector<unsigned int> get_joint_ids(std::vector<std::string> joint_names){
       int n_joint = joint_names.size();
       return _rtree.get_joint_ids(joint_names);
@@ -113,6 +138,7 @@ PYBIND11_MODULE(_tinyfk, m) {
     py::class_<RobotModelPyWrapper>(m, "RobotModel")
             .def(py::init<std::string &>())
             .def("solve_forward_kinematics", &RobotModelPyWrapper::solve_forward_kinematics)
+            .def("_solve_forward_kinematics", &RobotModelPyWrapper::_solve_forward_kinematics)
             .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)
             .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
             .def("set_base_pose", &RobotModelPyWrapper::set_base_pose)
