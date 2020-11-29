@@ -25,6 +25,14 @@ int main(){
   // test main
   std::string urdf_file = "../data/fetch_description/fetch.urdf";
   auto robot = RobotModel(urdf_file);
+
+  {// add new link to the robot
+    std::vector<std::string> strvec = {"l_gripper_finger_link"};
+    std::array<double, 3> pos = {0.1, 0.1, 0.1};
+    int parent_link_id = robot.get_link_ids(strvec)[0];
+    robot.add_new_link("mylink", parent_link_id, pos);
+  }
+
   auto joint_ids = robot.get_joint_ids(joint_names);
   auto link_ids = robot.get_link_ids(link_names);
 
@@ -43,6 +51,8 @@ int main(){
         !isNear(pose.position.y, pose_list[i][1]) || 
         !isNear(pose.position.z, pose_list[i][2])  
       ){
+      std::cout << "expected : " << pose_list[i][0] << " " << pose_list[i][1] << " " << pose_list[i][2] << std::endl; 
+      std::cout << "computed : " << pose.position.x << " " << pose.position.y << " " << pose.position.z << std::endl; 
       std::cout << "[FAIL] position of " << link_names[i] << " does not match" << std::endl; 
       return 0;
     }
@@ -79,21 +89,4 @@ int main(){
     }
   }
   std::cout << "[PASS] jacobain" << std::endl; 
-
-  // test add link points:
-  {
-    std::vector<std::string> strvec = {"l_gripper_finger_link"};
-    std::array<double, 3> pos = {0.1, 0.1, 0.1};
-    int parent_link_id = robot.get_link_ids(strvec)[0];
-    robot.add_new_link("hiro", parent_link_id, pos);
-
-    int hiro_link_id = robot._link_ids["hiro"];
-    std::vector<unsigned int> link_ids = {hiro_link_id};
-
-    robot.set_base_pose(0, 0.0, 0.0);
-    robot.set_init_angles();
-    auto ret = robot.get_jacobians_withcache(link_ids, joint_ids, false, false);
-    std::cout << ret[0] << std::endl; 
-  }
-
 }

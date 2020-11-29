@@ -1,7 +1,8 @@
 import json
 import numpy as np
 import skrobot
-from skrobot.coordinates import CascadedCoords, Coordinates
+from skrobot.model import Link
+from skrobot.coordinates import CascadedCoords, Coordinates, make_cascoords
 from skrobot.coordinates.math import rpy_matrix, rpy_angle
 
 robot_model = skrobot.models.urdf.RobotModelFromURDF(urdf_file=skrobot.data.fetch_urdfpath())
@@ -9,8 +10,8 @@ joint_table = {j.name : j for j in robot_model.joint_list}
 
 joint_names = ["torso_lift_joint", "shoulder_pan_joint", "shoulder_lift_joint", "upperarm_roll_joint", "elbow_flex_joint", "forearm_roll_joint", "wrist_flex_joint", "wrist_roll_joint"]
 
+
 joint_list = [joint_table[name] for name in joint_names]
-link_list = [j.child_link for j in joint_list]
 
 # set torso, arm
 joint_angles = [0.2] + [-0.5]*7
@@ -24,20 +25,23 @@ robot_model.newcoords(co)
 
 angle_vector = joint_angles + [x, y, theta]
 
+my_link = Link(pos=[0.1, 0.1, 0.1], name="mylink")
+finger_link = robot_model.l_gripper_finger_link
+finger_link.assoc(my_link, finger_link)
+link_list = [j.child_link for j in joint_list] + [my_link]
+
 # compute pose of links
 world_coordinate = CascadedCoords()
-extract_pose = lambda link: np.hstack((link.worldpos(), link.worldcoords().rpy_angle()[0]))
-pose_list = [extract_pose(link).tolist() for link in link_list]
+extract_pose = lambda co: np.hstack((co.worldpos(), co.worldcoords().rpy_angle()[0]))
+pose_list = [extract_pose(co).tolist() for co in link_list]
 
 # compute jacobian of links
-cascoords_list = [CascadedCoords(link) for link in link_list]
 world_coordinate = CascadedCoords()
-J = [robot_model.calc_jacobian_from_link_list(cascoords, link_list, transform_coords=world_coordinate, rotation_axis=True).tolist() for cascoords in cascoords_list]
-
-
-rarm_end_coords = skrobot.coordinates.CascadedCoords(
-        parent=robot_model.gripper_link, 
-        name='rarm_end_coords')
+J = [robot_model.calc_jacobian_from_link_list(
+    link,
+    [j.child_link for j in joint_list],
+    transform_coords=world_coordinate, 
+    rotation_axis=True).tolist() for link in link_list]
 
 ground_truth = {
         "angle_vector" : angle_vector, 
