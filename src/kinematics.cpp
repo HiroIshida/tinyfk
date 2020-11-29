@@ -17,12 +17,6 @@ void RobotModel::get_link_point_withcache(
   // maybe bit complicated because I use _tf_caceh
   urdf::LinkSharedPtr hlink = _links[link_id];
   urdf::Pose tf_hlink_to_elink; 
-  if(hlink->visual == nullptr){
-    //tf_hlink_to_elink; 
-    // Do nothing. unit transform 
-  }else{
-    tf_hlink_to_elink = hlink->visual->origin;
-  }
 
   // tf rlink_to_blink is set to a unit transform or _base_pose according to if usebase is enabled.
   // If a cached transform from root link to here link, then tf_rlink_to_blink is overwrite to the 
@@ -76,8 +70,7 @@ void RobotModel::get_link_point_withcache(
     counter--;
     if (counter == -1){break;}
   }
-  urdf::Pose tf_rlink_to_hlink = std::move(tf_rlink_to_plink);
-  out_tf_rlink_to_elink = pose_transform(tf_rlink_to_hlink, tf_hlink_to_elink);
+  out_tf_rlink_to_elink = std::move(tf_rlink_to_plink);
 }
 
 void RobotModel::get_link_point(
@@ -88,9 +81,6 @@ void RobotModel::get_link_point(
   
   urdf::LinkSharedPtr hlink = _links[link_id];
   urdf::Pose tf_hlink_to_elink; // unit transform by default
-  if(hlink->visual != nullptr){ // but if visual exists, overwrite it
-    tf_hlink_to_elink = hlink->visual->origin;
-  }
 
   while(true){
     // transform from parent to child links are computed by combining 

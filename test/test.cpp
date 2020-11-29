@@ -60,16 +60,18 @@ int main(){
     std::cout << "testing " << link_names[i] << std::endl; 
     int link_id = link_ids[i];
     robot.get_link_point_withcache(link_id, pose, base_also);
+    std::cout << "expected : " << pose_list[i][0] << " " << pose_list[i][1] << " " << pose_list[i][2] << std::endl; 
+    std::cout << "computed : " << pose.position.x << " " << pose.position.y << " " << pose.position.z << std::endl; 
 
     if(
         !isNear(pose.position.x, pose_list[i][0]) || 
         !isNear(pose.position.y, pose_list[i][1]) || 
         !isNear(pose.position.z, pose_list[i][2])  
       ){
-      std::cout << "expected : " << pose_list[i][0] << " " << pose_list[i][1] << " " << pose_list[i][2] << std::endl; 
-      std::cout << "computed : " << pose.position.x << " " << pose.position.y << " " << pose.position.z << std::endl; 
       std::cout << "[FAIL] position of " << link_names[i] << " does not match" << std::endl; 
       return 0;
+    }else{
+      std::cout << "[PASS] match" << std::endl; 
     }
 
     auto rpy = pose.rotation.getRPY();
