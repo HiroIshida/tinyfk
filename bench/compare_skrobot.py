@@ -9,10 +9,6 @@ import time
 urdf_path = "../data/fetch_description/fetch.urdf"
 rtree = tinyfk.RobotModel(urdf_path)
 
-link_names = ["shoulder_pan_link", "shoulder_lift_link",
-              "upperarm_roll_link", "elbow_flex_link",
-              "forearm_roll_link", "wrist_flex_link",
-              "wrist_roll_link"]
 elink_names = [
         "l_gripper_finger_link", 
         "r_gripper_finger_link", 

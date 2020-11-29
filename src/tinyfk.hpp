@@ -186,6 +186,20 @@ class RobotModel
       this->_update_abtable(); // set _abtable
     }
 
+    void debug_loop_get_points(int N, 
+        std::vector<unsigned int> joint_ids,
+        std::vector<double> angle_vector,
+        std::vector<unsigned int> link_ids
+        ){
+      urdf::Pose out;
+      for(int i=0; i<N; i++){
+        this->set_joint_angles(joint_ids, angle_vector); // this clear cached TFs
+        for(int lid : link_ids){
+          this->get_link_point_withcache(lid, out, false);
+        }
+      }
+    }
+
   private:
     void _update_abtable(){
       // this function usually must come in the end of a function

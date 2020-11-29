@@ -32,14 +32,21 @@ int main(){
   std::vector<double> angle_vector = {0, 0, 0, 0, 0, 0, 0};
 
   {// bench tinyfk FK : with cache
-    clock_t start = clock();
-    urdf::Pose out;
-    for(int i=0; i<N; i++){
-      robot.set_joint_angles(joint_ids, angle_vector); // this clear cached TFs
-      for(int lid : link_ids){
-        robot.get_link_point_withcache(lid, out, false);
-      }
+    std::cout << "N: " << N << std::endl; 
+    std::cout << "joint_ids: ";
+    for(int id : joint_ids){
+      std::cout << id << " ";
     }
+    std::cout << std::endl;
+
+    std::cout << "link_ids: ";
+    for(int id : link_ids){
+      std::cout << id << " ";
+    }
+    std::cout << std::endl;
+
+    clock_t start = clock();
+    robot.debug_loop_get_points(N, joint_ids, angle_vector, link_ids);
     clock_t end = clock();
     std::cout << "tinyfk.FK_with_cache : " << double(end - start)/1e6 << std::endl;
   }
