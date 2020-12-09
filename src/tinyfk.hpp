@@ -120,7 +120,11 @@ class RobotModel
         bool rotalso = false, bool basealso = false
         );
 
-    void set_joint_angles(
+    void clear_cache();
+
+    void set_joint_angle(unsigned int joint_id, double joint_angle);
+
+    void set_joint_angles(// this clear the cache
         const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles);
 
     void set_init_angles();
@@ -132,13 +136,6 @@ class RobotModel
 
     unsigned int get_link_id(std::string link_name) const;
     std::vector<unsigned int> get_link_ids(std::vector<std::string> link_names) const;
-
-    // private (I wanna make these function private, but 
-    // don't know who to do unit test after that
-    // anyway, don't use it
-    void set_joint_angle(unsigned int joint_id, double angle){
-      _joint_angles[joint_id] = angle;
-    }
 
     void set_base_pose(double x, double y, double theta){_base_pose.set(x, y, theta);}
     

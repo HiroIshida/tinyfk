@@ -84,12 +84,22 @@ RobotModel::RobotModel(const std::string& urdf_file){
   this->_update_abtable(); // update _abtable
 }
 
+void RobotModel::clear_cache()
+{
+  _tf_cache.clear();
+}
+
+void RobotModel::set_joint_angle(unsigned int joint_id, double joint_angle)
+{
+  _joint_angles[joint_id] = joint_angle;
+}
+
 void RobotModel::set_joint_angles(
     const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles){
     for(unsigned int i=0; i<joint_ids.size(); i++){
-      _joint_angles[joint_ids[i]] = joint_angles[i];
+      this->set_joint_angle(joint_ids[i], joint_angles[i]);
     }
-    _tf_cache.clear();
+    this->clear_cache();
 }
 
 void RobotModel::set_init_angles(){

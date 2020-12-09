@@ -3,6 +3,7 @@ const mylib = joinpath(pwd(), "../build/libtinyfk_capi.so")
 create_robot_model(str) = ccall((:capi_create_robot_model, mylib), Ptr{Cvoid}, (Cstring,), str)
 get_link_id(ptr_robot, str) = ccall((:capi_get_link_id, mylib), Cuint, (Ptr{Cvoid}, Cstring,), ptr_robot, str)
 get_joint_id(ptr_robot, str) = ccall((:capi_get_joint_id, mylib), Cuint, (Ptr{Cvoid}, Cstring,), ptr_robot, str)
+set_joint_angle(ptr_robot, joint_id, angle) = ccall((:capi_set_joint_angle, mylib), Cvoid, (Ptr{Cvoid}, Cuint, Cdouble), ptr_robot, joint_id, angle)
 
 hello() = ccall((:hello, mylib), Cvoid, ())
 
@@ -22,7 +23,5 @@ end
 joint_names = ["shoulder_pan_joint", "shoulder_lift_joint", "upperarm_roll_joint", "elbow_flex_joint", "forearm_roll_joint", "wrist_flex_joint", "wrist_roll_joint"]
 for joint_name in joint_names
     joint_id = get_joint_id(ptr_robot, joint_name)
-    println(joint_id)
+    set_joint_angle(ptr_robot, joint_id, -0.4)
 end
-
-
