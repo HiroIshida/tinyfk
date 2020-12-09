@@ -126,7 +126,11 @@ class RobotModel
     void set_init_angles();
 
     std::vector<double> get_joint_angles(const std::vector<unsigned int>& joint_ids) const;
+
+    unsigned int get_joint_id(std::string joint_name) const;
     std::vector<unsigned int> get_joint_ids(std::vector<std::string> joint_names) const;
+
+    unsigned int get_link_id(std::string link_name) const;
     std::vector<unsigned int> get_link_ids(std::vector<std::string> link_names) const;
 
     // private (I wanna make these function private, but 
