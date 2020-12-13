@@ -8,16 +8,10 @@ set (URDF_PATCH_VERSION 4)
 set (URDF_VERSION ${URDF_MAJOR_VERSION}.${URDF_MINOR_VERSION}.${URDF_PATCH_VERSION})
 set (URDF_MAJOR_MINOR_VERSION ${URDF_MAJOR_VERSION}.${URDF_MINOR_VERSION})
 
-add_subdirectory("external/tinyxml")
-
-find_package(console_bridge REQUIRED)
-include_directories(SYSTEM ${console_bridge_INCLUDE_DIRS})
-link_directories(${console_bridge_LIBRARY_DIRS})
-
-include_directories("external/tinyxml")
-include_directories("include")
-link_directories("external/tinyxml")
+find_package(PkgConfig)
+pkg_check_modules(TinyXML REQUIRED tinyxml)
 
 add_library(urdfdom_model STATIC src/pose.cpp src/model.cpp src/link.cpp src/joint.cpp)
-target_link_libraries(urdfdom_model tinyxml ${console_bridge_LIBRARIES})
+target_include_directories(urdfdom_model PUBLIC "include" ${TinyXML_INCLUDE_DIRS})
+target_link_libraries(urdfdom_model tinyxml)
 set_target_properties(urdfdom_model PROPERTIES SOVERSION ${URDF_MAJOR_MINOR_VERSION})

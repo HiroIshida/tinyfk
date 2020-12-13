@@ -39,7 +39,7 @@
 #include <stdexcept>
 #include <string>
 #include <urdf_model/joint.h>
-#include <console_bridge/console.h>
+//#include <console_bridge/console.h>
 #include <tinyxml.h>
 #include <urdf_parser/urdf_parser.h>
 
@@ -54,7 +54,7 @@ bool parseJointDynamics(JointDynamics &jd, TiXmlElement* config)
   // Get joint damping
   const char* damping_str = config->Attribute("damping");
   if (damping_str == NULL){
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_dynamics: no damping, defaults to 0");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_dynamics: no damping, defaults to 0");
     jd.damping = 0;
   }
   else
@@ -62,7 +62,7 @@ bool parseJointDynamics(JointDynamics &jd, TiXmlElement* config)
     try {
       jd.damping = strToDouble(damping_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("damping value (%s) is not a valid float", damping_str);
+      //CONSOLE_BRIDGE_logError("damping value (%s) is not a valid float", damping_str);
       return false;
     }
   }
@@ -70,7 +70,7 @@ bool parseJointDynamics(JointDynamics &jd, TiXmlElement* config)
   // Get joint friction
   const char* friction_str = config->Attribute("friction");
   if (friction_str == NULL){
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_dynamics: no friction, defaults to 0");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_dynamics: no friction, defaults to 0");
     jd.friction = 0;
   }
   else
@@ -78,18 +78,18 @@ bool parseJointDynamics(JointDynamics &jd, TiXmlElement* config)
     try {
       jd.friction = strToDouble(friction_str);
     } catch (std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("friction value (%s) is not a valid float", friction_str);
+      //CONSOLE_BRIDGE_logError("friction value (%s) is not a valid float", friction_str);
       return false;
     }
   }
 
   if (damping_str == NULL && friction_str == NULL)
   {
-    CONSOLE_BRIDGE_logError("joint dynamics element specified with no damping and no friction");
+    //CONSOLE_BRIDGE_logError("joint dynamics element specified with no damping and no friction");
     return false;
   }
   else{
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_dynamics: damping %f and friction %f", jd.damping, jd.friction);
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_dynamics: damping %f and friction %f", jd.damping, jd.friction);
     return true;
   }
 }
@@ -101,7 +101,7 @@ bool parseJointLimits(JointLimits &jl, TiXmlElement* config)
   // Get lower joint limit
   const char* lower_str = config->Attribute("lower");
   if (lower_str == NULL){
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_limit: no lower, defaults to 0");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_limit: no lower, defaults to 0");
     jl.lower = 0;
   }
   else
@@ -109,7 +109,7 @@ bool parseJointLimits(JointLimits &jl, TiXmlElement* config)
     try {
       jl.lower = strToDouble(lower_str);
     } catch (std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("lower value (%s) is not a valid float", lower_str);
+      //CONSOLE_BRIDGE_logError("lower value (%s) is not a valid float", lower_str);
       return false;
     }
   }
@@ -117,7 +117,7 @@ bool parseJointLimits(JointLimits &jl, TiXmlElement* config)
   // Get upper joint limit
   const char* upper_str = config->Attribute("upper");
   if (upper_str == NULL){
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_limit: no upper, , defaults to 0");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_limit: no upper, , defaults to 0");
     jl.upper = 0;
   }
   else
@@ -125,7 +125,7 @@ bool parseJointLimits(JointLimits &jl, TiXmlElement* config)
     try {
       jl.upper = strToDouble(upper_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("upper value (%s) is not a valid float", upper_str);
+      //CONSOLE_BRIDGE_logError("upper value (%s) is not a valid float", upper_str);
       return false;
     }
   }
@@ -133,7 +133,7 @@ bool parseJointLimits(JointLimits &jl, TiXmlElement* config)
   // Get joint effort limit
   const char* effort_str = config->Attribute("effort");
   if (effort_str == NULL){
-    CONSOLE_BRIDGE_logError("joint limit: no effort");
+    //CONSOLE_BRIDGE_logError("joint limit: no effort");
     return false;
   }
   else
@@ -141,7 +141,7 @@ bool parseJointLimits(JointLimits &jl, TiXmlElement* config)
     try {
       jl.effort = strToDouble(effort_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("effort value (%s) is not a valid float", effort_str);
+      //CONSOLE_BRIDGE_logError("effort value (%s) is not a valid float", effort_str);
       return false;
     }
   }
@@ -149,7 +149,7 @@ bool parseJointLimits(JointLimits &jl, TiXmlElement* config)
   // Get joint velocity limit
   const char* velocity_str = config->Attribute("velocity");
   if (velocity_str == NULL){
-    CONSOLE_BRIDGE_logError("joint limit: no velocity");
+    //CONSOLE_BRIDGE_logError("joint limit: no velocity");
     return false;
   }
   else
@@ -157,7 +157,7 @@ bool parseJointLimits(JointLimits &jl, TiXmlElement* config)
     try {
       jl.velocity = strToDouble(velocity_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("velocity value (%s) is not a valid float", velocity_str);
+      //CONSOLE_BRIDGE_logError("velocity value (%s) is not a valid float", velocity_str);
       return false;
     }
   }
@@ -173,7 +173,7 @@ bool parseJointSafety(JointSafety &js, TiXmlElement* config)
   const char* soft_lower_limit_str = config->Attribute("soft_lower_limit");
   if (soft_lower_limit_str == NULL)
   {
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_safety: no soft_lower_limit, using default value");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_safety: no soft_lower_limit, using default value");
     js.soft_lower_limit = 0;
   }
   else
@@ -181,7 +181,7 @@ bool parseJointSafety(JointSafety &js, TiXmlElement* config)
     try {
       js.soft_lower_limit = strToDouble(soft_lower_limit_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("soft_lower_limit value (%s) is not a valid float", soft_lower_limit_str);
+      //CONSOLE_BRIDGE_logError("soft_lower_limit value (%s) is not a valid float", soft_lower_limit_str);
       return false;
     }
   }
@@ -190,7 +190,7 @@ bool parseJointSafety(JointSafety &js, TiXmlElement* config)
   const char* soft_upper_limit_str = config->Attribute("soft_upper_limit");
   if (soft_upper_limit_str == NULL)
   {
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_safety: no soft_upper_limit, using default value");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_safety: no soft_upper_limit, using default value");
     js.soft_upper_limit = 0;
   }
   else
@@ -198,7 +198,7 @@ bool parseJointSafety(JointSafety &js, TiXmlElement* config)
     try {
       js.soft_upper_limit = strToDouble(soft_upper_limit_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("soft_upper_limit value (%s) is not a valid float", soft_upper_limit_str);
+      //CONSOLE_BRIDGE_logError("soft_upper_limit value (%s) is not a valid float", soft_upper_limit_str);
       return false;
     }
   }
@@ -207,7 +207,7 @@ bool parseJointSafety(JointSafety &js, TiXmlElement* config)
   const char* k_position_str = config->Attribute("k_position");
   if (k_position_str == NULL)
   {
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_safety: no k_position, using default value");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_safety: no k_position, using default value");
     js.k_position = 0;
   }
   else
@@ -215,7 +215,7 @@ bool parseJointSafety(JointSafety &js, TiXmlElement* config)
     try {
       js.k_position = strToDouble(k_position_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("k_position value (%s) is not a valid float", k_position_str);
+      //CONSOLE_BRIDGE_logError("k_position value (%s) is not a valid float", k_position_str);
       return false;
     }
   }
@@ -223,7 +223,7 @@ bool parseJointSafety(JointSafety &js, TiXmlElement* config)
   const char* k_velocity_str = config->Attribute("k_velocity");
   if (k_velocity_str == NULL)
   {
-    CONSOLE_BRIDGE_logError("joint safety: no k_velocity");
+    //CONSOLE_BRIDGE_logError("joint safety: no k_velocity");
     return false;
   }
   else
@@ -231,7 +231,7 @@ bool parseJointSafety(JointSafety &js, TiXmlElement* config)
     try {
       js.k_velocity = strToDouble(k_velocity_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("k_velocity value (%s) is not a valid float", k_velocity_str);
+      //CONSOLE_BRIDGE_logError("k_velocity value (%s) is not a valid float", k_velocity_str);
       return false;
     }
   }
@@ -247,7 +247,7 @@ bool parseJointCalibration(JointCalibration &jc, TiXmlElement* config)
   const char* rising_position_str = config->Attribute("rising");
   if (rising_position_str == NULL)
   {
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_calibration: no rising, using default value");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_calibration: no rising, using default value");
     jc.rising.reset();
   }
   else
@@ -255,7 +255,7 @@ bool parseJointCalibration(JointCalibration &jc, TiXmlElement* config)
     try {
       jc.rising.reset(new double(strToDouble(rising_position_str)));
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("rising value (%s) is not a valid float", rising_position_str);
+      //CONSOLE_BRIDGE_logError("rising value (%s) is not a valid float", rising_position_str);
       return false;
     }
   }
@@ -264,7 +264,7 @@ bool parseJointCalibration(JointCalibration &jc, TiXmlElement* config)
   const char* falling_position_str = config->Attribute("falling");
   if (falling_position_str == NULL)
   {
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_calibration: no falling, using default value");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_calibration: no falling, using default value");
     jc.falling.reset();
   }
   else
@@ -272,7 +272,7 @@ bool parseJointCalibration(JointCalibration &jc, TiXmlElement* config)
     try {
       jc.falling.reset(new double(strToDouble(falling_position_str)));
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("falling value (%s) is not a valid float", falling_position_str);
+      //CONSOLE_BRIDGE_logError("falling value (%s) is not a valid float", falling_position_str);
       return false;
     }
   }
@@ -289,7 +289,7 @@ bool parseJointMimic(JointMimic &jm, TiXmlElement* config)
 
   if (joint_name_str == NULL)
   {
-    CONSOLE_BRIDGE_logError("joint mimic: no mimic joint specified");
+    //CONSOLE_BRIDGE_logError("joint mimic: no mimic joint specified");
     return false;
   }
   else
@@ -300,7 +300,7 @@ bool parseJointMimic(JointMimic &jm, TiXmlElement* config)
 
   if (multiplier_str == NULL)
   {
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_mimic: no multiplier, using default value of 1");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_mimic: no multiplier, using default value of 1");
     jm.multiplier = 1;    
   }
   else
@@ -308,7 +308,7 @@ bool parseJointMimic(JointMimic &jm, TiXmlElement* config)
     try {
       jm.multiplier = strToDouble(multiplier_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("multiplier value (%s) is not a valid float", multiplier_str);
+      //CONSOLE_BRIDGE_logError("multiplier value (%s) is not a valid float", multiplier_str);
       return false;
     }
   }
@@ -318,7 +318,7 @@ bool parseJointMimic(JointMimic &jm, TiXmlElement* config)
   const char* offset_str = config->Attribute("offset");
   if (offset_str == NULL)
   {
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_mimic: no offset, using default value of 0");
+    //CONSOLE_BRIDGE_logDebug("urdfdom.joint_mimic: no offset, using default value of 0");
     jm.offset = 0;
   }
   else
@@ -326,7 +326,7 @@ bool parseJointMimic(JointMimic &jm, TiXmlElement* config)
     try {
       jm.offset = strToDouble(offset_str);
     } catch(std::runtime_error &) {
-      CONSOLE_BRIDGE_logError("offset value (%s) is not a valid float", offset_str);
+      //CONSOLE_BRIDGE_logError("offset value (%s) is not a valid float", offset_str);
       return false;
     }
   }
@@ -342,7 +342,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
   const char *name = config->Attribute("name");
   if (!name)
   {
-    CONSOLE_BRIDGE_logError("unnamed joint found");
+    //CONSOLE_BRIDGE_logError("unnamed joint found");
     return false;
   }
   joint.name = name;
@@ -351,7 +351,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
   TiXmlElement *origin_xml = config->FirstChildElement("origin");
   if (!origin_xml)
   {
-    CONSOLE_BRIDGE_logDebug("urdfdom: Joint [%s] missing origin tag under parent describing transform from Parent Link to Joint Frame, (using Identity transform).", joint.name.c_str());
+    //CONSOLE_BRIDGE_logDebug("urdfdom: Joint [%s] missing origin tag under parent describing transform from Parent Link to Joint Frame, (using Identity transform).", joint.name.c_str());
     joint.parent_to_joint_origin_transform.clear();
   }
   else
@@ -359,7 +359,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     if (!parsePose(joint.parent_to_joint_origin_transform, origin_xml))
     {
       joint.parent_to_joint_origin_transform.clear();
-      CONSOLE_BRIDGE_logError("Malformed parent origin element for joint [%s]", joint.name.c_str());
+      //CONSOLE_BRIDGE_logError("Malformed parent origin element for joint [%s]", joint.name.c_str());
       return false;
     }
   }
@@ -371,7 +371,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     const char *pname = parent_xml->Attribute("link");
     if (!pname)
     {
-      CONSOLE_BRIDGE_logInform("no parent link name specified for Joint link [%s]. this might be the root?", joint.name.c_str());
+      //CONSOLE_BRIDGE_logInform("no parent link name specified for Joint link [%s]. this might be the root?", joint.name.c_str());
     }
     else
     {
@@ -386,7 +386,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     const char *pname = child_xml->Attribute("link");
     if (!pname)
     {
-      CONSOLE_BRIDGE_logInform("no child link name specified for Joint link [%s].", joint.name.c_str());
+      //CONSOLE_BRIDGE_logInform("no child link name specified for Joint link [%s].", joint.name.c_str());
     }
     else
     {
@@ -398,7 +398,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
   const char* type_char = config->Attribute("type");
   if (!type_char)
   {
-    CONSOLE_BRIDGE_logError("joint [%s] has no type, check to see if it's a reference.", joint.name.c_str());
+    //CONSOLE_BRIDGE_logError("joint [%s] has no type, check to see if it's a reference.", joint.name.c_str());
     return false;
   }
   
@@ -417,7 +417,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     joint.type = Joint::FIXED;
   else
   {
-    CONSOLE_BRIDGE_logError("Joint [%s] has no known type [%s]", joint.name.c_str(), type_str.c_str());
+    //CONSOLE_BRIDGE_logError("Joint [%s] has no known type [%s]", joint.name.c_str(), type_str.c_str());
     return false;
   }
 
@@ -427,7 +427,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     // axis
     TiXmlElement *axis_xml = config->FirstChildElement("axis");
     if (!axis_xml){
-      CONSOLE_BRIDGE_logDebug("urdfdom: no axis elemement for Joint link [%s], defaulting to (1,0,0) axis", joint.name.c_str());
+      //CONSOLE_BRIDGE_logDebug("urdfdom: no axis elemement for Joint link [%s], defaulting to (1,0,0) axis", joint.name.c_str());
       joint.axis = Vector3(1.0, 0.0, 0.0);
     }
     else{
@@ -437,7 +437,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
         }
         catch (ParseError &e) {
           joint.axis.clear();
-          CONSOLE_BRIDGE_logError("Malformed axis element for joint [%s]: %s", joint.name.c_str(), e.what());
+          //CONSOLE_BRIDGE_logError("Malformed axis element for joint [%s]: %s", joint.name.c_str(), e.what());
           return false;
         }
       }
@@ -451,19 +451,19 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     joint.limits.reset(new JointLimits());
     if (!parseJointLimits(*joint.limits, limit_xml))
     {
-      CONSOLE_BRIDGE_logError("Could not parse limit element for joint [%s]", joint.name.c_str());
+      //CONSOLE_BRIDGE_logError("Could not parse limit element for joint [%s]", joint.name.c_str());
       joint.limits.reset();
       return false;
     }
   }
   else if (joint.type == Joint::REVOLUTE)
   {
-    CONSOLE_BRIDGE_logError("Joint [%s] is of type REVOLUTE but it does not specify limits", joint.name.c_str());
+    //CONSOLE_BRIDGE_logError("Joint [%s] is of type REVOLUTE but it does not specify limits", joint.name.c_str());
     return false;
   }
   else if (joint.type == Joint::PRISMATIC)
   {
-    CONSOLE_BRIDGE_logError("Joint [%s] is of type PRISMATIC without limits", joint.name.c_str()); 
+    //CONSOLE_BRIDGE_logError("Joint [%s] is of type PRISMATIC without limits", joint.name.c_str()); 
     return false;
   }
 
@@ -474,7 +474,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     joint.safety.reset(new JointSafety());
     if (!parseJointSafety(*joint.safety, safety_xml))
     {
-      CONSOLE_BRIDGE_logError("Could not parse safety element for joint [%s]", joint.name.c_str());
+      //CONSOLE_BRIDGE_logError("Could not parse safety element for joint [%s]", joint.name.c_str());
       joint.safety.reset();
       return false;
     }
@@ -487,7 +487,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     joint.calibration.reset(new JointCalibration());
     if (!parseJointCalibration(*joint.calibration, calibration_xml))
     {
-      CONSOLE_BRIDGE_logError("Could not parse calibration element for joint  [%s]", joint.name.c_str());
+      //CONSOLE_BRIDGE_logError("Could not parse calibration element for joint  [%s]", joint.name.c_str());
       joint.calibration.reset();
       return false;
     }
@@ -500,7 +500,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     joint.mimic.reset(new JointMimic());
     if (!parseJointMimic(*joint.mimic, mimic_xml))
     {
-      CONSOLE_BRIDGE_logError("Could not parse mimic element for joint  [%s]", joint.name.c_str());
+      //CONSOLE_BRIDGE_logError("Could not parse mimic element for joint  [%s]", joint.name.c_str());
       joint.mimic.reset();
       return false;
     }
@@ -513,7 +513,7 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     joint.dynamics.reset(new JointDynamics());
     if (!parseJointDynamics(*joint.dynamics, prop_xml))
     {
-      CONSOLE_BRIDGE_logError("Could not parse joint_dynamics element for joint [%s]", joint.name.c_str());
+      //CONSOLE_BRIDGE_logError("Could not parse joint_dynamics element for joint [%s]", joint.name.c_str());
       joint.dynamics.reset();
       return false;
     }
@@ -602,7 +602,7 @@ bool exportJoint(Joint &joint, TiXmlElement* xml)
   else if (joint.type == urdf::Joint::FIXED)
     joint_xml->SetAttribute("type", "fixed");
   else
-    CONSOLE_BRIDGE_logError("ERROR:  Joint [%s] type [%d] is not a defined type.\n",joint.name.c_str(), joint.type);
+    //CONSOLE_BRIDGE_logError("ERROR:  Joint [%s] type [%d] is not a defined type.\n",joint.name.c_str(), joint.type);
 
   // origin
   exportPose(joint.parent_to_joint_origin_transform, joint_xml);

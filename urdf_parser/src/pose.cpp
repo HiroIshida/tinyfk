@@ -39,7 +39,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-#include <console_bridge/console.h>
+//#include <console_bridge/console.h>
 #include <tinyxml.h>
 #include <urdf_parser/urdf_parser.h>
 
@@ -105,7 +105,7 @@ bool parsePose(Pose &pose, TiXmlElement* xml)
         pose.position.init(xyz_str);
       }
       catch (ParseError &e) {
-        CONSOLE_BRIDGE_logError(e.what());
+        //CONSOLE_BRIDGE_logError(e.what());
         return false;
       }
     }
@@ -117,7 +117,7 @@ bool parsePose(Pose &pose, TiXmlElement* xml)
         pose.rotation.init(rpy_str);
       }
       catch (ParseError &e) {
-        CONSOLE_BRIDGE_logError(e.what());
+        //CONSOLE_BRIDGE_logError(e.what());
         return false;
       }
     }
