@@ -23,6 +23,9 @@ jobs:
             - name: update submodule
               run: git submodule update --init --depth=1
 
+            - name: download model
+              run: pip install gdown && ./download.sh
+
             - name: installation
               run: |
                   sudo apt-get install libeigen3-dev libtinyxml-dev
