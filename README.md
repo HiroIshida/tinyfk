@@ -1,4 +1,4 @@
-## tinyfk
+## tinyfk ![CI](https://github.com/HiroIshida/tinyfk/workflows/CI/badge.svg)
 A tiny fast forward-kinematics solver written in c++ and its python wrapper
 
 ### Installation for python

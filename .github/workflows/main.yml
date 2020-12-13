@@ -1,0 +1,44 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - master
+    pull_request:
+        branches:
+            - master
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Setup python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: '3.7'
+
+            - name: Checkout Code
+              uses: actions/checkout@v2
+
+            - name: update submodule
+              run: git submodule update --init --depth=1
+
+            - name: download model
+              run: pip install gdown && ./download.sh
+
+            - name: installation
+              run: |
+                  sudo apt-get install libeigen3-dev libtinyxml-dev
+
+            - name: build
+              run: |
+                  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/lib/x86_64-linux-gnu/pkgconfig"
+                  mkdir build
+                  cd build
+                  cmake .. 
+                  make
+
+            - name: test
+              run: |
+                  cd build
+                  ./test_kinematics

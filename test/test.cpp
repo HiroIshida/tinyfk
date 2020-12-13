@@ -41,7 +41,7 @@ int main(){
     try{
       robot.add_new_link("mylink", parent_link_id, pos);
       std::cout << "[FAIL] must raise exception (add_new_link)" << std::endl;
-      return 0;
+      return -1;
     }catch (const std::exception& e){
       std::cout << "[PASS] successfully raise exception in add_new_link" << std::endl; 
     }
@@ -69,7 +69,7 @@ int main(){
         !isNear(pose.position.z, pose_list[i][2])  
       ){
       std::cout << "[FAIL] position of " << link_names[i] << " does not match" << std::endl; 
-      return 0;
+      return -1;
     }else{
       std::cout << "[PASS] match" << std::endl; 
     }
@@ -102,7 +102,7 @@ int main(){
     bool jacobian_equal = (J_ - J_numerical).array().abs().maxCoeff() < 1e-5;
     if(!jacobian_equal){
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
-      return  0;
+      return  -1;
     }
   }
   std::cout << "[PASS] jacobain" << std::endl; 
