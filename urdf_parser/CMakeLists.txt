@@ -11,9 +11,7 @@ set (URDF_MAJOR_MINOR_VERSION ${URDF_MAJOR_VERSION}.${URDF_MINOR_VERSION})
 find_package(PkgConfig)
 pkg_check_modules(TinyXML REQUIRED tinyxml)
 
-include_directories(${TinyXML_INCLUDE_DIRS})
-include_directories("include")
-
 add_library(urdfdom_model STATIC src/pose.cpp src/model.cpp src/link.cpp src/joint.cpp)
+target_include_directories(urdfdom_model PUBLIC "include" ${TinyXML_INCLUDE_DIRS})
 target_link_libraries(urdfdom_model tinyxml)
 set_target_properties(urdfdom_model PROPERTIES SOVERSION ${URDF_MAJOR_MINOR_VERSION})
