@@ -37,3 +37,8 @@ jobs:
                   cd build
                   cmake .. 
                   make
+
+            - name: test
+              run: |
+                  cd build
+                  ./test_kinematics
