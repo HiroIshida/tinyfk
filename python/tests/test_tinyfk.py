@@ -24,7 +24,7 @@ angle_vector = test_data['angle_vector']
 gt_pose_list_ = np.array(test_data['pose_list'])
 gt_pose_list = copy.copy(gt_pose_list_)
 gt_pose_list[:, 3] = gt_pose_list_[:, 5] # note in skrobot rpy order is z-y-x
-gt_pose_list[:, 5] = gt_pose_list_[:, 3]
+gt_pose_list[:, 5] = gt_pose_list_[:, 3] # so, the two lines are swapped.
 
 def test_fksovler():
     fksolver = tinyfk.RobotModel(urdf_model_path)
@@ -33,15 +33,21 @@ def test_fksovler():
     parent_id = fksolver.get_link_ids(["gripper_link"])[0]
     fksolver.add_new_link('mylink', parent_id, [0.1, 0.1, 0.1])
 
+    # To interact with fksolver, we must get the correspoinding link_ids and joint_ids.
     link_ids = fksolver.get_link_ids(link_names)
     joint_ids = fksolver.get_joint_ids(joint_names)
 
-    # check
-    P, J = fksolver.solve_forward_kinematics(
-            [angle_vector], link_ids, joint_ids, True, True, False)
+    # check P (array of poses [pos, rpy] of each link) coincides with the ground truth
+    use_rotation = True # If true P[i, :] has 6 dim, otherwise has 3 dim.
+    use_base = True # If true, assumes that angle_vector takes the form of [q_joints, q_base (3dof)]
+    with_jacobian = False # If true, jacobian is computed, otherewise returns J = None.
+    P, _ = fksolver.solve_forward_kinematics(
+            [angle_vector], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
     testing.assert_almost_equal(P, np.array(gt_pose_list))
 
-    # check jac
+    # The following test assumes: that the above test without jacobian succeeded.
+    # check resulting jacbian J_analytical coincides with J_numerical witch is 
+    # computed via numerical differentiation.
     for link_id, link_name in zip(link_ids, link_names):
         P0, J_analytical = fksolver.solve_forward_kinematics(
                 [angle_vector], [link_id], joint_ids, False, True, True)
