@@ -24,7 +24,7 @@ jobs:
                   python-version: '3.7'
 
             - name: install scikit-robot
-              run: pip install scikit-robot=0.0.9
+              run: pip install scikit-robot==0.0.9
 
             - name: installation
               run: |
@@ -38,7 +38,13 @@ jobs:
                   cmake .. 
                   make
 
-            - name: test
+            - name: test c++
               run: |
                   cd build
                   ./test_kinematics
+
+            - name: test python wrapper
+              run: |
+                  pip install . 
+                  cd bench
+                  python compare_skrobot.py
