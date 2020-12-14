@@ -6,7 +6,7 @@ import numpy as np
 from numpy import testing
 try:
     import tinyfk
-except NameError:
+except:
     import _tinyfk as tinyfk
 
 here_full_filepath = os.path.join(os.getcwd(), __file__)
@@ -39,10 +39,24 @@ def test_fksovler():
     # check
     P, J = fksolver.solve_forward_kinematics(
             [angle_vector], link_ids, joint_ids, True, True, False)
-
     testing.assert_almost_equal(P, np.array(gt_pose_list))
 
+    # check jac
+    for link_id, link_name in zip(link_ids, link_names):
+        P0, J_analytical = fksolver.solve_forward_kinematics(
+                [angle_vector], [link_id], joint_ids, False, True, True)
+
+        eps = 1e-7
+        J_numerical = np.zeros(J_analytical.shape)
+        for i in range(len(angle_vector)):
+            angle_vector_p = copy.copy(angle_vector)
+            angle_vector_p[i] += eps
+            P1, _ = fksolver.solve_forward_kinematics(
+                    [angle_vector_p], [link_id], joint_ids, False, True, False)
+            P_diff = (P1 - P0)/eps
+            J_numerical[:, i] = P_diff.flatten()
+            testing.assert_almost_equal(J_numerical[:, i], J_analytical[:, i], decimal=5)
 
 
 
-
+test_fksovler()
