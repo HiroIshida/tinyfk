@@ -23,11 +23,11 @@ jobs:
               with:
                   python-version: '3.7'
 
-            - name: installation
+            - name: Install apt packages
               run: |
                   sudo apt-get install libeigen3-dev libtinyxml-dev
 
-            - name: build
+            - name: Build c++ via cmake
               run: |
                   export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/lib/x86_64-linux-gnu/pkgconfig"
                   mkdir build
@@ -35,14 +35,17 @@ jobs:
                   cmake .. 
                   make
 
-            - name: test c++
+            - name: Test c++
               run: |
                   cd build
                   ./test_kinematics
 
-            - name: test python wrapper
+            - name: pip install tinyfk from source
               run: |
                   pip install numpy pytest
                   pip install . 
+
+            - name: Test python wrapper
+              run: |
                   cd python
                   pytest

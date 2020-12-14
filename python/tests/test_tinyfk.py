@@ -56,7 +56,3 @@ def test_fksovler():
             P_diff = (P1 - P0)/eps
             J_numerical[:, i] = P_diff.flatten()
             testing.assert_almost_equal(J_numerical[:, i], J_analytical[:, i], decimal=5)
-
-
-
-test_fksovler()
