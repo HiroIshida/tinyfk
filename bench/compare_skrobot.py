@@ -6,7 +6,7 @@ import numpy as np
 import time
 
 # common setting
-urdf_path = "../data/fetch_description/fetch.urdf"
+urdf_path = "../data/fetch.urdf"
 rtree = tinyfk.RobotModel(urdf_path)
 
 link_names = ["shoulder_pan_link", "shoulder_lift_link",

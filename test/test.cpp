@@ -24,7 +24,7 @@ int main(){
   vector<vector<double>> pose_list = js["pose_list"];
 
   // test main
-  std::string urdf_file = "../data/fetch_description/fetch.urdf";
+  std::string urdf_file = "../data/fetch.urdf";
   auto robot = RobotModel(urdf_file);
 
   {// add new link to the robot

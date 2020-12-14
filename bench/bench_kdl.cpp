@@ -28,7 +28,7 @@ void urdf2kdl(const std::string& urdf_file, KDL::Tree& tree){
 // http://wiki.ros.org/pr2_mechanism/Tutorials/Coding%20a%20realtime%20Cartesian%20controller%20with%20KDL
 int main(){
   int N = 100000;
-  std::string urdf_file = "../data/fetch_description/fetch.urdf";
+  std::string urdf_file = "../data/fetch.urdf";
   std::vector<std::string> link_names = {
     "l_gripper_finger_link", 
     "r_gripper_finger_link", 

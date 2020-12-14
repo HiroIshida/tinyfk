@@ -4,7 +4,7 @@
 
 int main(){
   int N = 100000;
-  std::string urdf_file = "../data/fetch_description/fetch.urdf";
+  std::string urdf_file = "../data/fetch.urdf";
   std::vector<std::string> link_names = {
     "l_gripper_finger_link", 
     "r_gripper_finger_link", 
