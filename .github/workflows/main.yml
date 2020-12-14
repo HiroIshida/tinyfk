@@ -12,16 +12,19 @@ jobs:
     build:
         runs-on: ubuntu-latest
         steps:
-            - name: Setup python
-              uses: actions/setup-python@v2
-              with:
-                  python-version: '3.7'
-
             - name: Checkout Code
               uses: actions/checkout@v2
 
             - name: update submodule
               run: git submodule update --init --depth=1
+
+            - name: Setup python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: '3.7'
+
+            - name: install scikit-robot
+              run: pip install scikit-robot=0.0.9
 
             - name: installation
               run: |
