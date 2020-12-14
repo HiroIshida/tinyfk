@@ -23,9 +23,6 @@ jobs:
               with:
                   python-version: '3.7'
 
-            - name: install scikit-robot
-              run: pip install scikit-robot==0.0.9
-
             - name: installation
               run: |
                   sudo apt-get install libeigen3-dev libtinyxml-dev
@@ -45,6 +42,7 @@ jobs:
 
             - name: test python wrapper
               run: |
+                  pip install numpy pytest
                   pip install . 
-                  cd bench
-                  python compare_skrobot.py
+                  cd python
+                  pytest

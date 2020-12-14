@@ -8,10 +8,11 @@ here_full_filepath = os.path.join(os.getcwd(), __file__)
 here_full_dirpath = os.path.dirname(here_full_filepath)
 project_base_path = os.path.join(here_full_dirpath, "..", "..")
 
-urdf_model_path = os.path.join(project_base_path, "data", "fetch_description", "fetch.urdf")
+urdf_model_path = os.path.join(project_base_path, "data", "fetch.urdf")
 test_data_path = os.path.join(project_base_path, "test", "test_data.json")
 
 with open(test_data_path, 'r') as f:
     test_data = json.load(f)
 
-fksolver = tinyfk.RobotModel(urdf_model_path)
+def test_fksovler():
+    fksolver = tinyfk.RobotModel(urdf_model_path)
