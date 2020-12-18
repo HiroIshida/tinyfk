@@ -23,6 +23,12 @@ jobs:
               with:
                   python-version: '3.7'
 
+            - name: Test pypi install in clean environment
+              run: |
+                  pip install tinyfk
+                  python -c "import tinyfk"
+                  pip uninstall tinyfk -y      
+
             - name: Install apt packages
               run: |
                   sudo apt-get install libeigen3-dev libtinyxml-dev
