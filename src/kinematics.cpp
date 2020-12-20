@@ -133,8 +133,10 @@ std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
     urdf::Rotation& erot = tf_rlink_to_elink.rotation;
 
     elink_points(j, 0) = epos.x; elink_points(j, 1) = epos.y; elink_points(j, 2) = epos.z;
-    urdf::Vector3 erpy = erot.getRPY();
-    elink_points(j, 3) = erpy.x; elink_points(j, 4) = erpy.y; elink_points(j, 5) = erpy.z;
+    if(rotalso){
+      urdf::Vector3 erpy = erot.getRPY();
+      elink_points(j, 3) = erpy.x; elink_points(j, 4) = erpy.y; elink_points(j, 5) = erpy.z;
+    }
 
     for(unsigned int i=0; i<joint_ids.size(); i++){
       int jid = joint_ids[i];
