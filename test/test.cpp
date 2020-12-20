@@ -104,6 +104,8 @@ int main(){
     MatrixXd J_numerical = robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
     bool jacobian_equal = (J_ - J_numerical).array().abs().maxCoeff() < 1e-5;
     if(!jacobian_equal){
+      std::cout << "numerical :\n" << J_numerical << std::endl; 
+      std::cout << "analytical :\n" << J_ << std::endl; 
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
       return  -1;
     }
