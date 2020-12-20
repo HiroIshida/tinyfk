@@ -49,6 +49,25 @@ int main(){
       std::cout << "[PASS] successfully raise exception in add_new_link" << std::endl; 
     }
   }
+  {// check if abtable is propery updated
+    std::vector<std::string> joint_names = {"torso_lift_joint", "r_wrist_flex_joint"};
+    std::vector<std::string> link_names = {"mylink"};
+    auto joint_ids = robot.get_joint_ids(joint_names);
+    unsigned int link_id = robot.get_link_ids(link_names)[0];
+    if(robot._abtable.isAncestorLink(joint_ids[0], link_id)==true){
+      std::cout << "[FAIL] mllink is considered as an ancestor of torso_lift_joint" << std::endl;
+      return -1;
+    }else{
+      std::cout << "[PASS] mylink is not an ancestor of torso_lift_joint" << std::endl;
+    }
+    if(robot._abtable.isAncestorLink(joint_ids[1], link_id)==false){
+      std::cout << "[FAIL] mylink is not considered as an ancestor of r_wrist_flex_joint" << std::endl;
+      return -1;
+    }else{
+      std::cout << "[PASS] mylink is an ancestor of r_wrist_flex_joint" << std::endl;
+    }
+
+  }
 
   auto joint_ids = robot.get_joint_ids(joint_names);
   auto link_ids = robot.get_link_ids(link_names);
