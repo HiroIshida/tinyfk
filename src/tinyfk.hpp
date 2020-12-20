@@ -11,6 +11,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <stdexcept>
 #include <Eigen/Core> // slow compile...  
 #include <array>
+#include <stack>
 #include <unordered_map>
 
 struct TransformCache
@@ -181,6 +182,7 @@ class RobotModel
 
       _link_ids[link_name] = link_id;
       _links.push_back(new_link);
+      _links[parent_id]->child_links.push_back(new_link);
       _tf_cache.extend();
 
       this->_update_abtable(); // set _abtable
@@ -198,13 +200,15 @@ class RobotModel
       for(urdf::JointSharedPtr joint : _joints){
         int joint_id = _joint_ids.at(joint->name);
         urdf::LinkSharedPtr clink = joint->getChildLink();
-        // do backward track. 
-        while(true){
-          clink = clink->getParent();
-          if(clink==nullptr)
-            break;
-          int clink_id = _link_ids.at(clink->name);
-          abtable._table[joint_id][clink_id] = true;
+        std::stack<urdf::LinkSharedPtr> link_stack;
+        link_stack.push(clink);
+        while(!link_stack.empty()){
+          auto here_link = link_stack.top();
+          link_stack.pop();
+          abtable._table[joint_id][here_link->id] = true;
+          for(auto& link : here_link->child_links){
+            link_stack.push(link);
+          }
         }
       }
       _abtable = abtable;
