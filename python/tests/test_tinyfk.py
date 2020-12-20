@@ -45,12 +45,17 @@ def test_fksovler():
             [angle_vector], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
     testing.assert_almost_equal(P, np.array(gt_pose_list))
 
+
+
     # The following test assumes: that the above test without jacobian succeeded.
     # check resulting jacbian J_analytical coincides with J_numerical witch is 
     # computed via numerical differentiation.
     for link_id, link_name in zip(link_ids, link_names):
-        P0, J_analytical = fksolver.solve_forward_kinematics(
+        P_tmp, J_analytical = fksolver.solve_forward_kinematics(
                 [angle_vector], [link_id], joint_ids, False, True, True)
+        P0, _ = fksolver.solve_forward_kinematics(
+                [angle_vector], [link_id], joint_ids, False, True, False)
+        testing.assert_almost_equal(P_tmp, P0) # P computed with and without jacobian must match
 
         eps = 1e-7
         J_numerical = np.zeros(J_analytical.shape)

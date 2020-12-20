@@ -92,7 +92,7 @@ int main(){
   }
   robot.set_base_pose(angle_vector[8], angle_vector[9], angle_vector[10]);
   robot._tf_cache.clear();
-  for(int i=0; i< 8; i++){ 
+  for(int i=0; i< link_names.size(); i++){ 
     bool rot_also = false; // rotatio part of the geometric jacobian is not yet checked
     unsigned int link_id = link_ids[i];
     vector<unsigned int> link_ids_ = {link_id};
