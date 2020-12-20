@@ -26,10 +26,11 @@ robot_model.newcoords(co)
 angle_vector = joint_angles + [x, y, theta]
 
 my_link = Link(pos=[0.1, 0.1, 0.1], name="mylink")
+base_link = robot_model.base_link
 finger_link = robot_model.l_gripper_finger_link
 gripper_link = robot_model.gripper_link
 gripper_link.assoc(my_link, my_link)
-link_list = [j.child_link for j in joint_list] + [gripper_link, finger_link, my_link]
+link_list = [j.child_link for j in joint_list] + [gripper_link, finger_link, my_link, base_link]
 
 # compute pose of links
 world_coordinate = CascadedCoords()
@@ -49,7 +50,6 @@ ground_truth = {
         "joint_names" : joint_names, 
         "link_names" : [l.name for l in link_list],
         "pose_list" : pose_list,
-        "jacobian_list" : J
         }
 
 with open("test_data.json", 'w') as f:
