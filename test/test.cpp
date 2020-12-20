@@ -27,18 +27,18 @@ int main(){
   int n_links = link_names.size();
 
   // test main
-  std::string urdf_file = "../data/fetch.urdf";
+  std::string urdf_file = "../data/pr2.urdf";
   auto robot = RobotModel(urdf_file);
 
   {// add new link to the robot
-    std::vector<std::string> strvec = {"gripper_link"};
+    std::vector<std::string> strvec = {"r_upper_arm_link"};
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
     int parent_link_id = robot.get_link_ids(strvec)[0];
     robot.add_new_link("mylink", parent_link_id, pos);
   }
 
   {// must raise exception when add link with the same name 
-    std::vector<std::string> strvec = {"gripper_link"};
+    std::vector<std::string> strvec = {"r_upper_arm_link"};
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
     int parent_link_id = robot.get_link_ids(strvec)[0];
     try{
