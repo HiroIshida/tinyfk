@@ -9,7 +9,7 @@ except ImportError:
 
 setup(
     name="tinyfk",
-    version="0.2.3",
+    version="0.2.4",
     description="a fast kinematics solver",
     author='Hirokazu Ishida',
     license="MIT",
