@@ -84,12 +84,22 @@ RobotModel::RobotModel(const std::string& urdf_file){
   this->_update_abtable(); // update _abtable
 }
 
+void RobotModel::clear_cache()
+{
+  _tf_cache.clear();
+}
+
+void RobotModel::set_joint_angle(unsigned int joint_id, double joint_angle)
+{
+  _joint_angles[joint_id] = joint_angle;
+}
+
 void RobotModel::set_joint_angles(
     const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles){
     for(unsigned int i=0; i<joint_ids.size(); i++){
-      _joint_angles[joint_ids[i]] = joint_angles[i];
+      this->set_joint_angle(joint_ids[i], joint_angles[i]);
     }
-    _tf_cache.clear();
+    this->clear_cache();
 }
 
 void RobotModel::set_init_angles(){
@@ -108,18 +118,34 @@ std::vector<double> RobotModel::get_joint_angles(const std::vector<unsigned int>
   return angles;
 }
 
+unsigned int RobotModel::get_joint_id(std::string joint_name) const
+{
+    auto iter = _joint_ids.find(joint_name);
+    if(iter==_joint_ids.end()){
+      throw std::invalid_argument("no joint named " + joint_name);
+    }
+    unsigned int joint_id = iter->second;
+    return joint_id;
+}
+
 std::vector<unsigned int> RobotModel::get_joint_ids(std::vector<std::string> joint_names) const
 {
   int n_joint = joint_names.size();
   std::vector<unsigned int> joint_ids(n_joint);
   for(int i=0; i<n_joint; i++){
-    auto iter = _joint_ids.find(joint_names[i]);
-    if(iter==_joint_ids.end()){
-      throw std::invalid_argument("no joint named " + joint_names[i]);
-    }
-    joint_ids[i] = iter->second;
+    joint_ids[i] = this->get_joint_id(joint_names[i]);
   }
   return joint_ids;
+}
+
+unsigned int RobotModel::get_link_id(std::string link_name) const
+{
+    auto iter = _link_ids.find(link_name);
+    if(iter==_link_ids.end()){
+      throw std::invalid_argument("no link named " + link_name);
+    }
+    unsigned int link_id = iter->second;
+    return link_id;
 }
 
 std::vector<unsigned int> RobotModel::get_link_ids(std::vector<std::string> link_names) const
@@ -127,11 +153,7 @@ std::vector<unsigned int> RobotModel::get_link_ids(std::vector<std::string> link
   int n_link = link_names.size();
   std::vector<unsigned int> link_ids(n_link);
   for(int i=0; i<n_link; i++){
-    auto iter = _link_ids.find(link_names[i]);
-    if(iter==_link_ids.end()){
-      throw std::invalid_argument("no link named " + link_names[i]);
-    }
-    link_ids[i] = iter->second;
+    link_ids[i] = this->get_link_id(link_names[i]);
   }
   return link_ids;
 }

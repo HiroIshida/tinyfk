@@ -19,6 +19,12 @@ include_directories(src/)
 add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk urdfdom_model)
 
+option(BUILD_C_API "build c api" ON)
+if(BUILD_C_API)
+    add_library(tinyfk_capi SHARED src/c_api.cpp)
+    target_link_libraries(tinyfk_capi tinyfk)
+endif(BUILD_C_API)
+
 # testing
 set(nlohmann_json_INCLUDE_DIRS third_party/json/include)
 add_executable(test_kinematics test/test.cpp)
