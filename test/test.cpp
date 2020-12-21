@@ -49,24 +49,35 @@ int main(){
       std::cout << "[PASS] successfully raise exception in add_new_link" << std::endl; 
     }
   }
-  {// check if abtable is propery updated
+  {// check if rptable is propery updated
     std::vector<std::string> joint_names = {"torso_lift_joint", "r_wrist_flex_joint"};
-    std::vector<std::string> link_names = {"mylink"};
+    std::vector<std::string> link_names = {"mylink", "head_pan_link", "fl_caster_rotation_link"};
     auto joint_ids = robot.get_joint_ids(joint_names);
-    unsigned int link_id = robot.get_link_ids(link_names)[0];
-    if(robot._abtable.isAncestorLink(joint_ids[0], link_id)!=true){
-      std::cout << "[FAIL] mllink is considered as an ancestor of torso_lift_joint" << std::endl;
+    auto link_ids = robot.get_link_ids(link_names);
+    if(!robot._rptable.isRelevant(joint_ids[0], link_ids[0])){
+      std::cout << "[FAIL] torso_lift_joint must move mylink" << std::endl;
       return -1;
     }else{
-      std::cout << "[PASS] mylink is not an ancestor of torso_lift_joint" << std::endl;
+      std::cout << "[PASS] rptable" << std::endl;
     }
-    if(robot._abtable.isAncestorLink(joint_ids[1], link_id)!=false){
-      std::cout << "[FAIL] mylink is not considered as an ancestor of r_wrist_flex_joint" << std::endl;
+    if(robot._rptable.isRelevant(joint_ids[1], link_ids[0])){
+      std::cout << "[FAIL] r_wrist_flex_joint must not move mylink" << std::endl;
       return -1;
     }else{
-      std::cout << "[PASS] mylink is an ancestor of r_wrist_flex_joint" << std::endl;
+      std::cout << "[PASS] rptable" << std::endl;
     }
-
+    if(!robot._rptable.isRelevant(joint_ids[0], link_ids[1])){
+      std::cout << "[FAIL] torso_lift_joint must move head_pan_link" << std::endl;
+      return -1;
+    }else{
+      std::cout << "[PASS] rptable" << std::endl;
+    }
+    if(robot._rptable.isRelevant(joint_ids[0], link_ids[2])){
+      std::cout << "[FAIL] torso_lift_joint must not move fl_caster_rotation_link" << std::endl;
+      return -1;
+    }else{
+      std::cout << "[PASS] rptable" << std::endl;
+    }
   }
 
   auto joint_ids = robot.get_joint_ids(joint_names);
