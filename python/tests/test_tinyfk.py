@@ -13,7 +13,7 @@ here_full_filepath = os.path.join(os.getcwd(), __file__)
 here_full_dirpath = os.path.dirname(here_full_filepath)
 project_base_path = os.path.join(here_full_dirpath, "..", "..")
 
-urdf_model_path = os.path.join(project_base_path, "data", "fetch.urdf")
+urdf_model_path = os.path.join(project_base_path, "data", "pr2.urdf")
 test_data_path = os.path.join(project_base_path, "test", "test_data.json")
 
 with open(test_data_path, 'r') as f:
@@ -29,8 +29,8 @@ gt_pose_list[:, 5] = gt_pose_list_[:, 3] # so, the two lines are swapped.
 def test_fksovler():
     fksolver = tinyfk.RobotModel(urdf_model_path)
 
-    # adding new link `mylink` to `gripper_link`
-    parent_id = fksolver.get_link_ids(["gripper_link"])[0]
+    # adding new link `mylink` to `r_upper_arm_link`
+    parent_id = fksolver.get_link_ids(["r_upper_arm_link"])[0]
     fksolver.add_new_link('mylink', parent_id, [0.1, 0.1, 0.1])
 
     # To interact with fksolver, we must get the correspoinding link_ids and joint_ids.
@@ -40,12 +40,10 @@ def test_fksovler():
     # check P (array of poses [pos, rpy] of each link) coincides with the ground truth
     use_rotation = True # If true P[i, :] has 6 dim, otherwise has 3 dim.
     use_base = True # If true, assumes that angle_vector takes the form of [q_joints, q_base (3dof)]
-    with_jacobian = False # If true, jacobian is computed, otherewise returns J = None.
+    with_jacobian = True # If true, jacobian is computed, otherewise returns J = None.
     P, _ = fksolver.solve_forward_kinematics(
             [angle_vector], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
-    testing.assert_almost_equal(P, np.array(gt_pose_list))
-
-
+    testing.assert_almost_equal(P, gt_pose_list)
 
     # The following test assumes: that the above test without jacobian succeeded.
     # check resulting jacbian J_analytical coincides with J_numerical witch is 

@@ -140,7 +140,7 @@ std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
 
     for(unsigned int i=0; i<joint_ids.size(); i++){
       int jid = joint_ids[i];
-      if(!_abtable.isAncestorLink(jid, elink_id)){
+      if(_rptable.isRelevant(jid, elink_id)){
         const urdf::JointSharedPtr& hjoint = _joints[jid];
         unsigned int type = hjoint->type;
         if(type == urdf::Joint::FIXED){

@@ -23,19 +23,22 @@ int main(){
   vector<string> link_names = js["link_names"];
   vector<vector<double>> pose_list = js["pose_list"];
 
+  int n_joints = joint_names.size();
+  int n_links = link_names.size();
+
   // test main
-  std::string urdf_file = "../data/fetch.urdf";
+  std::string urdf_file = "../data/pr2.urdf";
   auto robot = RobotModel(urdf_file);
 
   {// add new link to the robot
-    std::vector<std::string> strvec = {"gripper_link"};
+    std::vector<std::string> strvec = {"r_upper_arm_link"};
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
     int parent_link_id = robot.get_link_ids(strvec)[0];
     robot.add_new_link("mylink", parent_link_id, pos);
   }
 
   {// must raise exception when add link with the same name 
-    std::vector<std::string> strvec = {"gripper_link"};
+    std::vector<std::string> strvec = {"r_upper_arm_link"};
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
     int parent_link_id = robot.get_link_ids(strvec)[0];
     try{
@@ -46,17 +49,47 @@ int main(){
       std::cout << "[PASS] successfully raise exception in add_new_link" << std::endl; 
     }
   }
+  {// check if rptable is propery updated
+    std::vector<std::string> joint_names = {"torso_lift_joint", "r_wrist_flex_joint"};
+    std::vector<std::string> link_names = {"mylink", "head_pan_link", "fl_caster_rotation_link"};
+    auto joint_ids = robot.get_joint_ids(joint_names);
+    auto link_ids = robot.get_link_ids(link_names);
+    if(!robot._rptable.isRelevant(joint_ids[0], link_ids[0])){
+      std::cout << "[FAIL] torso_lift_joint must move mylink" << std::endl;
+      return -1;
+    }else{
+      std::cout << "[PASS] rptable" << std::endl;
+    }
+    if(robot._rptable.isRelevant(joint_ids[1], link_ids[0])){
+      std::cout << "[FAIL] r_wrist_flex_joint must not move mylink" << std::endl;
+      return -1;
+    }else{
+      std::cout << "[PASS] rptable" << std::endl;
+    }
+    if(!robot._rptable.isRelevant(joint_ids[0], link_ids[1])){
+      std::cout << "[FAIL] torso_lift_joint must move head_pan_link" << std::endl;
+      return -1;
+    }else{
+      std::cout << "[PASS] rptable" << std::endl;
+    }
+    if(robot._rptable.isRelevant(joint_ids[0], link_ids[2])){
+      std::cout << "[FAIL] torso_lift_joint must not move fl_caster_rotation_link" << std::endl;
+      return -1;
+    }else{
+      std::cout << "[PASS] rptable" << std::endl;
+    }
+  }
 
   auto joint_ids = robot.get_joint_ids(joint_names);
   auto link_ids = robot.get_link_ids(link_names);
 
-  for(int i=0; i<8; i++){
+  for(int i=0; i<n_joints; i++){
     robot.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
-  robot.set_base_pose(angle_vector[8], angle_vector[9], angle_vector[10]);
+  robot.set_base_pose(angle_vector[n_joints+0], angle_vector[n_joints+1], angle_vector[n_joints+2]);
   bool base_also = true;
   urdf::Pose pose, pose_naive;
-  for(unsigned int i=0; i<link_ids.size(); i++){
+  for(unsigned int i=0; i<n_links; i++){
     std::cout << "testing " << link_names[i] << std::endl; 
     int link_id = link_ids[i];
     robot.get_link_point_withcache(link_id, pose, base_also);
@@ -87,10 +120,10 @@ int main(){
   std::cout << "[PASS] get_link_point_withcache" << std::endl; 
 
   // Now we comapre jacobian computed by finite diff with the analytical one 
-  for(int i=0; i<8; i++){
+  for(int i=0; i<n_joints; i++){
     robot.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
-  robot.set_base_pose(angle_vector[8], angle_vector[9], angle_vector[10]);
+  robot.set_base_pose(angle_vector[n_joints], angle_vector[n_joints+1], angle_vector[n_joints+2]);
   robot._tf_cache.clear();
   for(int i=0; i< link_names.size(); i++){ 
     bool rot_also = false; // rotatio part of the geometric jacobian is not yet checked
@@ -101,6 +134,8 @@ int main(){
     MatrixXd J_numerical = robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
     bool jacobian_equal = (J_ - J_numerical).array().abs().maxCoeff() < 1e-5;
     if(!jacobian_equal){
+      std::cout << "numerical :\n" << J_numerical << std::endl; 
+      std::cout << "analytical :\n" << J_ << std::endl; 
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
       return  -1;
     }

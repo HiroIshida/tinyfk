@@ -69,7 +69,7 @@ RobotModel::RobotModel(const std::string& urdf_file){
   int num_dof = joint_ids.size();
   std::vector<double> joint_angles(num_dof, 0.0);
 
-  // consturct abtable
+  // consturct rptable
 
   _urdf_file = urdf_file;
   _nasty_stack = NastyStack(N_link);
@@ -81,7 +81,7 @@ RobotModel::RobotModel(const std::string& urdf_file){
   _joint_ids = joint_ids;
   _num_dof = num_dof;
   _joint_angles = joint_angles;
-  this->_update_abtable(); // update _abtable
+  this->_update_rptable(); // update _rptable
 }
 
 void RobotModel::set_joint_angles(
