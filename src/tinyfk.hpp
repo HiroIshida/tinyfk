@@ -58,16 +58,16 @@ struct NastyStack
 };
 
 
-struct AncestorBitTable
+struct RelevancePredicateTable
 {
   std::vector<std::vector<bool>> _table;
-  AncestorBitTable(){};
-  AncestorBitTable(int N_link, int N_joint){ 
+  RelevancePredicateTable(){};
+  RelevancePredicateTable(int N_link, int N_joint){ 
     for(int i=0; i<N_joint; i++){
       _table.push_back(std::vector<bool>(N_link));
     }
   }
-  bool isAncestorLink(int joint_id, int link_id) const{
+  bool isRelevant(int joint_id, int link_id) const{
     return _table[joint_id][link_id];
   }
 };
@@ -99,7 +99,7 @@ class RobotModel
     std::vector<urdf::JointSharedPtr> _joints;
     std::unordered_map<std::string, int> _joint_ids;
     std::vector<double> _joint_angles;
-    AncestorBitTable _abtable;
+    RelevancePredicateTable _rptable;
     BasePose _base_pose;
     int _num_dof;
 
@@ -185,17 +185,17 @@ class RobotModel
       _links[parent_id]->child_links.push_back(new_link);
       _tf_cache.extend();
 
-      this->_update_abtable(); // set _abtable
+      this->_update_rptable(); // set _rptable
     }
 
   private:
-    void _update_abtable(){
+    void _update_rptable(){
       // this function usually must come in the end of a function
       
       // we must recreate from scratch
       int n_link = _link_ids.size();
       int n_dof = _joint_ids.size();
-      auto abtable = AncestorBitTable(n_link, n_dof);
+      auto rptable = RelevancePredicateTable(n_link, n_dof);
 
       for(urdf::JointSharedPtr joint : _joints){
         int joint_id = _joint_ids.at(joint->name);
@@ -205,12 +205,12 @@ class RobotModel
         while(!link_stack.empty()){
           auto here_link = link_stack.top();
           link_stack.pop();
-          abtable._table[joint_id][here_link->id] = true;
+          rptable._table[joint_id][here_link->id] = true;
           for(auto& link : here_link->child_links){
             link_stack.push(link);
           }
         }
       }
-      _abtable = abtable;
+      _rptable = rptable;
     }
 };
