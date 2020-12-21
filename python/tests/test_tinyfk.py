@@ -40,18 +40,15 @@ def test_fksovler():
     # check P (array of poses [pos, rpy] of each link) coincides with the ground truth
     use_rotation = True # If true P[i, :] has 6 dim, otherwise has 3 dim.
     use_base = True # If true, assumes that angle_vector takes the form of [q_joints, q_base (3dof)]
-    with_jacobian = False # If true, jacobian is computed, otherewise returns J = None.
+    with_jacobian = True # If true, jacobian is computed, otherewise returns J = None.
     P, _ = fksolver.solve_forward_kinematics(
             [angle_vector], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
-    for p, q, name in zip(P, gt_pose_list, link_names):
-        print(name)
-        testing.assert_almost_equal(p, q)
+    testing.assert_almost_equal(P, gt_pose_list)
 
     # The following test assumes: that the above test without jacobian succeeded.
     # check resulting jacbian J_analytical coincides with J_numerical witch is 
     # computed via numerical differentiation.
     for link_id, link_name in zip(link_ids, link_names):
-        print(link_name)
         P_tmp, J_analytical = fksolver.solve_forward_kinematics(
                 [angle_vector], [link_id], joint_ids, False, True, True)
         P0, _ = fksolver.solve_forward_kinematics(

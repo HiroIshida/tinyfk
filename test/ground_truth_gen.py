@@ -5,16 +5,13 @@ from skrobot.model import Link
 from skrobot.coordinates import CascadedCoords, Coordinates, make_cascoords
 from skrobot.coordinates.math import rpy_matrix, rpy_angle
 
-#robot_model = skrobot.models.urdf.RobotModelFromURDF(urdf_file=skrobot.data.fetch_urdfpath())
 robot_model = skrobot.models.PR2()
-#joint_list = robot_model.joint_list
 joint_list = [
     robot_model.r_shoulder_pan_joint, robot_model.r_shoulder_lift_joint,
     robot_model.r_upper_arm_roll_joint, robot_model.r_elbow_flex_joint,
     robot_model.r_forearm_roll_joint, robot_model.r_wrist_flex_joint,
     robot_model.r_wrist_roll_joint]
 joint_names = [j.name for j in joint_list]
-
 
 mylink = Link(pos=[0.1, 0.1, 0.1], name="mylink")
 robot_model.r_upper_arm_link.assoc(mylink, mylink)
@@ -24,13 +21,10 @@ link_list = [
     robot_model.r_forearm_roll_link, robot_model.r_wrist_flex_link,
     robot_model.r_wrist_roll_link, robot_model.base_link, robot_model.r_upper_arm_link, mylink]
 
-
-# set torso, arm
 joint_angles = [0.564, 0.35, -0.74, -0.7, -0.7, -0.17, -0.63]
 for j, a in zip(joint_list, joint_angles):
     j.joint_angle(a)
 
-# set base position
 x, y, theta = 0.3, 0.5, 0.7
 co = Coordinates(pos=[x, y, 0.0], rot=rpy_matrix(theta, 0.0, 0.0))
 robot_model.newcoords(co)
@@ -39,7 +33,6 @@ angle_vector = joint_angles + [x, y, theta]
 
 # compute pose of links
 world_coordinate = CascadedCoords()
-
 
 def extract_pose(co): return np.hstack(
     (co.worldpos(), co.worldcoords().rpy_angle()[0]))
