@@ -32,7 +32,7 @@ jobs:
                   export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/lib/x86_64-linux-gnu/pkgconfig"
                   mkdir build
                   cd build
-                  cmake .. 
+                  cmake -DBUILD_PYTHON_INTERFACE=OFF .. 
                   make
 
             - name: Test c++
