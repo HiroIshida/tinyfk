@@ -1,4 +1,4 @@
-import _tinyfk
+from . import _tinyfk
 
 # higher layer wrap
 class RobotModel(object):
