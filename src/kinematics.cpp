@@ -253,34 +253,11 @@ namespace tinyfk
     int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
     int dim_feature = elink_ids.size();
 
-    // first, fill jacobian
-    Eigen::MatrixXd J_whole = Eigen::MatrixXd::Zero(dim_pose * dim_feature, dim_dof);
-    for(int i=0; i<dim_feature; i++){
-      int lid = elink_ids[i];
-      Eigen::MatrixXd J = this->get_jacobian_withcache(lid, joint_ids, with_rot, with_base);
-      J_whole.block(i * dim_pose, 0, dim_pose, dim_dof) = J;
-    }
-
-    //second fill poses
+    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(dim_pose, dim_dof * dim_feature);
     Eigen::MatrixXd P = Eigen::MatrixXd::Zero(dim_pose, elink_ids.size());
-    urdf::Pose tf_rlink_to_elink;
-    auto itr = static_cast<double*>(P.data());
-    for(int lid : elink_ids){
-      this->get_link_point_withcache(lid, tf_rlink_to_elink, with_base); 
-      urdf::Vector3& epos = tf_rlink_to_elink.position;
-      *itr++ = epos.x;
-      *itr++ = epos.y;
-      *itr++ = epos.z;
-
-      if(with_rot){
-        urdf::Rotation& erot = tf_rlink_to_elink.rotation;
-        urdf::Vector3 rpy = erot.getRPY();
-        *itr++ = rpy.x;
-        *itr++ = rpy.y;
-        *itr++ = rpy.z;
-      }
-    }
-    std::array<Eigen::MatrixXd, 2> ret = {J_whole, P};
+    this->_solve_batch_forward_kinematics(elink_ids, joint_ids,
+        with_rot, with_base, P.data(), J.data());
+    std::array<Eigen::MatrixXd, 2> ret = {J, P};
     return ret;
   }
 
