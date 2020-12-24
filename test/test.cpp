@@ -128,15 +128,16 @@ int main(){
   robot._tf_cache.clear();
   for(int i=0; i< link_names.size(); i++){ 
     bool rot_also = false; // rotatio part of the geometric jacobian is not yet checked
-    unsigned int link_id = link_ids[i];
-    vector<unsigned int> link_ids_ = {link_id};
-    auto tmp = robot.get_jacobians_withcache(link_ids_, joint_ids, rot_also, true);
-    auto J_ = tmp[0];
+    int link_id = link_ids[i];
+    //vector<unsigned int> link_ids_ = {link_id};
+    //auto tmp = robot.get_jacobians_withcache(link_ids_, joint_ids, rot_also, true);
+    //auto J_ = tmp[0];
+    auto J_analytical = robot.get_jacobian_withcache(link_id, joint_ids, rot_also, true);
     MatrixXd J_numerical = robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
-    bool jacobian_equal = (J_ - J_numerical).array().abs().maxCoeff() < 1e-5;
+    bool jacobian_equal = (J_analytical - J_numerical).array().abs().maxCoeff() < 1e-5;
     if(!jacobian_equal){
       std::cout << "numerical :\n" << J_numerical << std::endl; 
-      std::cout << "analytical :\n" << J_ << std::endl; 
+      std::cout << "analytical :\n" << J_analytical << std::endl; 
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
       return  -1;
     }

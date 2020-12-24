@@ -17,6 +17,9 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 namespace tinyfk
 {
 
+  using MatrixXdC = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
+  using MatrixXdR = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
   struct TransformCache
   {
     int _N_link;
@@ -155,8 +158,12 @@ namespace tinyfk
           bool basealso = false
           ) const;
 
-      void get_jacobian_withcache(
-          int elink_id, const std::vector<int>& joint_ids,
+      Eigen::MatrixXd get_jacobian_withcache(
+          int elink_id, const std::vector<unsigned int>& joint_ids,
+          bool with_rot, bool with_base) const;
+
+      void _get_jacobian_withcache(
+          int elink_id, const std::vector<unsigned int>& joint_ids,
           bool with_rot, bool with_base, double* jacobian) const;
 
       void get_link_point_withcache(
