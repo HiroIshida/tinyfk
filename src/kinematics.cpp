@@ -19,7 +19,6 @@ namespace tinyfk
     // _nasty_stack.hid_stack and _nasty_stack.tf_stack
     // maybe bit complicated because I use _tf_caceh
     urdf::LinkSharedPtr hlink = _links[link_id];
-    urdf::Pose tf_hlink_to_elink; 
 
     // tf rlink_to_blink is set to a unit transform or _base_pose according to if usebase is enabled.
     // If a cached transform from root link to here link, then tf_rlink_to_blink is overwrite to the 
