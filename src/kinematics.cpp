@@ -153,8 +153,21 @@ namespace tinyfk
     }
   }
 
-  void RobotModel::get_jacobian_withcache(
-      int elink_id, const std::vector<int>& joint_ids,
+  Eigen::MatrixXd RobotModel::get_jacobian_withcache(
+      int elink_id, const std::vector<unsigned int>& joint_ids,
+      bool with_rot, bool with_base) const
+  {
+    int dim_pose = with_rot ? 6 : 3;
+    int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
+    MatrixXdC jacobian(dim_pose, dim_dof);
+    this->_get_jacobian_withcache(elink_id, joint_ids, with_rot, with_base, 
+        static_cast<double*>(jacobian.data()));
+    return jacobian;
+  }
+
+  // lower level jacobian function, which directly iterate over poitner
+  void RobotModel::_get_jacobian_withcache(
+      int elink_id, const std::vector<unsigned int>& joint_ids,
       bool with_rot, bool with_base, double* jacobian) const
   {
     urdf::Pose tf_rlink_to_elink;
