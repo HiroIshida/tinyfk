@@ -171,7 +171,7 @@ namespace tinyfk
 
       void _get_jacobian_withcache(
           int elink_id, const std::vector<unsigned int>& joint_ids,
-          bool with_rot, bool with_base, double* jacobian) const;
+          bool with_rot, bool with_base, double* pose_arr, double* jacobian) const;
 
       void get_link_point_withcache(
           unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 

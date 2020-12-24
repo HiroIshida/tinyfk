@@ -134,6 +134,20 @@ namespace tinyfk
     }
   }
 
+  void copy_pose_to_arr(const urdf::Pose& pose, double* arr, bool with_rot){
+    const urdf::Vector3& pos = pose.position;
+    arr[0] = pos.x;
+    arr[1] = pos.y;
+    arr[2] = pos.z;
+    if(with_rot){
+      const urdf::Rotation& rot = pose.rotation;
+      urdf::Vector3 rpy = rot.getRPY();
+      arr[3] = rpy.x;
+      arr[4] = rpy.y;
+      arr[5] = rpy.z;
+    }
+  }
+
   Eigen::MatrixXd RobotModel::get_jacobian_withcache(
       int elink_id, const std::vector<unsigned int>& joint_ids,
       bool with_rot, bool with_base) const
@@ -142,69 +156,73 @@ namespace tinyfk
     int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
     Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(dim_pose, dim_dof);
     this->_get_jacobian_withcache(elink_id, joint_ids, with_rot, with_base, 
-        static_cast<double*>(jacobian.data()));
+        nullptr, static_cast<double*>(jacobian.data()));
     return jacobian;
   }
 
   // lower level jacobian function, which directly iterate over poitner
   void RobotModel::_get_jacobian_withcache(
       int elink_id, const std::vector<unsigned int>& joint_ids,
-      bool with_rot, bool with_base, double* jacobian) const
+      bool with_rot, bool with_base, double* pose_arr, double* jacobian) const
   {
     urdf::Pose tf_rlink_to_elink;
     this->get_link_point_withcache(elink_id, tf_rlink_to_elink, with_base); 
-    urdf::Vector3& epos = tf_rlink_to_elink.position;
-    int dim_jacobi = (with_rot ? 6 : 3);
-
-    double* column_ptr = jacobian; // increment by dim_jacobi in each iteration
-
-    for(int i=0; i<joint_ids.size(); i++){
-      int jid = joint_ids[i];
-      if(_rptable.isRelevant(jid, elink_id)){
-        const urdf::JointSharedPtr& hjoint = _joints[jid];
-        unsigned int type = hjoint->type;
-        if(type == urdf::Joint::FIXED){
-            throw std::invalid_argument("fixed type is not accepted");
-        }
-        urdf::LinkSharedPtr clink = hjoint->getChildLink(); // rotation of clink and hlink is same. so clink is ok.
-
-        urdf::Pose tf_rlink_to_clink;
-        this->get_link_point_withcache(clink->id, tf_rlink_to_clink, with_base);
-
-        urdf::Rotation& crot = tf_rlink_to_clink.rotation;
-        urdf::Vector3&& world_axis = crot * hjoint->axis; // axis w.r.t root link
-        urdf::Vector3 dpos;
-        if(type == urdf::Joint::PRISMATIC){
-          dpos = world_axis;
-        }else{//revolute or continuous
-          urdf::Vector3& cpos = tf_rlink_to_clink.position;
-          urdf::Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y, epos.z - cpos.z};
-          cross_product(world_axis, vec_clink_to_elink, dpos);
-        }
-        *(column_ptr+0) = dpos.x;
-        *(column_ptr+1) = dpos.y;
-        *(column_ptr+2) = dpos.z;
-
-        if(with_rot){ // (compute rpy jacobian)
-          if(type == urdf::Joint::PRISMATIC){
-            // jacobian for rotation is all zero
-          }else{
-            *(column_ptr+3) = dpos.x;
-            *(column_ptr+4) = dpos.y;
-            *(column_ptr+5) = dpos.z;
-          }
-        }
-      }
-      column_ptr += dim_jacobi;
+    if(pose_arr!=nullptr){
+      copy_pose_to_arr(tf_rlink_to_elink, pose_arr, with_rot);
     }
 
-    if(with_base){
-      // NOTE that epos is wrt global not wrt root link!
-      // so we first compute epos w.r.t root link then take a 
-      // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
-      const std::array<double, 3>& basepose3d = _base_pose._pose3d;
-      urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
-      get_base_jacobian(epos_local, column_ptr, with_rot);
+    if(jacobian!=nullptr){
+      urdf::Vector3& epos = tf_rlink_to_elink.position;
+      int dim_jacobi = (with_rot ? 6 : 3);
+      double* column_ptr = jacobian; // increment by dim_jacobi in each iteration
+      for(int i=0; i<joint_ids.size(); i++){
+        int jid = joint_ids[i];
+        if(_rptable.isRelevant(jid, elink_id)){
+          const urdf::JointSharedPtr& hjoint = _joints[jid];
+          unsigned int type = hjoint->type;
+          if(type == urdf::Joint::FIXED){
+              throw std::invalid_argument("fixed type is not accepted");
+          }
+          urdf::LinkSharedPtr clink = hjoint->getChildLink(); // rotation of clink and hlink is same. so clink is ok.
+
+          urdf::Pose tf_rlink_to_clink;
+          this->get_link_point_withcache(clink->id, tf_rlink_to_clink, with_base);
+
+          urdf::Rotation& crot = tf_rlink_to_clink.rotation;
+          urdf::Vector3&& world_axis = crot * hjoint->axis; // axis w.r.t root link
+          urdf::Vector3 dpos;
+          if(type == urdf::Joint::PRISMATIC){
+            dpos = world_axis;
+          }else{//revolute or continuous
+            urdf::Vector3& cpos = tf_rlink_to_clink.position;
+            urdf::Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y, epos.z - cpos.z};
+            cross_product(world_axis, vec_clink_to_elink, dpos);
+          }
+          *(column_ptr+0) = dpos.x;
+          *(column_ptr+1) = dpos.y;
+          *(column_ptr+2) = dpos.z;
+
+          if(with_rot){ // (compute rpy jacobian)
+            if(type == urdf::Joint::PRISMATIC){
+              // jacobian for rotation is all zero
+            }else{
+              *(column_ptr+3) = dpos.x;
+              *(column_ptr+4) = dpos.y;
+              *(column_ptr+5) = dpos.z;
+            }
+          }
+        }
+        column_ptr += dim_jacobi;
+      }
+
+      if(with_base){
+        // NOTE that epos is wrt global not wrt root link!
+        // so we first compute epos w.r.t root link then take a 
+        // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
+        const std::array<double, 3>& basepose3d = _base_pose._pose3d;
+        urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
+        get_base_jacobian(epos_local, column_ptr, with_rot);
+      }
     }
   }
 
