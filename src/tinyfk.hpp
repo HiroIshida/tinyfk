@@ -14,6 +14,9 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <stack>
 #include <unordered_map>
 
+namespace tinyfk
+{
+
 struct TransformCache
 {
   int _N_link;
@@ -214,3 +217,5 @@ class RobotModel
       _rptable = rptable;
     }
 };
+
+};//end namespace

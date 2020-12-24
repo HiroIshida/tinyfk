@@ -8,6 +8,9 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <cmath>
 #include "tinyfk.hpp"
 
+namespace tinyfk
+{
+
 RobotModel::RobotModel(const std::string& urdf_file){
   std::string xml_string;
   std::fstream xml_file(urdf_file, std::fstream::in);
@@ -136,3 +139,4 @@ std::vector<unsigned int> RobotModel::get_link_ids(std::vector<std::string> link
   return link_ids;
 }
 
+};//end namespace tinyfk

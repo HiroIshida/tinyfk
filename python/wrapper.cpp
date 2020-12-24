@@ -11,6 +11,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <Eigen/Dense>
 
 namespace py = pybind11;
+using namespace tinyfk;
 
 class RobotModelPyWrapper
 {

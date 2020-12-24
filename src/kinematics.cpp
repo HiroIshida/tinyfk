@@ -6,6 +6,9 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 #include "tinyfk.hpp"
 
+namespace tinyfk
+{
+
 void RobotModel::get_link_point_withcache(
     unsigned int link_id, urdf::Pose& out_tf_rlink_to_elink,
     bool usebase
@@ -259,3 +262,5 @@ Eigen::MatrixXd RobotModel::get_jacobian_naive(
   }
   return J;
 }
+
+}; //end namepsace tinyfk
