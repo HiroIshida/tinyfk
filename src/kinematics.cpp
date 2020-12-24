@@ -170,13 +170,15 @@ namespace tinyfk
       int elink_id, const std::vector<unsigned int>& joint_ids,
       bool with_rot, bool with_base, double* jacobian) const
   {
-    double* itr = jacobian;
     urdf::Pose tf_rlink_to_elink;
     this->get_link_point_withcache(elink_id, tf_rlink_to_elink, with_base); 
     urdf::Vector3& epos = tf_rlink_to_elink.position;
-    std::cout << jacobian << std::endl; 
+    int dim_jacobi = (with_rot ? 6 : 3);
 
-    for(int jid : joint_ids){
+    double* column_ptr = jacobian; // increment by dim_jacobi in each iteration
+
+    for(int i=0; i<joint_ids.size(); i++){
+      int jid = joint_ids[i];
       if(_rptable.isRelevant(jid, elink_id)){
         const urdf::JointSharedPtr& hjoint = _joints[jid];
         unsigned int type = hjoint->type;
@@ -198,29 +200,30 @@ namespace tinyfk
           urdf::Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y, epos.z - cpos.z};
           cross_product(world_axis, vec_clink_to_elink, dpos);
         }
-        *(jacobian++) = dpos.x;
-        *(jacobian++) = dpos.y;
-        *(jacobian++) = dpos.z;
+        *(column_ptr+0) = dpos.x;
+        *(column_ptr+1) = dpos.y;
+        *(column_ptr+2) = dpos.z;
 
         if(with_rot){ // (compute rpy jacobian)
           if(type == urdf::Joint::PRISMATIC){
             // jacobian for rotation is all zero
           }else{
-            *(jacobian++) = world_axis.x;
-            *(jacobian++) = world_axis.y;
-            *(jacobian++) = world_axis.z;
+            *(column_ptr+3) = dpos.x;
+            *(column_ptr+4) = dpos.y;
+            *(column_ptr+5) = dpos.z;
           }
         }
-        std::cout << &jacobian << std::endl; 
       }
+      column_ptr += dim_jacobi;
     }
+
     if(with_base){
       // NOTE that epos is wrt global not wrt root link!
       // so we first compute epos w.r.t root link then take a 
       // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
       const std::array<double, 3>& basepose3d = _base_pose._pose3d;
       urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
-      get_base_jacobian(epos_local, itr + 3 * joint_ids.size(), with_rot);
+      get_base_jacobian(epos_local, column_ptr, with_rot);
     }
   }
 
