@@ -160,6 +160,25 @@ namespace tinyfk
     return jacobian;
   }
 
+  void RobotModel::_solve_batch_forward_kinematics(
+      std::vector<unsigned int> elink_ids, const std::vector<unsigned int>& joint_ids,
+      bool with_rot, bool with_base, double* pose_arr, double* jacobian_arr) const
+  {
+    int dim_jacobi = (with_rot ? 6 : 3);
+    int dim_pose = (with_rot ? 6 : 3);
+    int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
+    for(auto elink_id : elink_ids){
+      _solve_forward_kinematics(elink_id, joint_ids, with_rot, with_base, pose_arr, jacobian_arr);
+      //pointer increment
+      if(pose_arr!=nullptr){
+        pose_arr += dim_pose; 
+      }
+      if(jacobian_arr!=nullptr){
+        jacobian_arr += dim_jacobi * dim_dof;
+      }
+    }
+  }
+
   // lower level jacobian function, which directly iterate over poitner
   void RobotModel::_solve_forward_kinematics(
       int elink_id, const std::vector<unsigned int>& joint_ids,
