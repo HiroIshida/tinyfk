@@ -155,20 +155,20 @@ namespace tinyfk
     int dim_pose = with_rot ? 6 : 3;
     int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
     Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(dim_pose, dim_dof);
-    this->_get_jacobian_withcache(elink_id, joint_ids, with_rot, with_base, 
+    this->_solve_forward_kinematics(elink_id, joint_ids, with_rot, with_base, 
         nullptr, static_cast<double*>(jacobian.data()));
     return jacobian;
   }
 
   // lower level jacobian function, which directly iterate over poitner
-  void RobotModel::_get_jacobian_withcache(
+  void RobotModel::_solve_forward_kinematics(
       int elink_id, const std::vector<unsigned int>& joint_ids,
-      bool with_rot, bool with_base, double* pose_arr, double* jacobian) const
+      bool with_rot, bool with_base, double* pose, double* jacobian) const
   {
     urdf::Pose tf_rlink_to_elink;
     this->get_link_point_withcache(elink_id, tf_rlink_to_elink, with_base); 
-    if(pose_arr!=nullptr){
-      copy_pose_to_arr(tf_rlink_to_elink, pose_arr, with_rot);
+    if(pose!=nullptr){
+      copy_pose_to_arr(tf_rlink_to_elink, pose, with_rot);
     }
 
     if(jacobian!=nullptr){
