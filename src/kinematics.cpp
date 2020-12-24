@@ -198,17 +198,16 @@ namespace tinyfk
             urdf::Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y, epos.z - cpos.z};
             cross_product(world_axis, vec_clink_to_elink, dpos);
           }
-          *(column_ptr+0) = dpos.x;
-          *(column_ptr+1) = dpos.y;
-          *(column_ptr+2) = dpos.z;
-
+          column_ptr[0] = dpos.x;
+          column_ptr[1] = dpos.y;
+          column_ptr[2] = dpos.z;
           if(with_rot){ // (compute rpy jacobian)
             if(type == urdf::Joint::PRISMATIC){
               // jacobian for rotation is all zero
             }else{
-              *(column_ptr+3) = dpos.x;
-              *(column_ptr+4) = dpos.y;
-              *(column_ptr+5) = dpos.z;
+              column_ptr[3] = dpos.x;
+              column_ptr[4] = dpos.y;
+              column_ptr[5] = dpos.z;
             }
           }
         }
