@@ -2,6 +2,8 @@
 #include <iostream>
 #include <fstream>
 
+using namespace tinyfk;
+
 int main(){
   int N = 100000;
   std::string urdf_file = "../data/fetch.urdf";

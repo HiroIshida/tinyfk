@@ -8,6 +8,7 @@
 
 using namespace std;
 using namespace Eigen;
+using namespace tinyfk;
 
 bool isNear(double x, double y){
   return (abs(x - y) < 1e-5);
