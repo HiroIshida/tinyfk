@@ -155,6 +155,10 @@ namespace tinyfk
           bool basealso = false
           ) const;
 
+      void get_jacobian_withcache(
+          int elink_id, const std::vector<int>& joint_ids,
+          bool with_rot, bool with_base, double* jacobian) const;
+
       void get_link_point_withcache(
           unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 
           bool usebase) const;

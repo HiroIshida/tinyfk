@@ -113,6 +113,84 @@ namespace tinyfk
     out_tf_rlink_to_elink = tf_hlink_to_elink;
   }
 
+  void get_base_jacobian(const urdf::Vector3& epos_local, double* jacobian, bool with_rot){
+    /*
+     * [1, 0,-y]
+     * [0, 1, x]
+     * [0, 0, 0]
+     *
+     * with_rot
+     * [0, 0, 0]
+     * [0, 0, 0]
+     * [0, 0, 1]
+     */
+    int dim_pose = (with_rot ? 6 : 3);
+    jacobian[dim_pose*0+0] = 1.0;
+    jacobian[dim_pose*1+1] = 1.0;
+    jacobian[dim_pose*2+0] = -epos_local.y;
+    jacobian[dim_pose*2+1] = epos_local.x;
+    if(with_rot){
+      jacobian[dim_pose*2+5] = 1.0;
+    }
+  }
+
+  void RobotModel::get_jacobian_withcache(
+      int elink_id, const std::vector<int>& joint_ids,
+      bool with_rot, bool with_base, double* jacobian) const
+  {
+    urdf::Pose tf_rlink_to_elink;
+    this->get_link_point_withcache(elink_id, tf_rlink_to_elink, with_base); 
+    urdf::Vector3& epos = tf_rlink_to_elink.position;
+
+    for(int jid : joint_ids){
+      if(_rptable.isRelevant(jid, elink_id)){
+        const urdf::JointSharedPtr& hjoint = _joints[jid];
+        unsigned int type = hjoint->type;
+        if(type == urdf::Joint::FIXED){
+            throw std::invalid_argument("fixed type is not accepted");
+        }
+        urdf::LinkSharedPtr clink = hjoint->getChildLink(); // rotation of clink and hlink is same. so clink is ok.
+
+        urdf::Pose tf_rlink_to_clink;
+        this->get_link_point_withcache(clink->id, tf_rlink_to_clink, with_base);
+
+
+        urdf::Rotation& crot = tf_rlink_to_clink.rotation;
+        urdf::Vector3&& world_axis = crot * hjoint->axis; // axis w.r.t root link
+        urdf::Vector3 dpos;
+        if(type == urdf::Joint::PRISMATIC){
+          dpos = world_axis;
+        }else{//revolute or continuous
+          urdf::Vector3& cpos = tf_rlink_to_clink.position;
+          urdf::Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y, epos.z - cpos.z};
+          cross_product(world_axis, vec_clink_to_elink, dpos);
+        }
+        *(jacobian++) = dpos.x;
+        *(jacobian++) = dpos.y;
+        *(jacobian++) = dpos.z;
+
+        if(with_rot){ // (compute rpy jacobian)
+          if(type == urdf::Joint::PRISMATIC){
+            // jacobian for rotation is all zero
+          }else{
+            *(jacobian++) = world_axis.x;
+            *(jacobian++) = world_axis.y;
+            *(jacobian++) = world_axis.z;
+          }
+        }
+      }
+
+      if(with_base){
+        // NOTE that epos is wrt global not wrt root link!
+        // so we first compute epos w.r.t root link then take a 
+        // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
+        const std::array<double, 3>& basepose3d = _base_pose._pose3d;
+        urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
+        get_base_jacobian(epos_local, jacobian, with_rot);
+      }
+    }
+  }
+
   std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
       const std::vector<unsigned int>& elink_ids,
       const std::vector<unsigned int>& joint_ids, 
