@@ -141,6 +141,24 @@ int main(){
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
       return  -1;
     }
+    bool with_rot = true;
+    auto tmp1 = robot.get_jacobians_withcache(link_ids, joint_ids, rot_also, with_rot);
+    auto tmp2 = robot.get_jacobians_withcache_new(link_ids, joint_ids, rot_also, with_rot);
+    bool J_equal = (tmp1[0] - tmp2[0]).array().abs().maxCoeff() < 1e-5;
+    if(J_equal){
+      std::cout << "[PASS] J equal" << std::endl; 
+    }else{
+      std::cout << "Hoge" << std::endl; 
+      std::cout << tmp1[0] << std::endl; 
+      std::cout << tmp2[0] << std::endl; 
+    }
+    bool P_equal = (tmp1[1] - tmp2[1].transpose()).array().abs().maxCoeff() < 1e-5;
+    if(P_equal){
+      std::cout << "[PASS] P equal" << std::endl; 
+    }else{
+      std::cout << tmp1[1] << std::endl; 
+      std::cout << tmp2[1] << std::endl; 
+    }
   }
   std::cout << "[PASS] jacobain" << std::endl; 
 }

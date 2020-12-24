@@ -208,6 +208,46 @@ namespace tinyfk
     }
   }
 
+  std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache_new(
+      const std::vector<unsigned int>& elink_ids,
+      const std::vector<unsigned int>& joint_ids, 
+      bool with_rot, bool with_base) const
+  {
+    int dim_pose = (with_rot ? 6 : 3);
+    int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
+    int dim_feature = elink_ids.size();
+
+    // first, fill jacobian
+    Eigen::MatrixXd J_whole = Eigen::MatrixXd::Zero(dim_pose * dim_feature, dim_dof);
+    for(int i=0; i<dim_feature; i++){
+      int lid = elink_ids[i];
+      Eigen::MatrixXd J = this->get_jacobian_withcache(lid, joint_ids, with_rot, with_base);
+      J_whole.block(i * dim_pose, 0, dim_pose, dim_dof) = J;
+    }
+
+    //second fill poses
+    Eigen::MatrixXd P = Eigen::MatrixXd::Zero(dim_pose, elink_ids.size());
+    urdf::Pose tf_rlink_to_elink;
+    auto itr = static_cast<double*>(P.data());
+    for(int lid : elink_ids){
+      this->get_link_point_withcache(lid, tf_rlink_to_elink, with_base); 
+      urdf::Vector3& epos = tf_rlink_to_elink.position;
+      *itr++ = epos.x;
+      *itr++ = epos.y;
+      *itr++ = epos.z;
+
+      if(with_rot){
+        urdf::Rotation& erot = tf_rlink_to_elink.rotation;
+        urdf::Vector3 rpy = erot.getRPY();
+        *itr++ = rpy.x;
+        *itr++ = rpy.y;
+        *itr++ = rpy.z;
+      }
+    }
+    std::array<Eigen::MatrixXd, 2> ret = {J_whole, P};
+    return ret;
+  }
+
   std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
       const std::vector<unsigned int>& elink_ids,
       const std::vector<unsigned int>& joint_ids, 
@@ -216,7 +256,7 @@ namespace tinyfk
     unsigned int n_pose_dim = (rotalso ? 6 : 3);
     unsigned int n_dof = (basealso ? joint_ids.size() + 3 : joint_ids.size());
     Eigen::MatrixXd J = Eigen::MatrixXd::Zero(n_pose_dim*elink_ids.size(), n_dof);
-    Eigen::MatrixXd elink_points = Eigen::MatrixXd::Zero(n_pose_dim*elink_ids.size(), n_pose_dim);
+    Eigen::MatrixXd elink_points = Eigen::MatrixXd::Zero(elink_ids.size(), n_pose_dim);
 
     // reserve
     urdf::Vector3 dpos; // d : diff 
