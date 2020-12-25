@@ -227,11 +227,11 @@ namespace tinyfk
 
       void _solve_forward_kinematics(
           int elink_id, const std::vector<unsigned int>& joint_ids,
-          bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian) const;
+          int rotation_mode, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian) const;
 
       void _solve_batch_forward_kinematics(
           std::vector<unsigned int> elink_ids, const std::vector<unsigned int>& joint_ids,
-          bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian_arr) const;
+          int rotation_mode, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian_arr) const;
 
       void get_link_point_withcache(
           unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 
@@ -299,5 +299,13 @@ namespace tinyfk
         _rptable = rptable;
       }
   };
+
+  enum rotation_mode : int
+  {
+    NO_ROTATION, RPY, YPR, XYZW, WXYZ
+  };
+
+  int rotation_dim(int rotation_mode);
+  void copy_pose_to_arr(const urdf::Pose& pose, TinyMatrix& arr, int rotation_mode);
 
 };//end namespace
