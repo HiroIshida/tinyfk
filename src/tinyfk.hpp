@@ -162,6 +162,10 @@ namespace tinyfk
           unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 
           bool usebase) const;
 
+      void _get_link_point_creating_cache(
+          unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 
+          bool usebase) const;
+
       void add_new_link(
           std::string link_name, 
           unsigned int parent_id,
