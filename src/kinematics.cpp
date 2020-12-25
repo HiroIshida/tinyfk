@@ -129,6 +129,26 @@ namespace tinyfk
     }
   }
 
+  std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
+      const std::vector<unsigned int>& elink_ids,
+      const std::vector<unsigned int>& joint_ids, 
+      bool with_rot, bool with_base) const
+  {
+    int dim_pose = (with_rot ? 6 : 3);
+    int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
+    int dim_feature = elink_ids.size();
+
+    Eigen::MatrixXd P = Eigen::MatrixXd::Zero(dim_pose, elink_ids.size());
+    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(dim_pose * dim_feature, dim_dof);
+    auto P_ = TinyMatrix(P);
+    auto J_ = TinyMatrix(J);
+
+    this->_solve_batch_forward_kinematics(elink_ids, joint_ids,
+        with_rot, with_base, P_, J_);
+    std::array<Eigen::MatrixXd, 2> ret = {J, P};
+    return ret;
+  }
+
   void RobotModel::_solve_batch_forward_kinematics(
       std::vector<unsigned int> elink_ids, const std::vector<unsigned int>& joint_ids,
       bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian_arr) const
