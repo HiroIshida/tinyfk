@@ -200,7 +200,7 @@ namespace tinyfk
         const urdf::JointSharedPtr& hjoint = _joints[jid];
         unsigned int type = hjoint->type;
         if(type == urdf::Joint::FIXED){
-            throw std::invalid_argument("fixed type is not accepted");
+           assert(type!=urdf::Joint::FIXED && "fixed type is not accepted");
         }
         urdf::LinkSharedPtr clink = hjoint->getChildLink(); // rotation of clink and hlink is same. so clink is ok.
 
