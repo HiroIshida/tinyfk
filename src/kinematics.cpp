@@ -5,9 +5,24 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
 #include "tinyfk.hpp"
+#include <cmath>
+
+urdf::Vector3 rpy_derivative(const urdf::Vector3& rpy, const urdf::Vector3 axis)
+{
+  // a1 -> y, a2 -> p, a3->r
+  urdf::Vector3 drpy_dt;
+  double a1 = -rpy.x;
+  double a2 = -rpy.y;
+  double a3 = -rpy.z;
+  drpy_dt.x = cos(a3)/cos(a2)*axis.x - sin(a3)/cos(a2)*axis.y;
+  drpy_dt.y = sin(a3)*axis.x + cos(a3)*axis.y;
+  drpy_dt.z = -cos(a3)*sin(a2)/cos(a2)*axis.x + sin(a3)*sin(a2)/cos(a2)*axis.y + axis.z;
+  return drpy_dt;
+}
 
 namespace tinyfk
 {
+
   void RobotModel::get_link_point_withcache(
       unsigned int link_id, urdf::Pose& out_tf_rlink_to_elink,
       bool usebase
@@ -112,6 +127,8 @@ namespace tinyfk
     base_jacobian(1, 2) = epos_local.x;
     if(with_rot){
       base_jacobian(5, 2) = 1.0;
+      // NOTE : thanks to the definition of rpy, if rotation axis is [0, 0, 1]
+      // then drpy/dt = [0, 0, 1], so we don't have to multiply kinematic matrix here.
     }
   }
 
@@ -175,6 +192,8 @@ namespace tinyfk
     copy_pose_to_arr(tf_rlink_to_elink, pose, with_rot);
 
     urdf::Vector3& epos = tf_rlink_to_elink.position;
+    urdf::Rotation& erot = tf_rlink_to_elink.rotation;
+    urdf::Vector3 erpy = erot.getRPY();
     int dim_jacobi = (with_rot ? 6 : 3);
     for(int i=0; i<joint_ids.size(); i++){
       int jid = joint_ids[i];
@@ -206,9 +225,10 @@ namespace tinyfk
           if(type == urdf::Joint::PRISMATIC){
             // jacobian for rotation is all zero
           }else{
-            jacobian(3, i) = world_axis.x;
-            jacobian(4, i) = world_axis.y;
-            jacobian(5, i) = world_axis.z;
+            urdf::Vector3 drpy_dt = rpy_derivative(erpy, world_axis);
+            jacobian(3, i) = drpy_dt.x;
+            jacobian(4, i) = drpy_dt.y;
+            jacobian(5, i) = drpy_dt.z;
           }
         }
       }

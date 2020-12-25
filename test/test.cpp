@@ -91,11 +91,8 @@ int main(){
   bool base_also = true;
   urdf::Pose pose, pose_naive;
   for(unsigned int i=0; i<n_links; i++){
-    std::cout << "testing " << link_names[i] << std::endl; 
     int link_id = link_ids[i];
     robot.get_link_point_withcache(link_id, pose, base_also);
-    std::cout << "expected : " << pose_list[i][0] << " " << pose_list[i][1] << " " << pose_list[i][2] << std::endl; 
-    std::cout << "computed : " << pose.position.x << " " << pose.position.y << " " << pose.position.z << std::endl; 
 
     if(
         !isNear(pose.position.x, pose_list[i][0]) || 
@@ -103,9 +100,9 @@ int main(){
         !isNear(pose.position.z, pose_list[i][2])  
       ){
       std::cout << "[FAIL] position of " << link_names[i] << " does not match" << std::endl; 
+      std::cout << "expected : " << pose_list[i][0] << " " << pose_list[i][1] << " " << pose_list[i][2] << std::endl; 
+      std::cout << "computed : " << pose.position.x << " " << pose.position.y << " " << pose.position.z << std::endl; 
       return -1;
-    }else{
-      std::cout << "[PASS] match" << std::endl; 
     }
 
     auto rpy = pose.rotation.getRPY();
@@ -115,31 +112,32 @@ int main(){
         !isNear(rpy.y, pose_list[i][4]) || 
         !isNear(rpy.x, pose_list[i][5])
       ){
-      //throw std::runtime_error("[FAIL] rpy of " << link_names[i] << " does not match");
+      std::cout << "[FAIL] rpy of " << link_names[i] << " does not match" << std::endl; 
+      return -1;
     }
+    std::cout << "[PASS] comparison with ground truth of link " << link_names[i] << std::endl; 
   }
   std::cout << "[PASS] get_link_point_withcache" << std::endl; 
 
   // Now we comapre jacobian computed by finite diff with the analytical one 
-  std::cout << "staring jacobian test..." << std::endl; 
   for(int i=0; i<n_joints; i++){
     robot.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
   robot.set_base_pose(angle_vector[n_joints], angle_vector[n_joints+1], angle_vector[n_joints+2]);
   robot._tf_cache.clear();
   for(int i=0; i< link_names.size(); i++){ 
-    bool rot_also = false; // rotatio part of the geometric jacobian is not yet checked
+    bool rot_also = true; // rotatio part of the geometric jacobian is not yet checked
     int link_id = link_ids[i];
     vector<unsigned int> link_ids_ = {link_id};
     auto J_numerical = robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
     auto tmpo = robot.get_jacobians_withcache(link_ids, joint_ids, rot_also, true);
     auto J_analytical_whole = tmpo[0];
-    auto J_analytical_block = J_analytical_whole.block(3*i, 0, 3, 10);
+    auto J_analytical_block = J_analytical_whole.block(6*i, 0, 6, 10);
 
     bool jacobian_equal = (J_analytical_block - J_numerical).array().abs().maxCoeff() < 1e-5;
     if(!jacobian_equal){
       std::cout << "analytical :\n" << J_analytical_block << std::endl; 
-      std::cout << "analytical_old :\n" << J_numerical << std::endl; 
+      std::cout << "numerical :\n" << J_numerical << std::endl; 
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
       return  -1;
     }
