@@ -94,68 +94,53 @@ namespace tinyfk
     out_tf_rlink_to_elink = std::move(tf_rlink_to_plink);
   }
 
-  void get_base_jacobian(const urdf::Vector3& epos_local, TinyMatrix& base_jacobian, bool with_rot){
+  void get_base_jacobian(const urdf::Vector3& epos_local, TinyMatrix& base_jacobian, int rotation_mode){
     /*
      * [1, 0,-y]
      * [0, 1, x]
      * [0, 0, 0]
      *
-     * with_rot
+     * if rotation_mode != NO_ROTATION
      * [0, 0, 0]
      * [0, 0, 0]
      * [0, 0, 1]
      */
-    int dim_pose = (with_rot ? 6 : 3);
     base_jacobian(0, 0) = 1.0;
     base_jacobian(1, 1) = 1.0;
     base_jacobian(0, 2) = -epos_local.y;
     base_jacobian(1, 2) = epos_local.x;
-    if(with_rot){
+    if(rotation_mode!=NO_ROTATION){
       base_jacobian(5, 2) = 1.0;
-    }
-  }
-
-  void copy_pose_to_arr(const urdf::Pose& pose, TinyMatrix& arr, bool with_rot){
-    const urdf::Vector3& pos = pose.position;
-    arr[0] = pos.x;
-    arr[1] = pos.y;
-    arr[2] = pos.z;
-    if(with_rot){
-      const urdf::Rotation& rot = pose.rotation;
-      urdf::Vector3 rpy = rot.getRPY();
-      arr[3] = rpy.x;
-      arr[4] = rpy.y;
-      arr[5] = rpy.z;
     }
   }
 
   void RobotModel::_solve_batch_forward_kinematics(
       std::vector<unsigned int> elink_ids, const std::vector<unsigned int>& joint_ids,
-      bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian_arr) const
+      int rotation_mode, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian_arr) const
   {
-    int dim_jacobi = (with_rot ? 6 : 3);
-    int dim_pose = (with_rot ? 6 : 3);
+    int dim_jacobi = (rotation_mode!=NO_ROTATION ? 0 : 3);
+    int dim_pose = rotation_dim(rotation_mode);
     int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
 
     for(int i=0; i< elink_ids.size(); i++){
       int elink_id = elink_ids[i];
       TinyMatrix pose = pose_arr.slice(i);
       TinyMatrix jacobian = jacobian_arr.block(dim_jacobi*i, 0, dim_jacobi, dim_dof);
-      _solve_forward_kinematics(elink_id, joint_ids, with_rot, with_base, pose, jacobian);
+      _solve_forward_kinematics(elink_id, joint_ids, rotation_mode, with_base, pose, jacobian);
     }
   }
 
   // lower level jacobian function, which directly iterate over poitner
   void RobotModel::_solve_forward_kinematics(
       int elink_id, const std::vector<unsigned int>& joint_ids,
-      bool with_rot, bool with_base, TinyMatrix& pose, TinyMatrix& jacobian) const
+      int rotation_mode, bool with_base, TinyMatrix& pose, TinyMatrix& jacobian) const
   {
     urdf::Pose tf_rlink_to_elink;
     this->get_link_point_withcache(elink_id, tf_rlink_to_elink, with_base); 
-    copy_pose_to_arr(tf_rlink_to_elink, pose, with_rot);
+    copy_pose_to_arr(tf_rlink_to_elink, pose, rotation_mode);
 
     urdf::Vector3& epos = tf_rlink_to_elink.position;
-    int dim_jacobi = (with_rot ? 6 : 3);
+    int dim_jacobi = (rotation_mode==NO_ROTATION ? 3 : 6);
     for(int i=0; i<joint_ids.size(); i++){
       int jid = joint_ids[i];
       if(_rptable.isRelevant(jid, elink_id)){
@@ -182,7 +167,7 @@ namespace tinyfk
         jacobian(0, i) = dpos.x;
         jacobian(1, i) = dpos.y;
         jacobian(2, i) = dpos.z;
-        if(with_rot){ // (compute rpy jacobian)
+        if(rotation_mode!=NO_ROTATION){ // (compute rpy jacobian)
           if(type == urdf::Joint::PRISMATIC){
             // jacobian for rotation is all zero
           }else{
@@ -202,7 +187,7 @@ namespace tinyfk
       urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
       int dim_dof = joint_ids.size();
       TinyMatrix base_jacobian = jacobian.block(0, dim_dof, dim_jacobi, 3);
-      get_base_jacobian(epos_local, base_jacobian, with_rot);
+      get_base_jacobian(epos_local, base_jacobian, rotation_mode);
     }
   }
 
