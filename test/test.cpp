@@ -121,6 +121,7 @@ int main(){
   std::cout << "[PASS] get_link_point_withcache" << std::endl; 
 
   // Now we comapre jacobian computed by finite diff with the analytical one 
+  std::cout << "staring jacobian test..." << std::endl; 
   for(int i=0; i<n_joints; i++){
     robot.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
@@ -133,7 +134,7 @@ int main(){
     auto J_numerical = robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
     auto tmpo = robot.get_jacobians_withcache(link_ids, joint_ids, rot_also, true);
     auto J_analytical_whole = tmpo[0];
-    auto J_analytical_block = J_analytical_whole.block(0, 10*i, 3, 10);
+    auto J_analytical_block = J_analytical_whole.block(3*i, 0, 3, 10);
 
     bool jacobian_equal = (J_analytical_block - J_numerical).array().abs().maxCoeff() < 1e-5;
     if(!jacobian_equal){
@@ -142,7 +143,7 @@ int main(){
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
       return  -1;
     }
-    std::cout << "[PASS] match" << std::endl; 
+    std::cout << "[PASS] jacobian match for link : " << link_names[i] << std::endl; 
   }
   std::cout << "[PASS] fk solve compare" << std::endl; 
 
