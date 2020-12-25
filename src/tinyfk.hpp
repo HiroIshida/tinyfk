@@ -13,6 +13,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <array>
 #include <stack>
 #include <unordered_map>
+#include <assert.h>
 
 namespace tinyfk
 {
@@ -29,8 +30,7 @@ namespace tinyfk
       _isCachedVec(std::vector<bool>(N_link, false)) {}
 
     void set_cache(unsigned int link_id, const urdf::Pose& tf){
-      bool isAlreadyCached = (_isCachedVec[link_id] == true);
-      if(isAlreadyCached){throw std::invalid_argument("attempt to break cache");}
+      assert(_isCachedVec[link_id] && "attempt to break an existing cache");
       _isCachedVec[link_id] = true;
       _data[link_id] = tf;
     }
