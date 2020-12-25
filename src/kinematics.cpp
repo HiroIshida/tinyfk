@@ -132,88 +132,135 @@ namespace tinyfk
     out_tf_rlink_to_elink = tf_hlink_to_elink;
   }
 
-  std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
-      const std::vector<unsigned int>& elink_ids,
-      const std::vector<unsigned int>& joint_ids, 
-      bool rotalso, bool basealso) const
+  void get_base_jacobian(const urdf::Vector3& epos_local, TinyMatrix& base_jacobian, bool with_rot){
+    /*
+     * [1, 0,-y]
+     * [0, 1, x]
+     * [0, 0, 0]
+     *
+     * with_rot
+     * [0, 0, 0]
+     * [0, 0, 0]
+     * [0, 0, 1]
+     */
+    int dim_pose = (with_rot ? 6 : 3);
+    base_jacobian(0, 0) = 1.0;
+    base_jacobian(1, 1) = 1.0;
+    base_jacobian(0, 2) = -epos_local.y;
+    base_jacobian(1, 2) = epos_local.x;
+    if(with_rot){
+      base_jacobian(5, 2) = 1.0;
+    }
+  }
+
+  void copy_pose_to_arr(const urdf::Pose& pose, TinyMatrix& arr, bool with_rot){
+    const urdf::Vector3& pos = pose.position;
+    arr[0] = pos.x;
+    arr[1] = pos.y;
+    arr[2] = pos.z;
+    if(with_rot){
+      const urdf::Rotation& rot = pose.rotation;
+      urdf::Vector3 rpy = rot.getRPY();
+      arr[3] = rpy.x;
+      arr[4] = rpy.y;
+      arr[5] = rpy.z;
+    }
+  }
+
+  void RobotModel::_solve_batch_forward_kinematics(
+      std::vector<unsigned int> elink_ids, const std::vector<unsigned int>& joint_ids,
+      bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian_arr) const
   {
-    unsigned int n_pose_dim = (rotalso ? 6 : 3);
-    unsigned int n_dof = (basealso ? joint_ids.size() + 3 : joint_ids.size());
-    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(n_pose_dim*elink_ids.size(), n_dof);
-    Eigen::MatrixXd elink_points = Eigen::MatrixXd::Zero(n_pose_dim*elink_ids.size(), n_pose_dim);
+    int dim_jacobi = (with_rot ? 6 : 3);
+    int dim_pose = (with_rot ? 6 : 3);
+    int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
 
-    // reserve
-    urdf::Vector3 dpos; // d : diff 
-    urdf::Vector3 drot; // d : diff 
+    for(int i=0; i< elink_ids.size(); i++){
+      int elink_id = elink_ids[i];
+      TinyMatrix pose = pose_arr.slice(i);
+      TinyMatrix jacobian = jacobian_arr.block(dim_jacobi*i, 0, dim_jacobi, dim_dof);
+      _solve_forward_kinematics(elink_id, joint_ids, with_rot, with_base, pose, jacobian);
+    }
+  }
+
+  // lower level jacobian function, which directly iterate over poitner
+  void RobotModel::_solve_forward_kinematics(
+      int elink_id, const std::vector<unsigned int>& joint_ids,
+      bool with_rot, bool with_base, TinyMatrix& pose, TinyMatrix& jacobian) const
+  {
     urdf::Pose tf_rlink_to_elink;
+    this->get_link_point_withcache(elink_id, tf_rlink_to_elink, with_base); 
+    copy_pose_to_arr(tf_rlink_to_elink, pose, with_rot);
 
-    for(unsigned int j=0; j<elink_ids.size(); j++){
-      int elink_id = elink_ids[j];
-      this->get_link_point_withcache(elink_id, tf_rlink_to_elink, basealso); 
-      urdf::Vector3& epos = tf_rlink_to_elink.position;
-      urdf::Rotation& erot = tf_rlink_to_elink.rotation;
-
-      elink_points(j, 0) = epos.x; elink_points(j, 1) = epos.y; elink_points(j, 2) = epos.z;
-      if(rotalso){
-        urdf::Vector3 erpy = erot.getRPY();
-        elink_points(j, 3) = erpy.x; elink_points(j, 4) = erpy.y; elink_points(j, 5) = erpy.z;
-      }
-
-      for(unsigned int i=0; i<joint_ids.size(); i++){
-        int jid = joint_ids[i];
-        if(_rptable.isRelevant(jid, elink_id)){
-          const urdf::JointSharedPtr& hjoint = _joints[jid];
-          unsigned int type = hjoint->type;
-          assert(type!=urdf::Joint::FIXED && "fixed type is not accepted");
-          urdf::LinkSharedPtr clink = hjoint->getChildLink(); // rotation of clink and hlink is same. so clink is ok.
-
-          urdf::Pose tf_rlink_to_clink;
-          this->get_link_point_withcache(clink->id, tf_rlink_to_clink, basealso);
-
-
-          urdf::Rotation& crot = tf_rlink_to_clink.rotation;
-          urdf::Vector3&& world_axis = crot * hjoint->axis; // axis w.r.t root link
-          if(type == urdf::Joint::PRISMATIC){
-            dpos = world_axis;
-          }else{//revolute or continuous
-            urdf::Vector3& cpos = tf_rlink_to_clink.position;
-            urdf::Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y, epos.z - cpos.z};
-            cross_product(world_axis, vec_clink_to_elink, dpos);
-          }
-          J(n_pose_dim*j+0, i) = dpos.x;
-          J(n_pose_dim*j+1, i) = dpos.y;
-          J(n_pose_dim*j+2, i) = dpos.z;
-
-          if(rotalso){ // (compute rpy jacobian)
-            if(type == urdf::Joint::PRISMATIC){
-                for(int i=3; i<=6; i++){
-                    J(n_pose_dim*j + i) = 0.0;
-                }
-            }else{
-                J(n_pose_dim*j+3, i) = world_axis.x;
-                J(n_pose_dim*j+4, i) = world_axis.y;
-                J(n_pose_dim*j+5, i) = world_axis.z;
-            }
-          }
+    urdf::Vector3& epos = tf_rlink_to_elink.position;
+    int dim_jacobi = (with_rot ? 6 : 3);
+    for(int i=0; i<joint_ids.size(); i++){
+      int jid = joint_ids[i];
+      if(_rptable.isRelevant(jid, elink_id)){
+        const urdf::JointSharedPtr& hjoint = _joints[jid];
+        unsigned int type = hjoint->type;
+        if(type == urdf::Joint::FIXED){
+           assert(type!=urdf::Joint::FIXED && "fixed type is not accepted");
         }
-        if(basealso){
-          // NOTE that epos is wrt global not wrt root link!
-          // so we first compute epos w.r.t root link then take a 
-          // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
-          const std::array<double, 3>& basepose3d = _base_pose._pose3d;
-          urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
+        urdf::LinkSharedPtr clink = hjoint->getChildLink(); // rotation of clink and hlink is same. so clink is ok.
 
-          J(n_pose_dim*j+0, joint_ids.size() + 0) = 1.0; // dx/dx
-          J(n_pose_dim*j+0, joint_ids.size() + 2) = -epos_local.y; // dx/dtheta
-          J(n_pose_dim*j+1, joint_ids.size() + 1) = 1.0; // dy/dy
-          J(n_pose_dim*j+1, joint_ids.size() + 2) = epos_local.x; //dy/dtheta
-          if(rotalso){
-            J(n_pose_dim*j+5, joint_ids.size() + 2) = 1.0; // world_axis = [0, 0, 1]
+        urdf::Pose tf_rlink_to_clink;
+        this->get_link_point_withcache(clink->id, tf_rlink_to_clink, with_base);
+
+        urdf::Rotation& crot = tf_rlink_to_clink.rotation;
+        urdf::Vector3&& world_axis = crot * hjoint->axis; // axis w.r.t root link
+        urdf::Vector3 dpos;
+        if(type == urdf::Joint::PRISMATIC){
+          dpos = world_axis;
+        }else{//revolute or continuous
+          urdf::Vector3& cpos = tf_rlink_to_clink.position;
+          urdf::Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y, epos.z - cpos.z};
+          cross_product(world_axis, vec_clink_to_elink, dpos);
+        }
+        jacobian(0, i) = dpos.x;
+        jacobian(1, i) = dpos.y;
+        jacobian(2, i) = dpos.z;
+        if(with_rot){ // (compute rpy jacobian)
+          if(type == urdf::Joint::PRISMATIC){
+            // jacobian for rotation is all zero
+          }else{
+            jacobian(3, i) = world_axis.x;
+            jacobian(4, i) = world_axis.y;
+            jacobian(5, i) = world_axis.z;
           }
         }
       }
     }
-    std::array<Eigen::MatrixXd, 2> ret = {J, elink_points};
+
+    if(with_base){
+      // NOTE that epos is wrt global not wrt root link!
+      // so we first compute epos w.r.t root link then take a 
+      // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
+      const std::array<double, 3>& basepose3d = _base_pose._pose3d;
+      urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
+      int dim_dof = joint_ids.size();
+      TinyMatrix base_jacobian = jacobian.block(0, dim_dof, dim_jacobi, 3);
+      get_base_jacobian(epos_local, base_jacobian, with_rot);
+    }
+  }
+
+  std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
+      const std::vector<unsigned int>& elink_ids,
+      const std::vector<unsigned int>& joint_ids, 
+      bool with_rot, bool with_base) const
+  {
+    int dim_pose = (with_rot ? 6 : 3);
+    int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
+    int dim_feature = elink_ids.size();
+
+    Eigen::MatrixXd P = Eigen::MatrixXd::Zero(dim_pose, elink_ids.size());
+    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(dim_pose * dim_feature, dim_dof);
+    auto P_ = TinyMatrix(P);
+    auto J_ = TinyMatrix(J);
+
+    this->_solve_batch_forward_kinematics(elink_ids, joint_ids,
+        with_rot, with_base, P_, J_);
+    std::array<Eigen::MatrixXd, 2> ret = {J, P};
     return ret;
   }
 

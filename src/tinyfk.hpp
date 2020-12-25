@@ -18,6 +18,73 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 namespace tinyfk
 {
 
+  using MatrixXdC = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
+  using MatrixXdR = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
+  // TODO templatize
+  // an util data structure to handle matrix. 
+  struct TinyMatrix // coll major (same as eigen)
+  {
+    double* _data; // beginning of the block matrix
+    int _i_begin;
+    int _j_begin;
+
+    int _n_block;
+    int _m_block;
+
+    int _n_whole;
+    int _m_whole;
+
+    TinyMatrix(Eigen::MatrixXd& mat, int i_begin, int j_begin, int n, int m) : 
+      _data(mat.data()),
+      _i_begin(i_begin), _j_begin(j_begin),
+      _n_block(n), _m_block(m),
+      _n_whole(mat.rows()), _m_whole(mat.cols()) {}
+
+    TinyMatrix(Eigen::MatrixXd& mat) :
+      _data(mat.data()),
+      _i_begin(0), _j_begin(0),
+      _n_block(mat.rows()), _m_block(mat.cols()),
+      _n_whole(_n_block), _m_whole(_m_block) {}
+
+    TinyMatrix(double* data, int i_begin, int j_begin, int n, int m, int n_whole, int m_whole) :
+      _data(data), _i_begin(i_begin), _j_begin(j_begin), _n_block(n), _m_block(m), 
+      _n_whole(n_whole), _m_whole(m_whole) {}
+
+    inline int rows(){
+      return _n_block;
+    }
+
+    inline int cols(){
+      return _m_block;
+    }
+
+    inline int get_idx(int i, int j){
+      assert(i<_n_whole && "out of index");
+      assert(j<_m_whole && "out of index");
+
+      int idx = _n_whole * (j+_j_begin) + (i+_i_begin);
+      return idx;
+    }
+
+    TinyMatrix block(int i, int j, int n, int m){
+      TinyMatrix mat = {_data, _i_begin+i, _j_begin+j, n, m, _n_whole, _m_whole};
+      return mat;
+    }
+
+    TinyMatrix slice(int i){ // we consider matrix is coll major. 
+      return this->block(0, i, _n_block, 1);
+    }
+
+    double& operator() (int i, int j){
+      return _data[this->get_idx(i, j)];
+    }
+
+    double& operator[] (int i){ // access to sliced matrix
+      return _data[this->get_idx(i, 0)];
+    }
+  };
+
   struct TransformCache
   {
     int _N_link;
@@ -157,6 +224,14 @@ namespace tinyfk
           bool rpyalso = false, // only point jacobian is computed by default
           bool basealso = false
           ) const;
+
+      void _solve_forward_kinematics(
+          int elink_id, const std::vector<unsigned int>& joint_ids,
+          bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian) const;
+
+      void _solve_batch_forward_kinematics(
+          std::vector<unsigned int> elink_ids, const std::vector<unsigned int>& joint_ids,
+          bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian_arr) const;
 
       void get_link_point_withcache(
           unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 
