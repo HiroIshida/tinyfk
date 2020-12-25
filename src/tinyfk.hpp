@@ -48,7 +48,10 @@ namespace tinyfk
       this->clear();
     }
 
-    void clear(){std::fill(_isCachedVec.begin(), _isCachedVec.end(), false);}
+    void clear(){// performance critical
+      // bool's default value is false.
+      _isCachedVec = std::vector<bool>(_N_link);
+    }
   };
 
   struct NastyStack
