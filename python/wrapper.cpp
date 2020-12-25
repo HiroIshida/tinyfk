@@ -52,7 +52,7 @@ class RobotModelPyWrapper
       Eigen::MatrixXd J_trajectory = with_jacobian ? 
         Eigen::MatrixXd::Zero(n_wp * (n_links * n_pose_dim), n_dof) : 
         Eigen::MatrixXd::Zero(0, 0);
-      Eigen::MatrixXd P_trajectory = Eigen::MatrixXd::Zero(n_wp * n_links, n_pose_dim);
+      Eigen::MatrixXd P_trajectory = Eigen::MatrixXd::Zero(n_pose_dim, n_wp * n_links);
 
       for(unsigned int i=0; i<n_wp; i++){
         if(basealso){
@@ -72,24 +72,24 @@ class RobotModelPyWrapper
           auto& J = tmp[0];
           auto& P = tmp[1];
           J_trajectory.block(i * (n_links * n_pose_dim), 0, n_links * n_pose_dim, n_dof) = J;
-          P_trajectory.block(i * n_links, 0, n_links, n_pose_dim) = P;
+          P_trajectory.block(0, i * n_links, n_pose_dim, n_links) = P;
         }else{
           urdf::Pose pose;
           for(int j=0; j<elink_ids.size(); j++){
             _rtree.get_link_point_withcache(elink_ids[j], pose, basealso);
-            P_trajectory(i * n_links + j, 0) = pose.position.x;
-            P_trajectory(i * n_links + j, 1) = pose.position.y;
-            P_trajectory(i * n_links + j, 2) = pose.position.z;
+            P_trajectory(0, i * n_links + j) = pose.position.x;
+            P_trajectory(1, i * n_links + j) = pose.position.y;
+            P_trajectory(2, i * n_links + j) = pose.position.z;
             if(rotalso){
               urdf::Vector3&& rpy = pose.rotation.getRPY(); 
-              P_trajectory(i * n_links + j, 3) = rpy.x;
-              P_trajectory(i * n_links + j, 4) = rpy.y;
-              P_trajectory(i * n_links + j, 5) = rpy.z;
+              P_trajectory(3, i * n_links + j) = rpy.x;
+              P_trajectory(4, i * n_links + j) = rpy.y;
+              P_trajectory(5, i * n_links + j) = rpy.z;
             }
           }
         }
       }
-      std::array<Eigen::MatrixXd, 2> ret = {P_trajectory, J_trajectory};
+      std::array<Eigen::MatrixXd, 2> ret = {P_trajectory.transpose(), J_trajectory};
       return ret;
     }
 
