@@ -127,38 +127,25 @@ int main(){
   robot.set_base_pose(angle_vector[n_joints], angle_vector[n_joints+1], angle_vector[n_joints+2]);
   robot._tf_cache.clear();
   for(int i=0; i< link_names.size(); i++){ 
-    bool rot_also = false; // rotatio part of the geometric jacobian is not yet checked
+    bool rot_also = true; // rotatio part of the geometric jacobian is not yet checked
     int link_id = link_ids[i];
-    //vector<unsigned int> link_ids_ = {link_id};
-    //auto tmp = robot.get_jacobians_withcache(link_ids_, joint_ids, rot_also, true);
-    //auto J_ = tmp[0];
-    auto J_analytical = robot.get_jacobian_withcache(link_id, joint_ids, rot_also, true);
-    MatrixXd J_numerical = robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
-    bool jacobian_equal = (J_analytical - J_numerical).array().abs().maxCoeff() < 1e-5;
+    vector<unsigned int> link_ids_ = {link_id};
+    auto tmp = robot.get_jacobians_withcache(link_ids_, joint_ids, rot_also, true);
+    auto J_analytical_old = tmp[0];
+    auto tmpo = robot.get_jacobians_withcache_new(link_ids, joint_ids, rot_also, true);
+    auto J_analytical_whole = tmpo[0];
+    auto J_analytical_block = J_analytical_whole.block(0, 10*i, 6, 10);
+
+    bool jacobian_equal = (J_analytical_block - J_analytical_old).array().abs().maxCoeff() < 1e-5;
     if(!jacobian_equal){
-      std::cout << "numerical :\n" << J_numerical << std::endl; 
-      std::cout << "analytical :\n" << J_analytical << std::endl; 
+      std::cout << "analytical :\n" << J_analytical_block << std::endl; 
+      std::cout << "analytical_old :\n" << J_analytical_old << std::endl; 
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
       return  -1;
     }
-    bool with_rot = true;
-    auto tmp1 = robot.get_jacobians_withcache(link_ids, joint_ids, rot_also, with_rot);
-    auto tmp2 = robot.get_jacobians_withcache_new(link_ids, joint_ids, rot_also, with_rot);
-    bool J_equal = (tmp1[0] - tmp2[0]).array().abs().maxCoeff() < 1e-5;
-    if(J_equal){
-      std::cout << "[PASS] J equal" << std::endl; 
-    }else{
-      std::cout << "Hoge" << std::endl; 
-      std::cout << tmp1[0] << std::endl; 
-      std::cout << tmp2[0] << std::endl; 
-    }
-    bool P_equal = (tmp1[1] - tmp2[1].transpose()).array().abs().maxCoeff() < 1e-5;
-    if(P_equal){
-      std::cout << "[PASS] P equal" << std::endl; 
-    }else{
-      std::cout << tmp1[1] << std::endl; 
-      std::cout << tmp2[1] << std::endl; 
-    }
+    std::cout << "[PASS] match" << std::endl; 
   }
-  std::cout << "[PASS] jacobain" << std::endl; 
+  std::cout << "[PASS] fk solve compare" << std::endl; 
+
+
 }

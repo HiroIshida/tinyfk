@@ -172,9 +172,13 @@ namespace tinyfk
           int elink_id, const std::vector<unsigned int>& joint_ids,
           bool with_rot, bool with_base) const;
 
-      void _get_jacobian_withcache(
+      void _solve_forward_kinematics(
           int elink_id, const std::vector<unsigned int>& joint_ids,
-          bool with_rot, bool with_base, double* jacobian) const;
+          bool with_rot, bool with_base, double* pose_arr, double* jacobian) const;
+
+      void _solve_batch_forward_kinematics(
+          std::vector<unsigned int> elink_ids, const std::vector<unsigned int>& joint_ids,
+          bool with_rot, bool with_base, double* pose_arr, double* jacobian_arr) const;
 
       void get_link_point_withcache(
           unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 
