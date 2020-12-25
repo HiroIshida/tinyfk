@@ -174,7 +174,7 @@ namespace tinyfk
         pose_arr += dim_pose; 
       }
       if(jacobian_arr!=nullptr){
-        jacobian_arr += dim_jacobi * dim_dof;
+        jacobian_arr += (dim_jacobi * dim_dof);
       }
     }
   }
@@ -224,9 +224,9 @@ namespace tinyfk
             if(type == urdf::Joint::PRISMATIC){
               // jacobian for rotation is all zero
             }else{
-              column_ptr[3] = dpos.x;
-              column_ptr[4] = dpos.y;
-              column_ptr[5] = dpos.z;
+              column_ptr[3] = world_axis.x;
+              column_ptr[4] = world_axis.y;
+              column_ptr[5] = world_axis.z;
             }
           }
         }
