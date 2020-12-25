@@ -58,7 +58,9 @@ int main(){
     urdf::Pose out;
     for(int i=0; i<N; i++){
       robot.set_joint_angles(joint_ids, angle_vector); // this clear cached TFs
-      robot.get_jacobians_withcache(link_ids, joint_ids, true, true);
+      for(int j=0; j<link_ids.size(); j++){
+        robot.get_jacobians_withcache(link_ids, joint_ids, true, true);
+      }
     }
     clock_t end = clock();
     std::cout << "tinyfk.jaocbian_with_cache : " << end - start << std::endl;
