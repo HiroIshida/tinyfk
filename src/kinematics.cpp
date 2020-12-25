@@ -8,8 +8,27 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 namespace tinyfk
 {
-
   void RobotModel::get_link_point_withcache(
+      unsigned int link_id, urdf::Pose& out_tf_rlink_to_elink,
+      bool usebase
+      ) const
+  {
+    // one may consider this procedure is redundant becaues 
+    // _tf_cache.get_cache() in _get_link_point_creating_cache does
+    // the same thing. However, because we cannot avoid additional procedures 
+    // in _get_link_point_creating_cache like while-loop and comparison of 
+    // counter etc, directly calling here and return immediately leads to 
+    // much efficiency.
+    urdf::Pose* pose_ptr = _tf_cache.get_cache(link_id);
+    if(pose_ptr){
+      out_tf_rlink_to_elink = *pose_ptr;
+      return;
+    }
+    // If cache does not found, get link pose creating cache 
+    this->_get_link_point_creating_cache(link_id, out_tf_rlink_to_elink, usebase);
+  }
+
+  void RobotModel::_get_link_point_creating_cache(
       unsigned int link_id, urdf::Pose& out_tf_rlink_to_elink,
       bool usebase
       ) const
