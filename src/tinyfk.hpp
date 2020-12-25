@@ -67,14 +67,8 @@ namespace tinyfk
       return idx;
     }
 
-    double& get(int i, int j){
-      return _data[this->get_idx(i, j)];
-    }
-
     TinyMatrix block(int i, int j, int n, int m){
-      int i_begin_new = _i_begin + i;
-      int j_begin_new = _j_begin + j;
-      TinyMatrix mat = {_data, i_begin_new, j_begin_new, n, m, _n_whole, _m_whole};
+      TinyMatrix mat = {_data, _i_begin+i, _j_begin+j, n, m, _n_whole, _m_whole};
       return mat;
     }
 
