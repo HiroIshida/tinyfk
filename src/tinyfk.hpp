@@ -30,7 +30,7 @@ namespace tinyfk
       _isCachedVec(std::vector<bool>(N_link, false)) {}
 
     void set_cache(unsigned int link_id, const urdf::Pose& tf){
-      assert(_isCachedVec[link_id] && "attempt to break an existing cache");
+      assert(!_isCachedVec[link_id] && "attempt to break an existing cache");
       _isCachedVec[link_id] = true;
       _data[link_id] = tf;
     }
