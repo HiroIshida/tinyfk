@@ -132,15 +132,18 @@ int main(){
     vector<unsigned int> link_ids_ = {link_id};
     auto tmp = robot.get_jacobians_withcache(link_ids_, joint_ids, rot_also, true);
     auto J_analytical_old = tmp[0];
-    auto tmpo = robot.get_jacobians_withcache_new(link_ids_, joint_ids, rot_also, true);
-    auto J_analytical = tmpo[0];
-    bool jacobian_equal = (J_analytical - J_analytical_old).array().abs().maxCoeff() < 1e-5;
+    auto tmpo = robot.get_jacobians_withcache_new(link_ids, joint_ids, rot_also, true);
+    auto J_analytical_whole = tmpo[0];
+    auto J_analytical_block = J_analytical_whole.block(0, 10*i, 6, 10);
+
+    bool jacobian_equal = (J_analytical_block - J_analytical_old).array().abs().maxCoeff() < 1e-5;
     if(!jacobian_equal){
-      std::cout << "analytical :\n" << J_analytical << std::endl; 
+      std::cout << "analytical :\n" << J_analytical_block << std::endl; 
       std::cout << "analytical_old :\n" << J_analytical_old << std::endl; 
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
       return  -1;
     }
+    std::cout << "[PASS] match" << std::endl; 
   }
   std::cout << "[PASS] fk solve compare" << std::endl; 
 
