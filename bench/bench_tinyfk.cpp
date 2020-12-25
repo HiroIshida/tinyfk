@@ -63,15 +63,4 @@ int main(){
     clock_t end = clock();
     std::cout << "tinyfk.jaocbian_with_cache : " << end - start << std::endl;
   }
-
-  {
-    clock_t start = clock();
-    urdf::Pose out;
-    for(int i=0; i<N; i++){
-      robot.set_joint_angles(joint_ids, angle_vector); // this clear cached TFs
-      robot.get_jacobians_withcache_new(link_ids, joint_ids, true, true);
-    }
-    clock_t end = clock();
-    std::cout << "tinyfk.jaocbian_with_cache new: " << end - start << std::endl;
-  }
 }

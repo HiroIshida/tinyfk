@@ -161,17 +161,6 @@ namespace tinyfk
           bool basealso = false
           ) const;
 
-      std::array<Eigen::MatrixXd, 2> get_jacobians_withcache_new(
-          const std::vector<unsigned int>& elink_ids,
-          const std::vector<unsigned int>& joint_ids, 
-          bool rpyalso = false, // only point jacobian is computed by default
-          bool basealso = false
-          ) const;
-
-      Eigen::MatrixXd get_jacobian_withcache(
-          int elink_id, const std::vector<unsigned int>& joint_ids,
-          bool with_rot, bool with_base) const;
-
       void _solve_forward_kinematics(
           int elink_id, const std::vector<unsigned int>& joint_ids,
           bool with_rot, bool with_base, double* pose_arr, double* jacobian) const;

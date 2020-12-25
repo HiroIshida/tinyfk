@@ -127,19 +127,18 @@ int main(){
   robot.set_base_pose(angle_vector[n_joints], angle_vector[n_joints+1], angle_vector[n_joints+2]);
   robot._tf_cache.clear();
   for(int i=0; i< link_names.size(); i++){ 
-    bool rot_also = true; // rotatio part of the geometric jacobian is not yet checked
+    bool rot_also = false; // rotatio part of the geometric jacobian is not yet checked
     int link_id = link_ids[i];
     vector<unsigned int> link_ids_ = {link_id};
-    auto tmp = robot.get_jacobians_withcache(link_ids_, joint_ids, rot_also, true);
-    auto J_analytical_old = tmp[0];
-    auto tmpo = robot.get_jacobians_withcache_new(link_ids, joint_ids, rot_also, true);
+    auto J_numerical = robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
+    auto tmpo = robot.get_jacobians_withcache(link_ids, joint_ids, rot_also, true);
     auto J_analytical_whole = tmpo[0];
-    auto J_analytical_block = J_analytical_whole.block(0, 10*i, 6, 10);
+    auto J_analytical_block = J_analytical_whole.block(0, 10*i, 3, 10);
 
-    bool jacobian_equal = (J_analytical_block - J_analytical_old).array().abs().maxCoeff() < 1e-5;
+    bool jacobian_equal = (J_analytical_block - J_numerical).array().abs().maxCoeff() < 1e-5;
     if(!jacobian_equal){
       std::cout << "analytical :\n" << J_analytical_block << std::endl; 
-      std::cout << "analytical_old :\n" << J_analytical_old << std::endl; 
+      std::cout << "analytical_old :\n" << J_numerical << std::endl; 
       std::cout << "[FAIL] jacobains of " << link_names[i] << "mismatch" << std::endl; 
       return  -1;
     }
