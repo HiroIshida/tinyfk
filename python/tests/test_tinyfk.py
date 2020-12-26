@@ -8,6 +8,7 @@ try:
     import tinyfk
 except:
     import _tinyfk as tinyfk
+from math import *
 
 here_full_filepath = os.path.join(os.getcwd(), __file__)
 here_full_dirpath = os.path.dirname(here_full_filepath)
@@ -45,14 +46,24 @@ def test_fksovler():
             [angle_vector], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
     testing.assert_almost_equal(P, gt_pose_list)
 
+    print("test start")
+    def rpy_kine_mat(rpy):
+        a1, a2, a3 = rpy
+        a3 = -a3
+        a2 = -a2
+        a1 = -a1
+        mat = np.array([[cos(a3)/cos(a2), -sin(a3)/cos(a2), 0], 
+            [sin(a3), cos(a3), 0],
+            [-cos(a3)*sin(a2)/cos(a2), sin(a3)*sin(a2)/cos(a2), 1]])
+        return mat
     # The following test assumes: that the above test without jacobian succeeded.
     # check resulting jacbian J_analytical coincides with J_numerical witch is 
     # computed via numerical differentiation.
     for link_id, link_name in zip(link_ids, link_names):
         P_tmp, J_analytical = fksolver.solve_forward_kinematics(
-                [angle_vector], [link_id], joint_ids, False, True, True)
+                [angle_vector], [link_id], joint_ids, True, True, True)
         P0, _ = fksolver.solve_forward_kinematics(
-                [angle_vector], [link_id], joint_ids, False, True, False)
+                [angle_vector], [link_id], joint_ids, True, True, False)
         testing.assert_almost_equal(P_tmp, P0) # P computed with and without jacobian must match
 
         eps = 1e-7
@@ -61,7 +72,13 @@ def test_fksovler():
             angle_vector_p = copy.copy(angle_vector)
             angle_vector_p[i] += eps
             P1, _ = fksolver.solve_forward_kinematics(
-                    [angle_vector_p], [link_id], joint_ids, False, True, False)
+                    [angle_vector_p], [link_id], joint_ids, True, True, False)
             P_diff = (P1 - P0)/eps
             J_numerical[:, i] = P_diff.flatten()
-            testing.assert_almost_equal(J_numerical[:, i], J_analytical[:, i], decimal=5)
+
+        rpy = P0[0][3:]
+        mat = rpy_kine_mat(rpy)
+        testing.assert_almost_equal(J_numerical[:3, :], J_analytical[:3, :])
+        testing.assert_almost_equal(J_numerical[3:, :], mat.dot(J_analytical[3:, :]))
+    return J_numerical[3:, :], J_analytical[3:, :], rpy
+
