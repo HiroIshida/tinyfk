@@ -9,7 +9,6 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 urdf::Vector3 rpy_derivative(const urdf::Vector3& rpy, const urdf::Vector3 axis)
 {
-  // a1 -> y, a2 -> p, a3->r
   urdf::Vector3 drpy_dt;
   double a1 = -rpy.x;
   double a2 = -rpy.y;
@@ -132,20 +131,6 @@ namespace tinyfk
     }
   }
 
-  void copy_pose_to_arr(const urdf::Pose& pose, TinyMatrix& arr, bool with_rot){
-    const urdf::Vector3& pos = pose.position;
-    arr[0] = pos.x;
-    arr[1] = pos.y;
-    arr[2] = pos.z;
-    if(with_rot){
-      const urdf::Rotation& rot = pose.rotation;
-      urdf::Vector3 rpy = rot.getRPY();
-      arr[3] = rpy.x;
-      arr[4] = rpy.y;
-      arr[5] = rpy.z;
-    }
-  }
-
   std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
       const std::vector<unsigned int>& elink_ids,
       const std::vector<unsigned int>& joint_ids, 
@@ -187,13 +172,23 @@ namespace tinyfk
       int elink_id, const std::vector<unsigned int>& joint_ids,
       bool with_rot, bool with_base, TinyMatrix& pose, TinyMatrix& jacobian) const
   {
+
+    // Forward kinematics computation 
+    // tf_rlink_to_elink and epos, erot, erpy will be also used in jacobian computation
     urdf::Pose tf_rlink_to_elink;
     this->get_link_point_withcache(elink_id, tf_rlink_to_elink, with_base); 
-    copy_pose_to_arr(tf_rlink_to_elink, pose, with_rot);
-
     urdf::Vector3& epos = tf_rlink_to_elink.position;
     urdf::Rotation& erot = tf_rlink_to_elink.rotation;
-    urdf::Vector3 erpy = erot.getRPY();
+    urdf::Vector3 erpy; // will be used only with_rot
+    if(with_rot){
+      erpy = erot.getRPY();
+    }
+    pose[0] = epos.x; pose[1] = epos.y; pose[2] = epos.z;
+    if(with_rot){
+      pose[3] = erpy.x; pose[4] = erpy.y; pose[5] = erpy.z;
+    }
+
+    // Jacobian computation
     int dim_jacobi = (with_rot ? 6 : 3);
     for(int i=0; i<joint_ids.size(); i++){
       int jid = joint_ids[i];
