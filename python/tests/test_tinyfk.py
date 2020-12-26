@@ -46,16 +46,6 @@ def test_fksovler():
             [angle_vector], link_ids, joint_ids, use_rotation, use_base, with_jacobian)
     testing.assert_almost_equal(P, gt_pose_list)
 
-    print("test start")
-    def rpy_kine_mat(rpy):
-        a1, a2, a3 = rpy
-        a3 = -a3
-        a2 = -a2
-        a1 = -a1
-        mat = np.array([[cos(a3)/cos(a2), -sin(a3)/cos(a2), 0], 
-            [sin(a3), cos(a3), 0],
-            [-cos(a3)*sin(a2)/cos(a2), sin(a3)*sin(a2)/cos(a2), 1]])
-        return mat
     # The following test assumes: that the above test without jacobian succeeded.
     # check resulting jacbian J_analytical coincides with J_numerical witch is 
     # computed via numerical differentiation.
@@ -77,8 +67,9 @@ def test_fksovler():
             J_numerical[:, i] = P_diff.flatten()
 
         rpy = P0[0][3:]
-        mat = rpy_kine_mat(rpy)
+        # test position jacobian
         testing.assert_almost_equal(J_numerical[:3, :], J_analytical[:3, :])
-        testing.assert_almost_equal(J_numerical[3:, :], mat.dot(J_analytical[3:, :]))
+        # test rpy jacobian
+        testing.assert_almost_equal(J_numerical[3:, :], J_analytical[3:, :])
     return J_numerical[3:, :], J_analytical[3:, :], rpy
-
+test_fksovler()
