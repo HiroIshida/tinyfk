@@ -150,10 +150,8 @@ namespace tinyfk
     std::array<double, 3> _pose3d;
     urdf::Pose _pose;
     void set(double x, double y, double theta){
-      urdf::Vector3&& pos = {x, y, 0.0};
-      urdf::Rotation&& rot = {0.0, 0.0, 1.0 * sin(0.5 * theta), cos(0.5 * theta)};
-      _pose.position = std::move(pos);
-      _pose.rotation = std::move(rot);
+      _pose.position = urdf::Vector3(x, y, 0.0);
+      _pose.rotation = urdf::Rotation(0.0, 0.0, 1.0 * sin(0.5 * theta), cos(0.5 * theta));
       _pose3d[0] = x; _pose3d[1] = y; _pose3d[2] = theta;
     }
   };

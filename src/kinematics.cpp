@@ -7,7 +7,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include "tinyfk.hpp"
 #include <cmath>
 
-urdf::Vector3 rpy_derivative(const urdf::Vector3& rpy, const urdf::Vector3 axis)
+urdf::Vector3 rpy_derivative(const urdf::Vector3& rpy, const urdf::Vector3& axis)
 {
   urdf::Vector3 drpy_dt;
   double a1 = -rpy.x;
