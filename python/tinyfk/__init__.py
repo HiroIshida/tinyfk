@@ -1,6 +1,9 @@
 import numpy as np
 from . import _tinyfk
 
+class IKFail(Exception):
+    pass
+
 # higher layer wrap
 class RobotModel(object):
     def __init__(self, urdfpath):
@@ -42,8 +45,8 @@ class RobotModel(object):
             J_sharp = J.T.dot(np.linalg.inv(J.dot(J.T) + option["sr_weight"])) # singular-robust inverse
             angle_vector = angle_vector + J_sharp.dot(pose_diff)
             if np.linalg.norm(pose_diff) < option["ftol"]:
-                break
-        return angle_vector
+                return angle_vector
+        raise IKFail
 
     def get_joint_ids(self, joint_names):
         return self._robot.get_joint_ids(joint_names)
