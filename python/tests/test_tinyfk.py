@@ -27,17 +27,18 @@ gt_pose_list = copy.copy(gt_pose_list_)
 gt_pose_list[:, 3] = gt_pose_list_[:, 5] # note in skrobot rpy order is z-y-x
 gt_pose_list[:, 5] = gt_pose_list_[:, 3] # so, the two lines are swapped.
 
+# common setups 
+fksolver = tinyfk.RobotModel(urdf_model_path)
+
+# adding new link `mylink` to `r_upper_arm_link`
+parent_id = fksolver.get_link_ids(["r_upper_arm_link"])[0]
+fksolver.add_new_link('mylink', parent_id, [0.1, 0.1, 0.1])
+
+# To interact with fksolver, we must get the correspoinding link_ids and joint_ids.
+link_ids = fksolver.get_link_ids(link_names)
+joint_ids = fksolver.get_joint_ids(joint_names)
+
 def test_fksovler():
-    fksolver = tinyfk.RobotModel(urdf_model_path)
-
-    # adding new link `mylink` to `r_upper_arm_link`
-    parent_id = fksolver.get_link_ids(["r_upper_arm_link"])[0]
-    fksolver.add_new_link('mylink', parent_id, [0.1, 0.1, 0.1])
-
-    # To interact with fksolver, we must get the correspoinding link_ids and joint_ids.
-    link_ids = fksolver.get_link_ids(link_names)
-    joint_ids = fksolver.get_joint_ids(joint_names)
-
     # check P (array of poses [pos, rpy] of each link) coincides with the ground truth
     use_rotation = True # If true P[i, :] has 6 dim, otherwise has 3 dim.
     use_base = True # If true, assumes that angle_vector takes the form of [q_joints, q_base (3dof)]
@@ -71,5 +72,29 @@ def test_fksovler():
         testing.assert_almost_equal(J_numerical[:3, :], J_analytical[:3, :])
         # test rpy jacobian
         testing.assert_almost_equal(J_numerical[3:, :], J_analytical[3:, :])
-    return J_numerical[3:, :], J_analytical[3:, :], rpy
-test_fksovler()
+
+def test_iksolver():
+
+    class Setting:
+        def __init__(self, av, pose_desired, with_rot, with_base):
+            self.av_init = av
+            self.pose_desired = pose_desired
+            self.with_rot = with_rot
+            self.with_base = with_base
+
+    setting_list = [
+            Setting(angle_vector[:-3], np.array([0.7, -0.6, 0.8]), False, False),
+            Setting(angle_vector, np.array([0.7, -0.6, 0.8]), False, True),
+            Setting(angle_vector, np.array([1.7, -0.6, 0.8]), False, True),
+            Setting(angle_vector[:-3], np.array([0.7, -0.6, 0.8, 0, 0, 0]), True, False),
+            Setting(angle_vector, np.array([1.7, -0.6, 0.8, 0, 0, 0]), True, True)
+            ]
+
+    end_link_id = fksolver.get_link_ids(["r_gripper_tool_frame"])[0]
+    for s in setting_list:
+        av_sol = fksolver.solve_inverse_kinematics(
+                s.pose_desired, s.av_init, end_link_id, joint_ids, s.with_rot, s.with_base)
+        P, J = fksolver.solve_forward_kinematics([av_sol], [end_link_id], joint_ids, with_rot=s.with_rot, with_base=s.with_base)
+        pose = P[0]
+        acc = np.linalg.norm(s.pose_desired - pose)
+        assert acc < 1e-4
