@@ -24,7 +24,7 @@ class RobotModel(object):
             with_rot, with_base, with_jacobian)
 
     def solve_inverse_kinematics(self, target_pose, init_angle_vector, elink_id, joint_ids,
-            with_rot=False, with_base=False, option=None):
+            with_rot=False, with_base=False, option=None, ignore_fail=False):
 
         if option is None:
             option = {"maxitr": 200, "ftol": 1e-4, "sr_weight":1.0}
@@ -46,6 +46,10 @@ class RobotModel(object):
             angle_vector = angle_vector + J_sharp.dot(pose_diff)
             if np.linalg.norm(pose_diff) < option["ftol"]:
                 return angle_vector
+
+        if ignore_fail:
+            return angle_vector
+
         raise IKFail
 
     def get_joint_ids(self, joint_names):
