@@ -90,11 +90,13 @@ def test_iksolver():
             Setting(angle_vector, np.array([1.7, -0.6, 0.8, 0, 0, 0]), True, True)
             ]
 
+    option = {"maxitr": 1000, "ftol": 1e-4, "sr_weight":1.0}
+
     end_link_id = fksolver.get_link_ids(["r_gripper_tool_frame"])[0]
     for s in setting_list:
         av_sol = fksolver.solve_inverse_kinematics(
-                s.pose_desired, s.av_init, end_link_id, joint_ids, s.with_rot, s.with_base)
+                s.pose_desired, s.av_init, end_link_id, joint_ids, s.with_rot, s.with_base, option=option)
         P, J = fksolver.solve_forward_kinematics([av_sol], [end_link_id], joint_ids, with_rot=s.with_rot, with_base=s.with_base)
         pose = P[0]
         acc = np.linalg.norm(s.pose_desired - pose)
-        assert acc < 1e-4
+        assert acc < option["ftol"]
