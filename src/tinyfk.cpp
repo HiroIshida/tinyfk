@@ -89,10 +89,27 @@ namespace tinyfk
 
   void RobotModel::set_joint_angles(
       const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles){
-      for(unsigned int i=0; i<joint_ids.size(); i++){
-        _joint_angles[joint_ids[i]] = joint_angles[i];
-      }
-      _tf_cache.clear();
+    this->_set_joint_angles(joint_ids, joint_angles);
+    _tf_cache.clear();
+  }
+
+  void RobotModel::_set_joint_angles(
+    const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles){
+    for(unsigned int i=0; i<joint_ids.size(); i++){
+      _joint_angles[joint_ids[i]] = joint_angles[i];
+    }
+  }
+
+  void RobotModel::set_base_pose(double x, double y, double theta){
+    _set_base_pose(x, y, theta);
+    _tf_cache.clear();
+  }
+  void RobotModel::_set_base_pose(double x, double y, double theta){
+    _base_pose.set(x, y, theta);
+  }
+
+  void RobotModel::clear_cache(){
+    _tf_cache.clear();
   }
 
   void RobotModel::set_init_angles(){
