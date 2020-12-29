@@ -88,10 +88,10 @@ namespace tinyfk
       for(unsigned int i=0; i<3; i++){
         std::array<double, 3>& tmp = _base_pose._pose3d;
         tmp[i] += dx;
-        this->set_base_pose(tmp[0], tmp[1], tmp[2]);
+        this->set_base_pose(tmp);
         this->get_link_point(elink_id, pose1, true);
         tmp[i] -= dx;
-        this->set_base_pose(tmp[0], tmp[1], tmp[2]);
+        this->set_base_pose(tmp);
 
         urdf::Vector3& pos0 = pose0.position;
         urdf::Vector3& pos1 = pose1.position;

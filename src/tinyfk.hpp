@@ -192,16 +192,8 @@ namespace tinyfk
           bool rotalso = false, bool basealso = false
           );
 
-      void set_joint_angles(// this will clear all the cache stored
+      void set_joint_angles(
           const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles);
-      void _set_joint_angles(// lower version of the set_joint_angle which does not clear cache
-          const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles);
-
-      void set_base_pose(double x, double y, double theta);
-      void _set_base_pose(double x, double y, double theta);
-      
-
-      void clear_cache();
 
       void set_init_angles();
 
@@ -214,6 +206,12 @@ namespace tinyfk
       // anyway, don't use it
       void set_joint_angle(unsigned int joint_id, double angle){
         _joint_angles[joint_id] = angle;
+      }
+
+      void set_base_pose(double x, double y, double theta){_base_pose.set(x, y, theta);}
+      
+      void set_base_pose(const std::array<double ,3>& pose3d){
+        _base_pose.set(pose3d[0], pose3d[1], pose3d[2]);
       }
 
       // perfromance of returning array of eigen is actually almost same as pass by reference
