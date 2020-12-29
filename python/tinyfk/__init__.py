@@ -1,13 +1,11 @@
 import numpy as np
 from . import _tinyfk
 
-class IKFail(Exception):
-    pass
-
 # higher layer wrap
 class RobotModel(object):
 
     from ._inverse_kinematics import solve_inverse_kinematics
+    from ._inverse_kinematics import solve_multi_endeffector_inverse_kinematics
 
     def __init__(self, urdfpath):
         self._robot = _tinyfk.RobotModel(urdfpath)
@@ -40,3 +38,6 @@ class RobotModel(object):
 
     def add_new_link(self, link_name, parent_id, position):
         return self._robot.add_new_link(link_name, parent_id, position)
+
+    def clear_cache(self):
+        self._robot.clear_cache()
