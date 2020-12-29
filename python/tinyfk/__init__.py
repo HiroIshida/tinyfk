@@ -21,10 +21,16 @@ class RobotModel(object):
             self._robot.set_joint_angles(joint_ids, joint_angles_)
 
     def solve_forward_kinematics(self, joint_angles_sequence, elink_ids, joint_ids,
-                                 with_rot=False, with_base=False, with_jacobian=False):
+                                 with_rot=False, with_base=False, with_jacobian=False, use_cache=False):
+        """
+        if use_cache is False, before solving FK, internal caches in the tinyfk side will be
+        cleared. If True, pre-exisiting cache will be took advantaged.
+        Setting use_cache=True is potentially dangeroud feature for developers who
+        understand the caching mechanism of the tinyfk side. 
+        """
         return self._robot.solve_forward_kinematics(
             joint_angles_sequence, elink_ids, joint_ids,
-            with_rot, with_base, with_jacobian)
+            with_rot, with_base, with_jacobian, use_cache)
 
     def get_joint_ids(self, joint_names):
         return self._robot.get_joint_ids(joint_names)

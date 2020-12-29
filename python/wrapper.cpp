@@ -35,7 +35,7 @@ class RobotModelPyWrapper
         const std::vector<std::vector<double>> joint_angles_sequence,
         const std::vector<unsigned int>& elink_ids,
         const std::vector<unsigned int>& joint_ids,
-        bool rotalso, bool basealso, bool with_jacobian)
+        bool rotalso, bool basealso, bool with_jacobian, bool use_cache)
     {
 
       unsigned int n_pose_dim = (rotalso ? 6 : 3); // 7 if rot enabled
@@ -55,16 +55,18 @@ class RobotModelPyWrapper
       Eigen::MatrixXd P_trajectory = Eigen::MatrixXd::Zero(n_pose_dim, n_wp * n_links);
 
       for(unsigned int i=0; i<n_wp; i++){
-        if(basealso){
-          // in this case, latter 3 elements represents x, y, theta of the base
-          _rtree.set_joint_angles(joint_ids, joint_angles_sequence[i]);
-          // TODO potentionally buggy
-          double x = joint_angles_sequence[i][n_joints + 0];
-          double y = joint_angles_sequence[i][n_joints + 1];
-          double theta = joint_angles_sequence[i][n_joints + 2];
-          _rtree.set_base_pose(x, y, theta);
-        }else{
-          _rtree.set_joint_angles(joint_ids, joint_angles_sequence[i]);
+        if(!use_cache){
+          if(basealso){
+            // in this case, latter 3 elements represents x, y, theta of the base
+            _rtree.set_joint_angles(joint_ids, joint_angles_sequence[i]);
+            // TODO potentionally buggy
+            double x = joint_angles_sequence[i][n_joints + 0];
+            double y = joint_angles_sequence[i][n_joints + 1];
+            double theta = joint_angles_sequence[i][n_joints + 2];
+            _rtree.set_base_pose(x, y, theta);
+          }else{
+            _rtree.set_joint_angles(joint_ids, joint_angles_sequence[i]);
+          }
         }
 
         if(with_jacobian){

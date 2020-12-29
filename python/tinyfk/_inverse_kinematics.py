@@ -16,7 +16,7 @@ def solve_inverse_kinematics(self, target_pose, init_angle_vector, elink_id, joi
 
     angle_vector = init_angle_vector
     for i in range(option["maxitr"]):
-        P, J = self._robot.solve_forward_kinematics(
+        P, J = self.solve_forward_kinematics(
                 [angle_vector], [elink_id], joint_ids, with_rot, with_base, True)
         pose_diff = target_pose - P[0]
         J_sharp = J.T.dot(np.linalg.inv(J.dot(J.T) + option["sr_weight"])) # singular-robust inverse
