@@ -55,19 +55,17 @@ class RobotModelPyWrapper
       Eigen::MatrixXd P_trajectory = Eigen::MatrixXd::Zero(n_pose_dim, n_wp * n_links);
 
       for(unsigned int i=0; i<n_wp; i++){
-        if(!use_cache){
-          if(basealso){
-            // in this case, latter 3 elements represents x, y, theta of the base
-            _rtree.set_joint_angles(joint_ids, joint_angles_sequence[i]);
-            // TODO potentionally buggy
-            double x = joint_angles_sequence[i][n_joints + 0];
-            double y = joint_angles_sequence[i][n_joints + 1];
-            double theta = joint_angles_sequence[i][n_joints + 2];
-            _rtree.set_base_pose(x, y, theta);
-          }else{
-            _rtree.set_joint_angles(joint_ids, joint_angles_sequence[i]);
-          }
+        _rtree._set_joint_angles(joint_ids, joint_angles_sequence[i]);
+        if(basealso){
+          double x = joint_angles_sequence[i][n_joints + 0];
+          double y = joint_angles_sequence[i][n_joints + 1];
+          double theta = joint_angles_sequence[i][n_joints + 2];
+          _rtree._set_base_pose(x, y, theta);
         }
+        if(!use_cache){
+          _rtree.clear_cache();
+        }
+
 
         if(with_jacobian){
           auto tmp = _rtree.get_jacobians_withcache(elink_ids, joint_ids, rotalso, basealso);
@@ -109,6 +107,10 @@ class RobotModelPyWrapper
       _rtree.add_new_link(link_name, parent_id, position);
     }
 
+    void clear_cache(){
+      _rtree.clear_cache();
+    }
+
 };
 
 PYBIND11_MODULE(_tinyfk, m) {
@@ -119,6 +121,7 @@ PYBIND11_MODULE(_tinyfk, m) {
             .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)
             .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
             .def("set_base_pose", &RobotModelPyWrapper::set_base_pose)
+            .def("get_link_ids", &RobotModelPyWrapper::get_link_ids)
             .def("add_new_link", &RobotModelPyWrapper::add_new_link)
-            .def("get_link_ids", &RobotModelPyWrapper::get_link_ids);
+            .def("clear_cache", &RobotModelPyWrapper::clear_cache);
 }
