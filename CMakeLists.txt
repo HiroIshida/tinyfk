@@ -45,7 +45,7 @@ if(BUILD_PYTHON_INTERFACE)
 
     set(LIBRARY_NAME _tinyfk)
     add_subdirectory(third_party/pybind11)
-    pybind11_add_module(_tinyfk python/wrapper.cpp)
+    pybind11_add_module(_tinyfk src/wrapper.cpp)
     target_link_libraries(_tinyfk PRIVATE tinyfk)
 
     if(INSTALL_VIA_PIP)
