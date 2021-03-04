@@ -4,10 +4,14 @@ This software is released under the MIT License, see LICENSE.
 tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
+#ifndef tinyfk_hpp
+#define tinyfk_hpp
+
 #include "urdf_parser/urdf_parser.h"
 #include "urdf_model/pose.h"
 #include "urdf_model/joint.h"
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
 #include <Eigen/Core> // slow compile...  
 #include <array>
@@ -159,7 +163,6 @@ namespace tinyfk
   class RobotModel
   {
     public: //members
-      std::string _urdf_file;
       // change them all to private later
       urdf::ModelInterfaceSharedPtr _robot_urdf_interface;
 
@@ -178,7 +181,7 @@ namespace tinyfk
       mutable TransformCache _tf_cache;
 
     public: //functions
-      RobotModel(const std::string& urdf_file);
+      RobotModel(const std::string& xml_string);
       RobotModel(){}
 
       void get_link_point(
@@ -300,4 +303,7 @@ namespace tinyfk
       }
   };
 
+  RobotModel construct_from_urdfpath(const std::string& urdf_path);
 };//end namespace
+
+#endif // include guard
