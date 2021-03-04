@@ -39,6 +39,7 @@ jobs:
               run: |
                   cd build
                   ./test_kinematics
+                  ./bench_tinyfk
 
             - name: pip install tinyfk from source
               run: |

@@ -16,7 +16,7 @@ int main(){
     "upperarm_roll_link"};
   std::cout << "\n start benchmarking" << std::endl; 
 
-  auto robot = RobotModel(urdf_file);
+  auto robot = construct_from_urdfpath(urdf_file);
   std::vector<std::string> joint_names = {// all joints to drive fetch arm
         "torso_lift_joint",
         "shoulder_pan_joint",
