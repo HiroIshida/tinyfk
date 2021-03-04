@@ -11,16 +11,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 namespace tinyfk
 {
 
-  RobotModel::RobotModel(const std::string& urdf_file){
-    std::string xml_string;
-    std::fstream xml_file(urdf_file, std::fstream::in);
-    while ( xml_file.good() )
-    {
-      std::string line;
-      std::getline( xml_file, line);
-      xml_string += (line + "\n");
-    }
-    xml_file.close();
+  RobotModel::RobotModel(const std::string& xml_string){
     urdf::ModelInterfaceSharedPtr robot_urdf_interface = urdf::parseURDF(xml_string);
 
     // numbering link id 
@@ -74,7 +65,6 @@ namespace tinyfk
 
     // consturct rptable
 
-    _urdf_file = urdf_file;
     _nasty_stack = NastyStack(N_link);
     _tf_cache = TransformCache(N_link);
     _root_link = robot_urdf_interface->root_link_;
@@ -156,4 +146,16 @@ namespace tinyfk
     return link_ids;
   }
 
+  RobotModel construct_from_urdfpath(const std::string& urdf_path){
+    std::string xml_string;
+    std::fstream xml_file(urdf_path, std::fstream::in);
+    while ( xml_file.good() )
+    {
+      std::string line;
+      std::getline( xml_file, line);
+      xml_string += (line + "\n");
+    }
+    xml_file.close();
+    return RobotModel(xml_string);
+  }
 };//end namespace tinyfk
