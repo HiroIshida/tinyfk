@@ -17,8 +17,8 @@ class RobotModelPyWrapper
 {
   public:
     RobotModel _rtree;
-    RobotModelPyWrapper(const std::string& urdf_file) :
-      _rtree(construct_from_urdfpath(urdf_file)) {}
+    RobotModelPyWrapper(const std::string& xml_string) :
+      _rtree(RobotModel(xml_string)) {}
 
     void set_joint_angles(
         const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles)

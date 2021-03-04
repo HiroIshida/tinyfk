@@ -9,8 +9,10 @@ class RobotModel(object):
     from ._inverse_kinematics import solve_multi_endeffector_inverse_kinematics
 
     def __init__(self, urdfpath):
-        self._urdfpath = urdfpath
-        self._robot = _tinyfk.RobotModel(urdfpath)
+        with open(urdfpath, 'r') as reader:
+            xml_text = reader.read()
+        self._xml_text = xml_text # solely for pickling & unpickling
+        self._robot = _tinyfk.RobotModel(xml_text)
 
     def set_joint_angles(self, joint_ids, joint_angles_, with_base=False):
         if with_base:
@@ -47,8 +49,8 @@ class RobotModel(object):
     # for pickling and unpickling
     # https://stackoverflow.com/questions/1939058/simple-example-of-use-of-setstate-and-getstate
     def __getstate__(self): # pickling
-        return {'_urdfpath': self._urdfpath}
+        return {'_xml_text': self._xml_text}
 
     def __setstate__(self, d): # unpickling
-        self._urdfpath = d['_urdfpath']
-        self._robot = _tinyfk.RobotModel(self._urdfpath)
+        self._xml_text = d['_xml_text']
+        self._robot = _tinyfk.RobotModel(self._xml_text)
