@@ -1,4 +1,3 @@
-import os
 import copy
 import json
 import unittest
@@ -10,12 +9,8 @@ except:
     import _tinyfk as tinyfk
 from math import *
 
-here_full_filepath = os.path.join(os.getcwd(), __file__)
-here_full_dirpath = os.path.dirname(here_full_filepath)
-project_base_path = os.path.join(here_full_dirpath, "..", "..")
-
-urdf_model_path = os.path.join(project_base_path, "data", "pr2.urdf")
-test_data_path = os.path.join(project_base_path, "test", "test_data.json")
+urdf_model_path = tinyfk.pr2_urdfpath()
+test_data_path = tinyfk._test_data_urdfpath()
 
 with open(test_data_path, 'r') as f:
     test_data = json.load(f)
