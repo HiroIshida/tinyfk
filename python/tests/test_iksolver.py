@@ -15,10 +15,7 @@ rarm_joint_names = ["r_shoulder_pan_joint", "r_shoulder_lift_joint", "r_upper_ar
 larm_joint_names = ["l_shoulder_pan_joint", "l_shoulder_lift_joint", "l_upper_arm_roll_joint", "l_elbow_flex_joint", "l_forearm_roll_joint", "l_wrist_flex_joint", "l_wrist_roll_joint"]
 
 # common setups 
-here_full_filepath = os.path.join(os.getcwd(), __file__)
-here_full_dirpath = os.path.dirname(here_full_filepath)
-project_base_path = os.path.join(here_full_dirpath, "..", "..")
-urdf_model_path = os.path.join(project_base_path, "data", "pr2.urdf")
+urdf_model_path = tinyfk.pr2_urdfpath()
 fksolver = tinyfk.RobotModel(urdf_model_path)
 
 # To interact with fksolver, we must get the correspoinding link_ids and joint_ids.

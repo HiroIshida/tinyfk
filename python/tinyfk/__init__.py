@@ -3,17 +3,28 @@ import os
 import numpy as np
 from . import _tinyfk
 
-tinyfk_cahce_dir = os.path.expanduser('~/.tinyfk')
-if not os.path.exists(tinyfk_cahce_dir):
-    os.makedirs(tinyfk_cahce_dir)
+_cache_dir = os.path.expanduser('~/.tinyfk')
+if not os.path.exists(_cache_dir):
+    os.makedirs(_cache_dir)
     if sys.version_info[0] >= 3:
         from urllib.request import urlretrieve
     else:
         from urllib import urlretrieve
     addr_pr2 = 'https://raw.githubusercontent.com/HiroIshida/tinyfk/master/data/pr2.urdf'
     addr_fetch = 'https://raw.githubusercontent.com/HiroIshida/tinyfk/master/data/fetch.urdf'
-    urlretrieve(addr_pr2, os.path.join(tinyfk_cahce_dir, 'pr2.urdf'))
-    urlretrieve(addr_fetch, os.path.join(tinyfk_cahce_dir, 'fetch.urdf'))
+    addr_testdata = 'https://raw.githubusercontent.com/HiroIshida/tinyfk/master/test/test_data.json'
+    urlretrieve(addr_pr2, os.path.join(_cache_dir, 'pr2.urdf'))
+    urlretrieve(addr_fetch, os.path.join(_cache_dir, 'fetch.urdf'))
+    urlretrieve(addr_testdata, os.path.join(_cache_dir, 'test_data.json')) # used only in the unit test
+
+def pr2_urdfpath():
+    return os.path.join(_cache_dir, 'pr2.urdf')
+
+def fetch_urdfpath():
+    return os.path.join(_cache_dir, 'fetch.urdf')
+
+def _test_data_urdfpath():
+    return os.path.join(_cache_dir, 'test_data.json')
 
 # higher layer wrap
 class RobotModel(object):
