@@ -1,6 +1,19 @@
+import sys
+import os
 import numpy as np
 from . import _tinyfk
 
+tinyfk_cahce_dir = os.path.expanduser('~/.tinyfk')
+if not os.path.exists(tinyfk_cahce_dir):
+    os.makedirs(tinyfk_cahce_dir)
+    if sys.version_info[0] >= 3:
+        from urllib.request import urlretrieve
+    else:
+        from urllib import urlretrieve
+    addr_pr2 = 'https://raw.githubusercontent.com/HiroIshida/tinyfk/master/data/pr2.urdf'
+    addr_fetch = 'https://raw.githubusercontent.com/HiroIshida/tinyfk/master/data/fetch.urdf'
+    urlretrieve(addr_pr2, os.path.join(tinyfk_cahce_dir, 'pr2.urdf'))
+    urlretrieve(addr_fetch, os.path.join(tinyfk_cahce_dir, 'fetch.urdf'))
 
 # higher layer wrap
 class RobotModel(object):
