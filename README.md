@@ -8,16 +8,11 @@ pip install tinyfk
 
 or, building locally from source (for developer):
 ```bash
-# maybe you need to export:
-# export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/lib/x86_64-linux-gnu/pkgconfig"
+sudo apt-get install libeigen3-dev
 git clone https://github.com/HiroIshida/tinyfk.git
 cd tinyfk
 git submodule update --init --depth=1
 pip install . 
-```
-To build from source, we require `eigen3` is already installed.
-```
-sudo apt-get install libeigen3-dev
 ```
 
 ### Usage
@@ -61,6 +56,7 @@ The output is
 ### For debugging
 For debugging or developing, it's better using cmake directly rather than using `pip`. In this case, please use
 ```bash
+sudo apt-get install libeigen3-dev
 git clone https://github.com/HiroIshida/tinyfk.git
 cd tinyfk
 git submodule update --init --depth=1
