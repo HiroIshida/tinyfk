@@ -15,9 +15,9 @@ cd tinyfk
 git submodule update --init --depth=1
 pip install . 
 ```
-To build from source, we require `libtinyxml` and `eigen3` is already installed.
+To build from source, we require `eigen3` is already installed.
 ```
-sudo apt-get install libeigen3-dev libtinyxml-dev
+sudo apt-get install libeigen3-dev
 ```
 
 ### Usage
