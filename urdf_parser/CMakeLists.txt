@@ -8,8 +8,8 @@ set (URDF_PATCH_VERSION 4)
 set (URDF_VERSION ${URDF_MAJOR_VERSION}.${URDF_MINOR_VERSION}.${URDF_PATCH_VERSION})
 set (URDF_MAJOR_MINOR_VERSION ${URDF_MAJOR_VERSION}.${URDF_MINOR_VERSION})
 
-find_package(PkgConfig)
-pkg_check_modules(TinyXML REQUIRED tinyxml)
+add_subdirectory("tinyxml")
+set(TinyXML_INCLUDE_DIRS "tinyxml")
 
 add_library(urdfdom_model STATIC src/pose.cpp src/model.cpp src/link.cpp src/joint.cpp)
 target_include_directories(urdfdom_model PUBLIC "include" ${TinyXML_INCLUDE_DIRS})
