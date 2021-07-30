@@ -13,7 +13,7 @@ jobs:
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
-                os: [ubuntu-latest, ubuntu-18.04]
+                os: [ubuntu-latest, ubuntu-18.04, ubuntu-16.04]
         steps:
             - name: Setup python
               uses: actions/setup-python@v2
@@ -21,6 +21,7 @@ jobs:
                   python-version: '3.7'
             - name: install tinyfk from pypi
               run: |
+                  strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6|grep  GLIBC
                   pip install numpy
                   pip install tinyfk
                   python -c "import tinyfk"
