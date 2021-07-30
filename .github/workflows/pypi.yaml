@@ -21,5 +21,6 @@ jobs:
                   python-version: '3.7'
             - name: install tinyfk from pypi
               run: |
+                  pip install numpy
                   pip install tinyfk
                   python -c "import tinyfk"
