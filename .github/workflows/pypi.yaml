@@ -1,0 +1,25 @@
+name: PyPi test
+
+on:
+    push:
+        branches:
+            - master
+    pull_request:
+        branches:
+            - master
+jobs:
+    build:
+        runs-on: ${{ matrix.os }}
+    strategy:
+        matrix:
+            os: [ubuntu-latest, ubuntu-18.04]
+    steps:
+        - name: Setup python
+          uses: actions/setup-python@v2
+          with:
+              python-version: '3.7' # matrix?
+
+        - name: pip install tinyfk from pypi
+          run: |
+              pip install tinyfk
+              python -c "import tinyfk;"
