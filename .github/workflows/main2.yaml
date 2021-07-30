@@ -19,3 +19,6 @@ jobs:
               uses: actions/setup-python@v2
               with:
                   python-version: '3.7'
+            - name: install tinyfk from pypi
+              run: |
+                  pip install tinyfk
