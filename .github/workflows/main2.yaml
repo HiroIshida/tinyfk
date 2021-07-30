@@ -15,17 +15,7 @@ jobs:
             matrix:
                 os: [ubuntu-latest, ubuntu-18.04]
         steps:
-            - name: Checkout Code
-              uses: actions/checkout@v2
-
-            - name: update submodule
-              run: git submodule update --init --depth=1
-
             - name: Setup python
               uses: actions/setup-python@v2
               with:
                   python-version: '3.7'
-
-            - name: Install apt packages
-              run: |
-                  sudo apt-get install libeigen3-dev
