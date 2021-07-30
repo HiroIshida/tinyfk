@@ -15,5 +15,6 @@ setup(
     license="MIT",
     packages=["tinyfk"],
     package_dir={'': 'python'},
-    cmake_install_dir='python/tinyfk/'
+    cmake_install_dir='python/tinyfk/',
+    install_requires=['numpy']
     )
