@@ -10,7 +10,10 @@ on:
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, ubuntu-18.04]
         steps:
             - name: Checkout Code
               uses: actions/checkout@v2
@@ -26,27 +29,3 @@ jobs:
             - name: Install apt packages
               run: |
                   sudo apt-get install libeigen3-dev
-
-            - name: Build c++ via cmake
-              run: |
-                  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/lib/x86_64-linux-gnu/pkgconfig"
-                  mkdir build
-                  cd build
-                  cmake -DBUILD_PYTHON_INTERFACE=OFF -DCMAKE_BUILD_TYPE=Debug ..
-                  make
-
-            - name: Test c++
-              run: |
-                  cd build
-                  ./test_kinematics
-                  ./bench_tinyfk
-
-            - name: pip install tinyfk from source
-              run: |
-                  pip install numpy pytest
-                  pip install . 
-
-            - name: Test python wrapper
-              run: |
-                  cd python
-                  pytest
