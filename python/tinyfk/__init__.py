@@ -32,9 +32,11 @@ class RobotModel(object):
     from ._inverse_kinematics import solve_inverse_kinematics
     from ._inverse_kinematics import solve_multi_endeffector_inverse_kinematics
 
-    def __init__(self, urdfpath):
-        with open(urdfpath, 'r') as reader:
-            xml_text = reader.read()
+    def __init__(self, urdfpath=None, xml_text=None):
+        assert (urdfpath is None) ^ (xml_text is None)
+        if not xml_text:
+            with open(urdfpath, 'r') as reader:
+                xml_text = reader.read()
         self._xml_text = xml_text # solely for pickling & unpickling
         self._robot = _tinyfk.RobotModel(xml_text)
 
