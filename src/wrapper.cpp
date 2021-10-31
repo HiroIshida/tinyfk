@@ -103,6 +103,10 @@ class RobotModelPyWrapper
       return robot_model_.get_link_ids(link_names);
     }
 
+    std::vector<std::pair<double, double>> get_joint_limits(const std::vector<size_t>& joint_ids){
+      return robot_model_.get_joint_limits(joint_ids);
+    }
+
     void add_new_link(std::string link_name, size_t parent_id, std::array<double, 3> position){ 
       robot_model_.add_new_link(link_name, parent_id, position);
     }
@@ -120,6 +124,7 @@ PYBIND11_MODULE(_tinyfk, m) {
             .def("solve_forward_kinematics", &RobotModelPyWrapper::solve_forward_kinematics)
             .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)
             .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
+            .def("get_joint_limits", &RobotModelPyWrapper::get_joint_limits)
             .def("set_base_pose", &RobotModelPyWrapper::set_base_pose)
             .def("get_link_ids", &RobotModelPyWrapper::get_link_ids)
             .def("add_new_link", &RobotModelPyWrapper::add_new_link)

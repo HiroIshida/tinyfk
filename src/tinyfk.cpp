@@ -131,6 +131,20 @@ namespace tinyfk
     return joint_ids;
   }
 
+  std::vector<AngleLimit> RobotModel::get_joint_limits(const std::vector<size_t>& joint_ids) const
+  {
+    const size_t n_joint = joint_ids.size();
+    std::vector<AngleLimit> limits(n_joint, AngleLimit());
+    for(size_t i=0; i<n_joint; i++){
+
+      const auto& joint = joints_[joint_ids[i]];
+      auto& limit = limits[i];
+      limit.first = joint->limits->lower;
+      limit.second = joint->limits->upper;
+    }
+    return limits;
+  }
+
   std::vector<size_t> RobotModel::get_link_ids(std::vector<std::string> link_names) const
   {
     int n_link = link_names.size();
