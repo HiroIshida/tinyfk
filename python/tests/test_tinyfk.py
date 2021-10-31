@@ -32,6 +32,16 @@ fksolver.add_new_link('mylink', parent_id, [0.1, 0.1, 0.1])
 # To interact with fksolver, we must get the correspoinding link_ids and joint_ids.
 link_ids = fksolver.get_link_ids(link_names)
 joint_ids = fksolver.get_joint_ids(joint_names)
+joint_limits = fksolver.get_joint_limits(joint_ids)
+
+def test_joint_limit():
+    r_shoulder_pan_joint_limit = joint_limits[0]
+    assert abs(r_shoulder_pan_joint_limit[0] - -2.2853981634) < 1e-10
+    assert abs(r_shoulder_pan_joint_limit[1] - 0.714601836603) < 1e-10
+
+    r_wrist_roll_joint_limit = joint_limits[-1]
+    assert r_wrist_roll_joint_limit[0] == None
+    assert r_wrist_roll_joint_limit[1] == None
 
 def test_fksovler():
     # check P (array of poses [pos, rpy] of each link) coincides with the ground truth
