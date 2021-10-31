@@ -12,7 +12,7 @@ namespace tinyfk
 {
 
   void RobotModel::get_link_point(
-      unsigned int link_id, urdf::Pose& out_tf_rlink_to_elink, bool basealso) const
+      size_t link_id, urdf::Pose& out_tf_rlink_to_elink, bool basealso) const
   {
     // h : here , e: endeffector , r: root, p: parent
     // e.g. hlink means here_link and rlink means root_link
@@ -50,18 +50,18 @@ namespace tinyfk
   }
 
   Eigen::MatrixXd RobotModel::get_jacobian_naive(
-      unsigned int elink_id, const std::vector<unsigned int>& joint_ids, bool rotalso, bool basealso) 
+      size_t elink_id, const std::vector<size_t>& joint_ids, bool rotalso, bool basealso) 
   {
-    unsigned int n_pose_dim = (rotalso ? 6 : 3);
-    unsigned int n_joints = joint_ids.size();
-    unsigned int n_dof = (basealso ? n_joints + 3 : n_joints);
+    size_t n_pose_dim = (rotalso ? 6 : 3);
+    size_t n_joints = joint_ids.size();
+    size_t n_dof = (basealso ? n_joints + 3 : n_joints);
     Eigen::MatrixXd J = Eigen::MatrixXd::Zero(n_pose_dim, n_dof);
 
     double dx = 1e-7;
     std::vector<double> q0 = this->get_joint_angles(joint_ids);
     urdf::Pose pose0, pose1;
     this->get_link_point(elink_id, pose0, basealso);
-    for(unsigned int i=0; i<n_joints; i++){
+    for(size_t i=0; i<n_joints; i++){
       int jid = joint_ids[i];
 
       this->set_joint_angle(jid, q0[i] + dx);
@@ -85,7 +85,7 @@ namespace tinyfk
     }
 
     if(basealso){
-      for(unsigned int i=0; i<3; i++){
+      for(size_t i=0; i<3; i++){
         std::array<double, 3>& tmp = base_pose_.pose3d_;
         tmp[i] += dx;
         this->set_base_pose(tmp[0], tmp[1], tmp[2]);

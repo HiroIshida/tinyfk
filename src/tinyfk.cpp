@@ -26,7 +26,7 @@ namespace tinyfk
       links.push_back(link);
       lid++;
     }
-    unsigned int N_link = lid; // starting from 0 and finally ++ increment, so it'S ok
+    size_t N_link = lid; // starting from 0 and finally ++ increment, so it'S ok
 
     // construct joints and joint_ids, and numbering joint id
     std::vector<urdf::JointSharedPtr> joints;
@@ -35,7 +35,7 @@ namespace tinyfk
     for(auto& map_pair: robot_urdf_interface->joints_){
       std::string jname = map_pair.first;
       urdf::JointSharedPtr joint = map_pair.second;
-      unsigned int jtype = joint->type;
+      size_t jtype = joint->type;
 
       if(
           jtype==urdf::Joint::REVOLUTE || 
@@ -77,14 +77,14 @@ namespace tinyfk
   }
 
   void RobotModel::set_joint_angles(
-      const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles){
+      const std::vector<size_t>& joint_ids, const std::vector<double>& joint_angles){
     this->_set_joint_angles(joint_ids, joint_angles);
     tf_cache_.clear();
   }
 
   void RobotModel::_set_joint_angles(
-    const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles){
-    for(unsigned int i=0; i<joint_ids.size(); i++){
+    const std::vector<size_t>& joint_ids, const std::vector<double>& joint_angles){
+    for(size_t i=0; i<joint_ids.size(); i++){
       joint_angles_[joint_ids[i]] = joint_angles[i];
     }
   }
@@ -107,20 +107,20 @@ namespace tinyfk
     tf_cache_.clear();
   }
 
-  std::vector<double> RobotModel::get_joint_angles(const std::vector<unsigned int>& joint_ids) const
+  std::vector<double> RobotModel::get_joint_angles(const std::vector<size_t>& joint_ids) const
   {
     std::vector<double> angles(joint_ids.size());
-    for(unsigned int i=0; i<joint_ids.size(); i++){
+    for(size_t i=0; i<joint_ids.size(); i++){
       int idx = joint_ids[i];
       angles[i] = joint_angles_[idx];
     }
     return angles;
   }
 
-  std::vector<unsigned int> RobotModel::get_joint_ids(std::vector<std::string> joint_names) const
+  std::vector<size_t> RobotModel::get_joint_ids(std::vector<std::string> joint_names) const
   {
     int n_joint = joint_names.size();
-    std::vector<unsigned int> joint_ids(n_joint);
+    std::vector<size_t> joint_ids(n_joint);
     for(int i=0; i<n_joint; i++){
       auto iter = joint_ids_.find(joint_names[i]);
       if(iter==joint_ids_.end()){
@@ -131,10 +131,10 @@ namespace tinyfk
     return joint_ids;
   }
 
-  std::vector<unsigned int> RobotModel::get_link_ids(std::vector<std::string> link_names) const
+  std::vector<size_t> RobotModel::get_link_ids(std::vector<std::string> link_names) const
   {
     int n_link = link_names.size();
-    std::vector<unsigned int> link_ids(n_link);
+    std::vector<size_t> link_ids(n_link);
     for(int i=0; i<n_link; i++){
       auto iter = link_ids_.find(link_names[i]);
       if(iter==link_ids_.end()){

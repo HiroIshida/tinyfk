@@ -90,7 +90,7 @@ int main(){
   robot.set_base_pose(angle_vector[n_joints+0], angle_vector[n_joints+1], angle_vector[n_joints+2]);
   bool base_also = true;
   urdf::Pose pose, pose_naive;
-  for(unsigned int i=0; i<n_links; i++){
+  for(size_t i=0; i<n_links; i++){
     int link_id = link_ids[i];
     robot.get_link_point_withcache(link_id, pose, base_also);
 
@@ -128,7 +128,7 @@ int main(){
   for(int i=0; i< link_names.size(); i++){ 
     bool rot_also = true; // rotatio part of the geometric jacobian is not yet checked
     int link_id = link_ids[i];
-    vector<unsigned int> link_ids_ = {link_id};
+    vector<size_t> link_ids_ = {link_id};
     auto J_numerical = robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
     auto tmpo = robot.get_jacobians_withcache(link_ids, joint_ids, rot_also, true);
     auto J_analytical_whole = tmpo[0];

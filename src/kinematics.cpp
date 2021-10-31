@@ -23,7 +23,7 @@ namespace tinyfk
 {
 
   void RobotModel::get_link_point_withcache(
-      unsigned int link_id, urdf::Pose& out_tf_rlink_to_elink,
+      size_t link_id, urdf::Pose& out_tf_rlink_to_elink,
       bool usebase
       ) const
   {
@@ -43,7 +43,7 @@ namespace tinyfk
   }
 
   void RobotModel::_get_link_point_creating_cache(
-      unsigned int link_id, urdf::Pose& out_tf_rlink_to_elink,
+      size_t link_id, urdf::Pose& out_tf_rlink_to_elink,
       bool usebase
       ) const
   {
@@ -132,8 +132,8 @@ namespace tinyfk
   }
 
   std::array<Eigen::MatrixXd, 2> RobotModel::get_jacobians_withcache(
-      const std::vector<unsigned int>& elink_ids,
-      const std::vector<unsigned int>& joint_ids, 
+      const std::vector<size_t>& elink_ids,
+      const std::vector<size_t>& joint_ids, 
       bool with_rot, bool with_base) const
   {
     int dim_pose = (with_rot ? 6 : 3);
@@ -152,7 +152,7 @@ namespace tinyfk
   }
 
   void RobotModel::_solve_batch_forward_kinematics(
-      std::vector<unsigned int> elink_ids, const std::vector<unsigned int>& joint_ids,
+      std::vector<size_t> elink_ids, const std::vector<size_t>& joint_ids,
       bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian_arr) const
   {
     int dim_jacobi = (with_rot ? 6 : 3);
@@ -169,7 +169,7 @@ namespace tinyfk
 
   // lower level jacobian function, which directly iterate over poitner
   void RobotModel::_solve_forward_kinematics(
-      int elink_id, const std::vector<unsigned int>& joint_ids,
+      int elink_id, const std::vector<size_t>& joint_ids,
       bool with_rot, bool with_base, TinyMatrix& pose, TinyMatrix& jacobian) const
   {
 
@@ -194,7 +194,7 @@ namespace tinyfk
       int jid = joint_ids[i];
       if(rptable_.isRelevant(jid, elink_id)){
         const urdf::JointSharedPtr& hjoint = joints_[jid];
-        unsigned int type = hjoint->type;
+        size_t type = hjoint->type;
         if(type == urdf::Joint::FIXED){
            assert(type!=urdf::Joint::FIXED && "fixed type is not accepted");
         }

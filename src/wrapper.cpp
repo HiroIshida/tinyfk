@@ -21,7 +21,7 @@ class RobotModelPyWrapper
       robot_model_(RobotModel(xml_string)) {}
 
     void set_joint_angles(
-        const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles)
+        const std::vector<size_t>& joint_ids, const std::vector<double>& joint_angles)
     {
       robot_model_.set_joint_angles(joint_ids, joint_angles);
     }
@@ -33,12 +33,12 @@ class RobotModelPyWrapper
 
     std::array<Eigen::MatrixXd, 2> solve_forward_kinematics(
         const std::vector<std::vector<double>> joint_angles_sequence,
-        const std::vector<unsigned int>& elink_ids,
-        const std::vector<unsigned int>& joint_ids,
+        const std::vector<size_t>& elink_ids,
+        const std::vector<size_t>& joint_ids,
         bool rotalso, bool basealso, bool with_jacobian, bool use_cache)
     {
 
-      unsigned int n_pose_dim = (rotalso ? 6 : 3); // 7 if rot enabled
+      size_t n_pose_dim = (rotalso ? 6 : 3); // 7 if rot enabled
       auto n_wp = joint_angles_sequence.size();
       auto n_links = elink_ids.size();
       auto n_joints = joint_ids.size();
@@ -54,7 +54,7 @@ class RobotModelPyWrapper
         Eigen::MatrixXd::Zero(0, 0);
       Eigen::MatrixXd P_trajectory = Eigen::MatrixXd::Zero(n_pose_dim, n_wp * n_links);
 
-      for(unsigned int i=0; i<n_wp; i++){
+      for(size_t i=0; i<n_wp; i++){
         robot_model_._set_joint_angles(joint_ids, joint_angles_sequence[i]);
         if(basealso){
           double x = joint_angles_sequence[i][n_joints + 0];
@@ -93,17 +93,17 @@ class RobotModelPyWrapper
       return ret;
     }
 
-    std::vector<unsigned int> get_joint_ids(std::vector<std::string> joint_names){
+    std::vector<size_t> get_joint_ids(std::vector<std::string> joint_names){
       int n_joint = joint_names.size();
       return robot_model_.get_joint_ids(joint_names);
     }
 
-    std::vector<unsigned int> get_link_ids(std::vector<std::string> link_names){
+    std::vector<size_t> get_link_ids(std::vector<std::string> link_names){
       int n_link = link_names.size();
       return robot_model_.get_link_ids(link_names);
     }
 
-    void add_new_link(std::string link_name, unsigned int parent_id, std::array<double, 3> position){ 
+    void add_new_link(std::string link_name, size_t parent_id, std::array<double, 3> position){ 
       robot_model_.add_new_link(link_name, parent_id, position);
     }
 

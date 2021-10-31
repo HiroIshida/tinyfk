@@ -96,17 +96,17 @@ namespace tinyfk
     std::vector<bool> isCachedVec_;
 
     TransformCache(){}
-    TransformCache(unsigned int N_link) : 
+    TransformCache(size_t N_link) : 
       N_link_(N_link), data_(std::vector<urdf::Pose>(N_link)), 
       isCachedVec_(std::vector<bool>(N_link, false)) {}
 
-    void set_cache(unsigned int link_id, const urdf::Pose& tf){
+    void set_cache(size_t link_id, const urdf::Pose& tf){
       assert(!isCachedVec_[link_id] && "attempt to break an existing cache");
       isCachedVec_[link_id] = true;
       data_[link_id] = tf;
     }
 
-    urdf::Pose* get_cache(unsigned int link_id){
+    urdf::Pose* get_cache(size_t link_id){
       bool isAlreadyCached = (isCachedVec_[link_id] == true);
       if(!isAlreadyCached){return nullptr;} //the cache does not exists
       return &data_[link_id];
@@ -128,10 +128,10 @@ namespace tinyfk
   struct NastyStack
   {
     std::vector<urdf::Pose> tf_stack_;
-    std::vector<unsigned int> hid_stack_; // here id stack
+    std::vector<size_t> hid_stack_; // here id stack
     NastyStack(){};
-    NastyStack(unsigned int N_link) : tf_stack_(std::vector<urdf::Pose>(N_link)), 
-    hid_stack_(std::vector<unsigned int>(N_link)) {} 
+    NastyStack(size_t N_link) : tf_stack_(std::vector<urdf::Pose>(N_link)), 
+    hid_stack_(std::vector<size_t>(N_link)) {} 
   };
 
 
@@ -185,20 +185,20 @@ namespace tinyfk
       RobotModel(){}
 
       void get_link_point(
-          unsigned int link_id, urdf::Pose& out_tf_root_to_ef, bool basealso) const;
+          size_t link_id, urdf::Pose& out_tf_root_to_ef, bool basealso) const;
       
       // naive jacobian computation with finite differentiation (just for testing)
       // as in the finite differentiatoin, set_joint_angle is called, this function cannot be
       // const-nized
       Eigen::MatrixXd get_jacobian_naive(
-          unsigned int elink_id, const std::vector<unsigned int>& joint_ids,
+          size_t elink_id, const std::vector<size_t>& joint_ids,
           bool rotalso = false, bool basealso = false
           );
 
       void set_joint_angles(// this will clear all the cache stored
-          const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles);
+          const std::vector<size_t>& joint_ids, const std::vector<double>& joint_angles);
       void _set_joint_angles(// lower version of the set_joint_angle which does not clear cache
-          const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles);
+          const std::vector<size_t>& joint_ids, const std::vector<double>& joint_angles);
 
       void set_base_pose(double x, double y, double theta);
       void _set_base_pose(double x, double y, double theta);
@@ -208,45 +208,45 @@ namespace tinyfk
 
       void set_init_angles();
 
-      std::vector<double> get_joint_angles(const std::vector<unsigned int>& joint_ids) const;
-      std::vector<unsigned int> get_joint_ids(std::vector<std::string> joint_names) const;
-      std::vector<unsigned int> get_link_ids(std::vector<std::string> link_names) const;
+      std::vector<double> get_joint_angles(const std::vector<size_t>& joint_ids) const;
+      std::vector<size_t> get_joint_ids(std::vector<std::string> joint_names) const;
+      std::vector<size_t> get_link_ids(std::vector<std::string> link_names) const;
 
       // private (I wanna make these function private, but 
       // don't know who to do unit test after that
       // anyway, don't use it
-      void set_joint_angle(unsigned int joint_id, double angle){
+      void set_joint_angle(size_t joint_id, double angle){
         joint_angles_[joint_id] = angle;
       }
 
       // perfromance of returning array of eigen is actually almost same as pass by reference
       // thanks to the compiler's optimization
       std::array<Eigen::MatrixXd, 2> get_jacobians_withcache(
-          const std::vector<unsigned int>& elink_ids,
-          const std::vector<unsigned int>& joint_ids, 
+          const std::vector<size_t>& elink_ids,
+          const std::vector<size_t>& joint_ids, 
           bool rpyalso = false, // only point jacobian is computed by default
           bool basealso = false
           ) const;
 
       void _solve_forward_kinematics(
-          int elink_id, const std::vector<unsigned int>& joint_ids,
+          int elink_id, const std::vector<size_t>& joint_ids,
           bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian) const;
 
       void _solve_batch_forward_kinematics(
-          std::vector<unsigned int> elink_ids, const std::vector<unsigned int>& joint_ids,
+          std::vector<size_t> elink_ids, const std::vector<size_t>& joint_ids,
           bool with_rot, bool with_base, TinyMatrix& pose_arr, TinyMatrix& jacobian_arr) const;
 
       void get_link_point_withcache(
-          unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 
+          size_t link_id, urdf::Pose& out_tf_root_to_ef, 
           bool usebase) const;
 
       void _get_link_point_creating_cache(
-          unsigned int link_id, urdf::Pose& out_tf_root_to_ef, 
+          size_t link_id, urdf::Pose& out_tf_root_to_ef, 
           bool usebase) const;
 
       void add_new_link(
           std::string link_name, 
-          unsigned int parent_id,
+          size_t parent_id,
           std::array<double, 3> position){
 
         bool link_name_exists = (link_ids_.find(link_name) != link_ids_.end());
