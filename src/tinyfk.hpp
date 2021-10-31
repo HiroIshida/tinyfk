@@ -24,6 +24,7 @@ namespace tinyfk
 
   using MatrixXdC = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
   using MatrixXdR = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using AngleLimit = std::pair<double, double>;
 
   // TODO templatize
   // an util data structure to handle matrix. 
@@ -210,6 +211,7 @@ namespace tinyfk
 
       std::vector<double> get_joint_angles(const std::vector<size_t>& joint_ids) const;
       std::vector<size_t> get_joint_ids(std::vector<std::string> joint_names) const;
+      std::vector<AngleLimit> get_joint_limits(const std::vector<size_t>& joint_ids) const;
       std::vector<size_t> get_link_ids(std::vector<std::string> link_names) const;
 
       // private (I wanna make these function private, but 
