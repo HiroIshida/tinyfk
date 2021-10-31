@@ -66,6 +66,19 @@ class RobotModel(object):
     def get_link_ids(self, link_names):
         return self._robot.get_link_ids(link_names)
 
+    def get_joint_limits(self, joint_ids):
+        ret = self._robot.get_joint_limits(joint_ids)
+        limits = []
+        for lower, upper in ret:
+            if lower==0.0 and upper==0.0:
+                # NOTE: if no limit is set, the value is set to 0.0 in urdfdom
+                # TODO: I assume that if joint limit is not set, both lower and upper
+                # are not set. Is this assumption correct?
+                limits.append([None, None])
+            else:
+                limits.append([lower, upper])
+        return limits
+
     def add_new_link(self, link_name, parent_id, position):
         return self._robot.add_new_link(link_name, parent_id, position)
 
