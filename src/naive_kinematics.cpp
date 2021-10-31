@@ -17,7 +17,7 @@ namespace tinyfk
     // h : here , e: endeffector , r: root, p: parent
     // e.g. hlink means here_link and rlink means root_link
     
-    urdf::LinkSharedPtr hlink = _links[link_id];
+    urdf::LinkSharedPtr hlink = links_[link_id];
     urdf::Pose tf_hlink_to_elink; // unit transform by default
 
     while(true){
@@ -26,7 +26,7 @@ namespace tinyfk
 
       const urdf::JointSharedPtr& pjoint = hlink->parent_joint;
       if(pjoint == nullptr){
-        if(basealso){tf_hlink_to_elink = pose_transform(_base_pose._pose, tf_hlink_to_elink);}
+        if(basealso){tf_hlink_to_elink = pose_transform(base_pose_.pose_, tf_hlink_to_elink);}
           break;
       }
 
@@ -36,7 +36,7 @@ namespace tinyfk
       if(pjoint->type==urdf::Joint::FIXED){
         tf_plink_to_hlink = tf_plink_to_pjoint;
       }else{
-        double angle = _joint_angles[pjoint->id];
+        double angle = joint_angles_[pjoint->id];
         urdf::Pose tf_pjoint_to_hlink = pjoint->transform(angle);
         tf_plink_to_hlink = pose_transform(tf_plink_to_pjoint, tf_pjoint_to_hlink);
       }
@@ -86,7 +86,7 @@ namespace tinyfk
 
     if(basealso){
       for(unsigned int i=0; i<3; i++){
-        std::array<double, 3>& tmp = _base_pose._pose3d;
+        std::array<double, 3>& tmp = base_pose_.pose3d_;
         tmp[i] += dx;
         this->set_base_pose(tmp[0], tmp[1], tmp[2]);
         this->get_link_point(elink_id, pose1, true);

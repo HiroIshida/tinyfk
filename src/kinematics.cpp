@@ -33,7 +33,7 @@ namespace tinyfk
     // in _get_link_point_creating_cache like while-loop and comparison of 
     // counter etc, directly calling here and return immediately leads to 
     // much efficiency.
-    urdf::Pose* pose_ptr = _tf_cache.get_cache(link_id);
+    urdf::Pose* pose_ptr = tf_cache_.get_cache(link_id);
     if(pose_ptr){
       out_tf_rlink_to_elink = *pose_ptr;
       return;
@@ -51,13 +51,13 @@ namespace tinyfk
     // starting from the specifid endeffector link. The copmuted tfs are stored into 
     // _nasty_stack.hid_stack and _nasty_stack.tf_stack
     // maybe bit complicated because I use _tf_caceh
-    urdf::LinkSharedPtr hlink = _links[link_id];
+    urdf::LinkSharedPtr hlink = links_[link_id];
 
     // tf rlink_to_blink is set to a unit transform or _base_pose according to if usebase is enabled.
     // If a cached transform from root link to here link, then tf_rlink_to_blink is overwrite to the 
     // cached value.
     urdf::Pose tf_rlink_to_blink; 
-    if(usebase){tf_rlink_to_blink = _base_pose._pose;}
+    if(usebase){tf_rlink_to_blink = base_pose_.pose_;}
 
     int counter = -1;
     while(true){
@@ -65,7 +65,7 @@ namespace tinyfk
       urdf::LinkSharedPtr plink = hlink->getParent();
       if(plink == nullptr){break;} // hit the root link
 
-      urdf::Pose* tf_rlink_to_blink_ptr = _tf_cache.get_cache(hlink->id); 
+      urdf::Pose* tf_rlink_to_blink_ptr = tf_cache_.get_cache(hlink->id); 
       if(tf_rlink_to_blink_ptr){
         tf_rlink_to_blink = *tf_rlink_to_blink_ptr;
         break;
@@ -79,7 +79,7 @@ namespace tinyfk
         if(pjoint->type==urdf::Joint::FIXED){
           tf_plink_to_hlink = tf_plink_to_pjoint;
         }else{
-          double angle = _joint_angles[pjoint->id];
+          double angle = joint_angles_[pjoint->id];
           urdf::Pose tf_pjoint_to_hlink = pjoint->transform(angle);
           tf_plink_to_hlink = pose_transform(tf_plink_to_pjoint, tf_pjoint_to_hlink);
         }
@@ -87,8 +87,8 @@ namespace tinyfk
 
       // update
       counter++; //counter must be here
-      _nasty_stack._hid_stack[counter] = hlink->id;
-      _nasty_stack._tf_stack[counter] = std::move(tf_plink_to_hlink);
+      nasty_stack_.hid_stack_[counter] = hlink->id;
+      nasty_stack_.tf_stack_[counter] = std::move(tf_plink_to_hlink);
       hlink = std::move(plink);
     }
 
@@ -96,11 +96,11 @@ namespace tinyfk
     // note that counter inclimented in the first is directry used here
     urdf::Pose tf_rlink_to_plink = std::move(tf_rlink_to_blink);
     while(counter >= 0){
-      int hid = _nasty_stack._hid_stack[counter];
-      urdf::Pose& tf_plink_to_hlink = _nasty_stack._tf_stack[counter];
+      int hid = nasty_stack_.hid_stack_[counter];
+      urdf::Pose& tf_plink_to_hlink = nasty_stack_.tf_stack_[counter];
       urdf::Pose tf_rlink_to_hlink = pose_transform(tf_rlink_to_plink, tf_plink_to_hlink);
 
-      _tf_cache.set_cache(hid, tf_rlink_to_hlink);
+      tf_cache_.set_cache(hid, tf_rlink_to_hlink);
       tf_rlink_to_plink = std::move(tf_rlink_to_hlink);
       counter--;
       if (counter == -1){break;}
@@ -192,8 +192,8 @@ namespace tinyfk
     int dim_jacobi = (with_rot ? 6 : 3);
     for(int i=0; i<joint_ids.size(); i++){
       int jid = joint_ids[i];
-      if(_rptable.isRelevant(jid, elink_id)){
-        const urdf::JointSharedPtr& hjoint = _joints[jid];
+      if(rptable_.isRelevant(jid, elink_id)){
+        const urdf::JointSharedPtr& hjoint = joints_[jid];
         unsigned int type = hjoint->type;
         if(type == urdf::Joint::FIXED){
            assert(type!=urdf::Joint::FIXED && "fixed type is not accepted");
@@ -233,7 +233,7 @@ namespace tinyfk
       // NOTE that epos is wrt global not wrt root link!
       // so we first compute epos w.r.t root link then take a 
       // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
-      const std::array<double, 3>& basepose3d = _base_pose._pose3d;
+      const std::array<double, 3>& basepose3d = base_pose_.pose3d_;
       urdf::Vector3 epos_local = epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
       int dim_dof = joint_ids.size();
       TinyMatrix base_jacobian = jacobian.block(0, dim_dof, dim_jacobi, 3);

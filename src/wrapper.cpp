@@ -16,19 +16,19 @@ using namespace tinyfk;
 class RobotModelPyWrapper
 {
   public:
-    RobotModel _rtree;
+    RobotModel robot_model_;
     RobotModelPyWrapper(const std::string& xml_string) :
-      _rtree(RobotModel(xml_string)) {}
+      robot_model_(RobotModel(xml_string)) {}
 
     void set_joint_angles(
         const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles)
     {
-      _rtree.set_joint_angles(joint_ids, joint_angles);
+      robot_model_.set_joint_angles(joint_ids, joint_angles);
     }
 
     void set_base_pose(const std::vector<double>& xytheta)
     {
-      _rtree.set_base_pose(xytheta[0], xytheta[1], xytheta[2]);
+      robot_model_.set_base_pose(xytheta[0], xytheta[1], xytheta[2]);
     }
 
     std::array<Eigen::MatrixXd, 2> solve_forward_kinematics(
@@ -55,20 +55,20 @@ class RobotModelPyWrapper
       Eigen::MatrixXd P_trajectory = Eigen::MatrixXd::Zero(n_pose_dim, n_wp * n_links);
 
       for(unsigned int i=0; i<n_wp; i++){
-        _rtree._set_joint_angles(joint_ids, joint_angles_sequence[i]);
+        robot_model_._set_joint_angles(joint_ids, joint_angles_sequence[i]);
         if(basealso){
           double x = joint_angles_sequence[i][n_joints + 0];
           double y = joint_angles_sequence[i][n_joints + 1];
           double theta = joint_angles_sequence[i][n_joints + 2];
-          _rtree._set_base_pose(x, y, theta);
+          robot_model_._set_base_pose(x, y, theta);
         }
         if(!use_cache){
-          _rtree.clear_cache();
+          robot_model_.clear_cache();
         }
 
 
         if(with_jacobian){
-          auto tmp = _rtree.get_jacobians_withcache(elink_ids, joint_ids, rotalso, basealso);
+          auto tmp = robot_model_.get_jacobians_withcache(elink_ids, joint_ids, rotalso, basealso);
           auto& J = tmp[0];
           auto& P = tmp[1];
           J_trajectory.block(i * (n_links * n_pose_dim), 0, n_links * n_pose_dim, n_dof) = J;
@@ -76,7 +76,7 @@ class RobotModelPyWrapper
         }else{
           urdf::Pose pose;
           for(int j=0; j<elink_ids.size(); j++){
-            _rtree.get_link_point_withcache(elink_ids[j], pose, basealso);
+            robot_model_.get_link_point_withcache(elink_ids[j], pose, basealso);
             P_trajectory(0, i * n_links + j) = pose.position.x;
             P_trajectory(1, i * n_links + j) = pose.position.y;
             P_trajectory(2, i * n_links + j) = pose.position.z;
@@ -95,20 +95,20 @@ class RobotModelPyWrapper
 
     std::vector<unsigned int> get_joint_ids(std::vector<std::string> joint_names){
       int n_joint = joint_names.size();
-      return _rtree.get_joint_ids(joint_names);
+      return robot_model_.get_joint_ids(joint_names);
     }
 
     std::vector<unsigned int> get_link_ids(std::vector<std::string> link_names){
       int n_link = link_names.size();
-      return _rtree.get_link_ids(link_names);
+      return robot_model_.get_link_ids(link_names);
     }
 
     void add_new_link(std::string link_name, unsigned int parent_id, std::array<double, 3> position){ 
-      _rtree.add_new_link(link_name, parent_id, position);
+      robot_model_.add_new_link(link_name, parent_id, position);
     }
 
     void clear_cache(){
-      _rtree.clear_cache();
+      robot_model_.clear_cache();
     }
 
 };

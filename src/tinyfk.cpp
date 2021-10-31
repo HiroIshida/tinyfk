@@ -63,49 +63,48 @@ namespace tinyfk
     int num_dof = joint_ids.size();
     std::vector<double> joint_angles(num_dof, 0.0);
 
-    // consturct rptable
 
-    _nasty_stack = NastyStack(N_link);
-    _tf_cache = TransformCache(N_link);
-    _root_link = robot_urdf_interface->root_link_;
-    _links = links;
-    _link_ids = link_ids;
-    _joints = joints;
-    _joint_ids = joint_ids;
-    _num_dof = num_dof;
-    _joint_angles = joint_angles;
+    nasty_stack_ = NastyStack(N_link);
+    tf_cache_ = TransformCache(N_link);
+    root_link_ = robot_urdf_interface->root_link_;
+    links_ = links;
+    link_ids_ = link_ids;
+    joints_ = joints;
+    joint_ids_ = joint_ids;
+    num_dof_ = num_dof;
+    joint_angles_ = joint_angles;
     this->_update_rptable(); // update _rptable
   }
 
   void RobotModel::set_joint_angles(
       const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles){
     this->_set_joint_angles(joint_ids, joint_angles);
-    _tf_cache.clear();
+    tf_cache_.clear();
   }
 
   void RobotModel::_set_joint_angles(
     const std::vector<unsigned int>& joint_ids, const std::vector<double>& joint_angles){
     for(unsigned int i=0; i<joint_ids.size(); i++){
-      _joint_angles[joint_ids[i]] = joint_angles[i];
+      joint_angles_[joint_ids[i]] = joint_angles[i];
     }
   }
 
   void RobotModel::set_base_pose(double x, double y, double theta){
     _set_base_pose(x, y, theta);
-    _tf_cache.clear();
+    tf_cache_.clear();
   }
   void RobotModel::_set_base_pose(double x, double y, double theta){
-    _base_pose.set(x, y, theta);
+    base_pose_.set(x, y, theta);
   }
 
   void RobotModel::clear_cache(){
-    _tf_cache.clear();
+    tf_cache_.clear();
   }
 
   void RobotModel::set_init_angles(){
-    std::vector<double> joint_angles(_num_dof, 0.0);
-    _joint_angles = joint_angles;
-    _tf_cache.clear();
+    std::vector<double> joint_angles(num_dof_, 0.0);
+    joint_angles_ = joint_angles;
+    tf_cache_.clear();
   }
 
   std::vector<double> RobotModel::get_joint_angles(const std::vector<unsigned int>& joint_ids) const
@@ -113,7 +112,7 @@ namespace tinyfk
     std::vector<double> angles(joint_ids.size());
     for(unsigned int i=0; i<joint_ids.size(); i++){
       int idx = joint_ids[i];
-      angles[i] = _joint_angles[idx];
+      angles[i] = joint_angles_[idx];
     }
     return angles;
   }
@@ -123,8 +122,8 @@ namespace tinyfk
     int n_joint = joint_names.size();
     std::vector<unsigned int> joint_ids(n_joint);
     for(int i=0; i<n_joint; i++){
-      auto iter = _joint_ids.find(joint_names[i]);
-      if(iter==_joint_ids.end()){
+      auto iter = joint_ids_.find(joint_names[i]);
+      if(iter==joint_ids_.end()){
         throw std::invalid_argument("no joint named " + joint_names[i]);
       }
       joint_ids[i] = iter->second;
@@ -137,8 +136,8 @@ namespace tinyfk
     int n_link = link_names.size();
     std::vector<unsigned int> link_ids(n_link);
     for(int i=0; i<n_link; i++){
-      auto iter = _link_ids.find(link_names[i]);
-      if(iter==_link_ids.end()){
+      auto iter = link_ids_.find(link_names[i]);
+      if(iter==link_ids_.end()){
         throw std::invalid_argument("no link named " + link_names[i]);
       }
       link_ids[i] = iter->second;

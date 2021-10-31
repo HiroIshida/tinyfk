@@ -55,25 +55,25 @@ int main(){
     std::vector<std::string> link_names = {"mylink", "head_pan_link", "fl_caster_rotation_link"};
     auto joint_ids = robot.get_joint_ids(joint_names);
     auto link_ids = robot.get_link_ids(link_names);
-    if(!robot._rptable.isRelevant(joint_ids[0], link_ids[0])){
+    if(!robot.rptable_.isRelevant(joint_ids[0], link_ids[0])){
       std::cout << "[FAIL] torso_lift_joint must move mylink" << std::endl;
       return -1;
     }else{
       std::cout << "[PASS] rptable" << std::endl;
     }
-    if(robot._rptable.isRelevant(joint_ids[1], link_ids[0])){
+    if(robot.rptable_.isRelevant(joint_ids[1], link_ids[0])){
       std::cout << "[FAIL] r_wrist_flex_joint must not move mylink" << std::endl;
       return -1;
     }else{
       std::cout << "[PASS] rptable" << std::endl;
     }
-    if(!robot._rptable.isRelevant(joint_ids[0], link_ids[1])){
+    if(!robot.rptable_.isRelevant(joint_ids[0], link_ids[1])){
       std::cout << "[FAIL] torso_lift_joint must move head_pan_link" << std::endl;
       return -1;
     }else{
       std::cout << "[PASS] rptable" << std::endl;
     }
-    if(robot._rptable.isRelevant(joint_ids[0], link_ids[2])){
+    if(robot.rptable_.isRelevant(joint_ids[0], link_ids[2])){
       std::cout << "[FAIL] torso_lift_joint must not move fl_caster_rotation_link" << std::endl;
       return -1;
     }else{
@@ -124,7 +124,7 @@ int main(){
     robot.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
   robot.set_base_pose(angle_vector[n_joints], angle_vector[n_joints+1], angle_vector[n_joints+2]);
-  robot._tf_cache.clear();
+  robot.tf_cache_.clear();
   for(int i=0; i< link_names.size(); i++){ 
     bool rot_also = true; // rotatio part of the geometric jacobian is not yet checked
     int link_id = link_ids[i];
