@@ -56,6 +56,13 @@ class RobotModel(object):
         Setting use_cache=True is potentially dangeroud feature for developers who
         understand the caching mechanism of the tinyfk side. 
         """
+        if not isinstance(joint_angles_sequence, np.ndarray):
+            joint_angles_sequence = np.array(joint_angles_sequence)
+            if joint_angles_sequence.ndim == 1:
+                joint_angles_sequence = np.expand_dims(joint_angles_sequence, axis=0)
+        n_seq, n_dof = joint_angles_sequence.shape
+        assert n_dof == len(joint_ids) + (3 if with_base else 0)
+
         return self._robot.solve_forward_kinematics(
             joint_angles_sequence, elink_ids, joint_ids,
             with_rot, with_base, with_jacobian, use_cache)
