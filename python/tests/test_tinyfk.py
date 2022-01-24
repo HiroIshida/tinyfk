@@ -27,7 +27,7 @@ fksolver = tinyfk.RobotModel(urdf_model_path)
 
 # adding new link `mylink` to `r_upper_arm_link`
 parent_id = fksolver.get_link_ids(["r_upper_arm_link"])[0]
-fksolver.add_new_link('mylink', parent_id, [0.1, 0.1, 0.1])
+fksolver.add_new_link('mylink', parent_id, [0.1, 0.1, 0.1], [0.3, 0.2, 0.1])
 
 # To interact with fksolver, we must get the correspoinding link_ids and joint_ids.
 link_ids = fksolver.get_link_ids(link_names)

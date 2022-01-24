@@ -13,7 +13,7 @@ joint_list = [
     robot_model.r_wrist_roll_joint]
 joint_names = [j.name for j in joint_list]
 
-mylink = Link(pos=[0.1, 0.1, 0.1], name="mylink")
+mylink = Link(pos=[0.1, 0.1, 0.1], rot=[0.1, 0.2, 0.3], name="mylink")
 robot_model.r_upper_arm_link.assoc(mylink, mylink)
 link_list = [
     robot_model.r_shoulder_pan_link, robot_model.r_shoulder_lift_link,
