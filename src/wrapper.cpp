@@ -107,8 +107,8 @@ class RobotModelPyWrapper
       return robot_model_.get_joint_limits(joint_ids);
     }
 
-    void add_new_link(std::string link_name, size_t parent_id, std::array<double, 3> position){ 
-      robot_model_.add_new_link(link_name, parent_id, position);
+    void add_new_link(std::string link_name, size_t parent_id, std::array<double, 3> position, std::array<double, 3> rotation){ 
+      robot_model_.add_new_link(link_name, parent_id, position, rotation);
     }
 
     void clear_cache(){

@@ -249,7 +249,7 @@ namespace tinyfk
       void add_new_link(
           std::string link_name, 
           size_t parent_id,
-          std::array<double, 3> position){
+          std::array<double, 3> position, std::array<double, 3> rotation){
 
         bool link_name_exists = (link_ids_.find(link_name) != link_ids_.end());
         if(link_name_exists){
@@ -259,8 +259,11 @@ namespace tinyfk
 
         auto fixed_joint = std::make_shared<urdf::Joint>();
         auto&& vec = urdf::Vector3(position[0], position[1], position[2]);
-        // only these two infomation is used in kinematics computation 
+        auto rot = urdf::Rotation();
+        rot.setFromRPY(rotation[0], rotation[1], rotation[2]);
+
         fixed_joint->parent_to_joint_origin_transform.position = vec;
+        fixed_joint->parent_to_joint_origin_transform.rotation = rot;
         fixed_joint->type = urdf::Joint::FIXED;
 
         int link_id = links_.size();

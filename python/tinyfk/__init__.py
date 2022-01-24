@@ -86,8 +86,10 @@ class RobotModel(object):
                 limits.append([lower, upper])
         return limits
 
-    def add_new_link(self, link_name, parent_id, position):
-        return self._robot.add_new_link(link_name, parent_id, position)
+    def add_new_link(self, link_name, parent_id, position, rotation=None):
+        if rotation is None:
+            rotation = [0, 0, 0]
+        return self._robot.add_new_link(link_name, parent_id, position, rotation)
 
     def clear_cache(self):
         self._robot.clear_cache()
