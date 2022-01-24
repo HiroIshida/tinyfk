@@ -34,16 +34,18 @@ int main(){
   {// add new link to the robot
     std::vector<std::string> strvec = {"r_upper_arm_link"};
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
+    std::array<double, 3> rot = {0.0, 0.0, 0.0};
     int parent_link_id = robot.get_link_ids(strvec)[0];
-    robot.add_new_link("mylink", parent_link_id, pos);
+    robot.add_new_link("mylink", parent_link_id, pos, rot);
   }
 
   {// must raise exception when add link with the same name 
     std::vector<std::string> strvec = {"r_upper_arm_link"};
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
+    std::array<double, 3> rot = {0.0, 0.0, 0.0};
     int parent_link_id = robot.get_link_ids(strvec)[0];
     try{
-      robot.add_new_link("mylink", parent_link_id, pos);
+      robot.add_new_link("mylink", parent_link_id, pos, rot);
       std::cout << "[FAIL] must raise exception (add_new_link)" << std::endl;
       return -1;
     }catch (const std::exception& e){
