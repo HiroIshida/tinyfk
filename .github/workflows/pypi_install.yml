@@ -12,7 +12,7 @@ jobs:
     build:
         strategy:
           matrix:
-            python-version: [2.7, 3.6, 3.7, 3.8]
+            python-version: [2.7, 3.6]
             os: [ubuntu16.04, ubuntu18.04, ubuntu20.04]
         runs-on: ${{ matrix.os }}
         steps:
