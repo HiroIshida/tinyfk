@@ -1,0 +1,32 @@
+name: pip_install_by_pyi
+
+on:
+    push:
+        branches:
+            - master
+    pull_request:
+        branches:
+            - master
+
+jobs:
+    build:
+        strategy:
+          matrix:
+            python-version: [2.7, 3.6, 3.7, 3.8]
+            os: [ubuntu16.04, ubuntu18.04, ubuntu20.04]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Setup python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: ${{ matrix.python }}
+
+            - name: Checkout Code
+              uses: actions/checkout@v2
+
+            - name: pip install tinyfk from pypi and run pytest
+              run: |
+                  pip install tinyfk
+                  pip install pytest
+                  cd python
+                  pytest
