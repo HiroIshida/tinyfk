@@ -11,7 +11,7 @@ or, building locally from source (for developer):
 sudo apt-get install libeigen3-dev
 git clone https://github.com/HiroIshida/tinyfk.git
 cd tinyfk
-git submodule update --init --depth=1
+git submodule update --init
 pip install . 
 ```
 
@@ -59,7 +59,7 @@ For debugging or developing, it's better using cmake directly rather than using 
 sudo apt-get install libeigen3-dev
 git clone https://github.com/HiroIshida/tinyfk.git
 cd tinyfk
-git submodule update --init --depth=1
+git submodule update --init
 mkdir build
 cd build
 cmake --DCMAKE_BUILD_TYPE=Debug --DINSTALL_VIA_PIP=OFF ..
