@@ -1,4 +1,4 @@
-## tinyfk ![CI](https://github.com/HiroIshida/tinyfk/workflows/CI/badge.svg)
+## tinyfk ![CI](https://github.com/HiroIshida/tinyfk/workflows/CI/badge.svg) ![PyPI version](https://badge.fury.io/py/tinyfk.svg)
 A tiny fast forward-kinematics solver written in c++ and its python wrapper
 
 Installation by downloading wheel from PyPI (only linux):
