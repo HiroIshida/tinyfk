@@ -10,7 +10,7 @@ public:
 
   SizedCache() : SizedCache(0) {}
   void set_cache(size_t id, const DataT &data);
-  DataT const * get_cache(size_t id) const;
+  DataT const *get_cache(size_t id) const;
   void extend();
   void clear();
 
@@ -28,7 +28,8 @@ void SizedCache<DataT>::set_cache(size_t id, const DataT &tf) {
   data_[id] = tf;
 }
 
-template <class DataT> DataT const * SizedCache<DataT>::get_cache(size_t id) const {
+template <class DataT>
+DataT const *SizedCache<DataT>::get_cache(size_t id) const {
   bool isAlreadyCached = (cache_predicate_vector_[id] == true);
   if (!isAlreadyCached) {
     return nullptr;
@@ -61,7 +62,9 @@ public:
     data_[current_idx_] = elem;
     current_idx_++;
   }
-  inline ElementT &top() const { return const_cast<ElementT &>(data_[current_idx_ - 1]); }
+  inline ElementT &top() const {
+    return const_cast<ElementT &>(data_[current_idx_ - 1]);
+  }
   inline void pop() { current_idx_--; }
 
 private:

@@ -76,7 +76,7 @@ public:
       } else {
         urdf::Pose pose;
         for (int j = 0; j < elink_ids.size(); j++) {
-          robot_model_.get_link_point_withcache(elink_ids[j], pose, basealso);
+          robot_model_.get_link_pose(elink_ids[j], pose, basealso);
           P_trajectory(0, i * n_links + j) = pose.position.x;
           P_trajectory(1, i * n_links + j) = pose.position.y;
           P_trajectory(2, i * n_links + j) = pose.position.z;

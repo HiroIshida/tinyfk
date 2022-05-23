@@ -100,7 +100,7 @@ int main() {
   urdf::Pose pose, pose_naive;
   for (size_t i = 0; i < n_links; i++) {
     int link_id = link_ids[i];
-    robot.get_link_point_withcache(link_id, pose, base_also);
+    robot.get_link_pose(link_id, pose, base_also);
 
     if (!isNear(pose.position.x, pose_list[i][0]) ||
         !isNear(pose.position.y, pose_list[i][1]) ||

@@ -34,7 +34,7 @@ int main(){
     urdf::Pose out;
     for(int i=0; i<N; i++){
       for(int lid : link_ids){
-        robot.get_link_point(lid, out, false);
+        robot.get_link_pose_naive(lid, out, false);
       }
     }
     clock_t end = clock();
@@ -47,7 +47,7 @@ int main(){
     for(int i=0; i<N; i++){
       robot.set_joint_angles(joint_ids, angle_vector); // this clear cached TFs
       for(int lid : link_ids){
-        robot.get_link_point_withcache(lid, out, false);
+        robot.get_link_pose(lid, out, false);
       }
     }
     clock_t end = clock();

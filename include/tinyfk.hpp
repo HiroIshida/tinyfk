@@ -31,7 +31,7 @@ using AngleLimit = std::pair<double, double>;
 
 // TODO templatize
 // an util data structure to handle matrix.
-struct TinyMatrix // coll major (same as eigen)
+struct SlicedMatrix // coll major (same as eigen)
 {
   double *data_; // beginning of the block matrix
   int i_begin_;
@@ -43,16 +43,16 @@ struct TinyMatrix // coll major (same as eigen)
   int n_whole_;
   int m_whole_;
 
-  TinyMatrix(Eigen::MatrixXd &mat, int i_begin, int j_begin, int n, int m)
+  SlicedMatrix(Eigen::MatrixXd &mat, int i_begin, int j_begin, int n, int m)
       : data_(mat.data()), i_begin_(i_begin), j_begin_(j_begin), n_block_(n),
         m_block_(m), n_whole_(mat.rows()), m_whole_(mat.cols()) {}
 
-  TinyMatrix(Eigen::MatrixXd &mat)
+  SlicedMatrix(Eigen::MatrixXd &mat)
       : data_(mat.data()), i_begin_(0), j_begin_(0), n_block_(mat.rows()),
         m_block_(mat.cols()), n_whole_(n_block_), m_whole_(m_block_) {}
 
-  TinyMatrix(double *data, int i_begin, int j_begin, int n, int m, int n_whole,
-             int m_whole)
+  SlicedMatrix(double *data, int i_begin, int j_begin, int n, int m,
+               int n_whole, int m_whole)
       : data_(data), i_begin_(i_begin), j_begin_(j_begin), n_block_(n),
         m_block_(m), n_whole_(n_whole), m_whole_(m_whole) {}
 
@@ -68,13 +68,13 @@ struct TinyMatrix // coll major (same as eigen)
     return idx;
   }
 
-  TinyMatrix block(int i, int j, int n, int m) const {
-    TinyMatrix mat = {data_, i_begin_ + i, j_begin_ + j, n,
-                      m,     n_whole_,     m_whole_};
+  SlicedMatrix block(int i, int j, int n, int m) const {
+    SlicedMatrix mat = {data_, i_begin_ + i, j_begin_ + j, n,
+                        m,     n_whole_,     m_whole_};
     return mat;
   }
 
-  TinyMatrix slice(int i) const { // we consider matrix is coll major.
+  SlicedMatrix slice(int i) const { // we consider matrix is coll major.
     return this->block(0, i, n_block_, 1);
   }
 
@@ -87,7 +87,7 @@ struct TinyMatrix // coll major (same as eigen)
 
 struct RelevancePredicateTable {
   std::vector<std::vector<bool>> table_;
-  RelevancePredicateTable() : RelevancePredicateTable(0, 0) {};
+  RelevancePredicateTable() : RelevancePredicateTable(0, 0){};
   RelevancePredicateTable(int N_link, int N_joint) {
     for (int i = 0; i < N_joint; i++) {
       table_.push_back(std::vector<bool>(N_link));
@@ -139,17 +139,6 @@ public: // functions
   RobotModel(const std::string &xml_string);
   RobotModel() {}
 
-  void get_link_point(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                      bool basealso) const;
-
-  // naive jacobian computation with finite differentiation (just for testing)
-  // as in the finite differentiatoin, set_joint_angle is called, this function
-  // cannot be const-nized
-  Eigen::MatrixXd get_jacobian_naive(size_t elink_id,
-                                     const std::vector<size_t> &joint_ids,
-                                     bool rotalso = false,
-                                     bool basealso = false);
-
   void set_joint_angles( // this will clear all the cache stored
       const std::vector<size_t> &joint_ids,
       const std::vector<double> &joint_angles);
@@ -187,85 +176,37 @@ public: // functions
       bool rpyalso = false, // only point jacobian is computed by default
       bool basealso = false) const;
 
-  void _solve_forward_kinematics(int elink_id,
-                                 const std::vector<size_t> &joint_ids,
-                                 bool with_rot, bool with_base,
-                                 TinyMatrix &pose_arr,
-                                 TinyMatrix &jacobian) const;
+  void solve_forward_kinematics(int elink_id,
+                                const std::vector<size_t> &joint_ids,
+                                bool with_rot, bool with_base,
+                                SlicedMatrix &pose_arr,
+                                SlicedMatrix &jacobian) const;
 
-  void _solve_batch_forward_kinematics(std::vector<size_t> elink_ids,
-                                       const std::vector<size_t> &joint_ids,
-                                       bool with_rot, bool with_base,
-                                       TinyMatrix &pose_arr,
-                                       TinyMatrix &jacobian_arr) const;
+  void solve_batch_forward_kinematics(std::vector<size_t> elink_ids,
+                                      const std::vector<size_t> &joint_ids,
+                                      bool with_rot, bool with_base,
+                                      SlicedMatrix &pose_arr,
+                                      SlicedMatrix &jacobian_arr) const;
 
-  void get_link_point_withcache(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                                bool usebase) const;
+  void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
+                     bool usebase) const;
 
-  void _get_link_point_creating_cache(size_t link_id,
-                                      urdf::Pose &out_tf_root_to_ef,
-                                      bool usebase) const;
+  void get_link_pose_naive(size_t link_id, urdf::Pose &out_tf_root_to_ef,
+                           bool basealso) const;
+
+  Eigen::MatrixXd get_jacobian_naive(size_t elink_id,
+                                     const std::vector<size_t> &joint_ids,
+                                     bool rotalso = false,
+                                     bool basealso = false);
 
   void add_new_link(std::string link_name, size_t parent_id,
                     std::array<double, 3> position,
-                    std::array<double, 3> rotation) {
-
-    bool link_name_exists = (link_ids_.find(link_name) != link_ids_.end());
-    if (link_name_exists) {
-      std::string message = "link name " + link_name + " already exists";
-      throw std::invalid_argument("link name : " + link_name +
-                                  " already exists");
-    }
-
-    auto fixed_joint = std::make_shared<urdf::Joint>();
-    auto &&vec = urdf::Vector3(position[0], position[1], position[2]);
-    auto rot = urdf::Rotation();
-    rot.setFromRPY(rotation[0], rotation[1], rotation[2]);
-
-    fixed_joint->parent_to_joint_origin_transform.position = vec;
-    fixed_joint->parent_to_joint_origin_transform.rotation = rot;
-    fixed_joint->type = urdf::Joint::FIXED;
-
-    int link_id = links_.size();
-    auto new_link = std::make_shared<urdf::Link>();
-    new_link->parent_joint = fixed_joint;
-    new_link->setParent(links_[parent_id]);
-    new_link->name = link_name;
-    new_link->id = link_id;
-
-    link_ids_[link_name] = link_id;
-    links_.push_back(new_link);
-    links_[parent_id]->child_links.push_back(new_link);
-    transform_cache_.extend();
-
-    this->_update_rptable(); // set _rptable
-  }
+                    std::array<double, 3> rotation);
 
 private:
-  void _update_rptable() {
-    // this function usually must come in the end of a function
-
-    // we must recreate from scratch
-    int n_link = link_ids_.size();
-    int n_dof = joint_ids_.size();
-    auto rptable = RelevancePredicateTable(n_link, n_dof);
-
-    for (urdf::JointSharedPtr joint : joints_) {
-      int joint_id = joint_ids_.at(joint->name);
-      urdf::LinkSharedPtr clink = joint->getChildLink();
-      std::stack<urdf::LinkSharedPtr> link_stack;
-      link_stack.push(clink);
-      while (!link_stack.empty()) {
-        auto here_link = link_stack.top();
-        link_stack.pop();
-        rptable.table_[joint_id][here_link->id] = true;
-        for (auto &link : here_link->child_links) {
-          link_stack.push(link);
-        }
-      }
-    }
-    rptable_ = rptable;
-  }
+  void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,
+                           bool usebase) const;
+  void update_rptable();
 };
 
 RobotModel construct_from_urdfpath(const std::string &urdf_path);

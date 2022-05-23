@@ -10,9 +10,9 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 namespace tinyfk {
 
-void RobotModel::get_link_point(size_t link_id,
-                                urdf::Pose &out_tf_rlink_to_elink,
-                                bool basealso) const {
+void RobotModel::get_link_pose_naive(size_t link_id,
+                                     urdf::Pose &out_tf_rlink_to_elink,
+                                     bool basealso) const {
   // h : here , e: endeffector , r: root, p: parent
   // e.g. hlink means here_link and rlink means root_link
 
@@ -66,12 +66,12 @@ RobotModel::get_jacobian_naive(size_t elink_id,
   double dx = 1e-7;
   std::vector<double> q0 = this->get_joint_angles(joint_ids);
   urdf::Pose pose0, pose1;
-  this->get_link_point(elink_id, pose0, basealso);
+  this->get_link_pose_naive(elink_id, pose0, basealso);
   for (size_t i = 0; i < n_joints; i++) {
     int jid = joint_ids[i];
 
     this->set_joint_angle(jid, q0[i] + dx);
-    this->get_link_point(elink_id, pose1, basealso);
+    this->get_link_pose_naive(elink_id, pose1, basealso);
     this->set_joint_angle(jid, q0[i]); // must to set to the original
 
     urdf::Vector3 &pos0 = pose0.position;
@@ -95,7 +95,7 @@ RobotModel::get_jacobian_naive(size_t elink_id,
       std::array<double, 3> &tmp = base_pose_.pose3d_;
       tmp[i] += dx;
       this->set_base_pose(tmp[0], tmp[1], tmp[2]);
-      this->get_link_point(elink_id, pose1, true);
+      this->get_link_pose_naive(elink_id, pose1, true);
       tmp[i] -= dx;
       this->set_base_pose(tmp[0], tmp[1], tmp[2]);
 

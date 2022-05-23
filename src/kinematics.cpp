@@ -22,19 +22,20 @@ urdf::Vector3 rpy_derivative(const urdf::Vector3 &rpy,
 
 namespace tinyfk {
 
-void RobotModel::get_link_point_withcache(size_t link_id,
-                                          urdf::Pose &out_tf_rlink_to_elink,
-                                          bool usebase) const {
-  urdf::Pose const * pose_ptr = transform_cache_.get_cache(link_id);
+void RobotModel::get_link_pose(size_t link_id,
+                               urdf::Pose &out_tf_rlink_to_elink,
+                               bool usebase) const {
+  urdf::Pose const *pose_ptr = transform_cache_.get_cache(link_id);
   if (pose_ptr) {
     out_tf_rlink_to_elink = *pose_ptr;
     return;
   }
-  this->_get_link_point_creating_cache(link_id, out_tf_rlink_to_elink, usebase);
+  this->get_link_pose_inner(link_id, out_tf_rlink_to_elink, usebase);
 }
 
-void RobotModel::_get_link_point_creating_cache(
-    size_t link_id, urdf::Pose &out_tf_rlink_to_elink, bool usebase) const {
+void RobotModel::get_link_pose_inner(size_t link_id,
+                                     urdf::Pose &out_tf_rlink_to_elink,
+                                     bool usebase) const {
   urdf::LinkSharedPtr hlink = links_[link_id];
 
   urdf::Pose tf_rlink_to_blink;
@@ -50,7 +51,8 @@ void RobotModel::_get_link_point_creating_cache(
       break;
     } // hit the root link
 
-    urdf::Pose const * tf_rlink_to_blink_ptr = transform_cache_.get_cache(hlink->id);
+    urdf::Pose const *tf_rlink_to_blink_ptr =
+        transform_cache_.get_cache(hlink->id);
     if (tf_rlink_to_blink_ptr) {
       tf_rlink_to_blink = *tf_rlink_to_blink_ptr;
       break;
@@ -94,7 +96,7 @@ void RobotModel::_get_link_point_creating_cache(
 }
 
 void get_base_jacobian(const urdf::Vector3 &epos_local,
-                       TinyMatrix &base_jacobian, bool with_rot) {
+                       SlicedMatrix &base_jacobian, bool with_rot) {
   /*
    * [1, 0,-y]
    * [0, 1, x]
@@ -128,45 +130,45 @@ RobotModel::get_jacobians_withcache(const std::vector<size_t> &elink_ids,
 
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(dim_pose, elink_ids.size());
   Eigen::MatrixXd J = Eigen::MatrixXd::Zero(dim_pose * dim_feature, dim_dof);
-  auto P_ = TinyMatrix(P);
-  auto J_ = TinyMatrix(J);
+  auto P_ = SlicedMatrix(P);
+  auto J_ = SlicedMatrix(J);
 
-  this->_solve_batch_forward_kinematics(elink_ids, joint_ids, with_rot,
-                                        with_base, P_, J_);
+  this->solve_batch_forward_kinematics(elink_ids, joint_ids, with_rot,
+                                       with_base, P_, J_);
   std::array<Eigen::MatrixXd, 2> ret = {J, P};
   return ret;
 }
 
-void RobotModel::_solve_batch_forward_kinematics(
+void RobotModel::solve_batch_forward_kinematics(
     std::vector<size_t> elink_ids, const std::vector<size_t> &joint_ids,
-    bool with_rot, bool with_base, TinyMatrix &pose_arr,
-    TinyMatrix &jacobian_arr) const {
+    bool with_rot, bool with_base, SlicedMatrix &pose_arr,
+    SlicedMatrix &jacobian_arr) const {
   int dim_jacobi = (with_rot ? 6 : 3);
   int dim_pose = (with_rot ? 6 : 3);
   int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
 
   for (int i = 0; i < elink_ids.size(); i++) {
     int elink_id = elink_ids[i];
-    TinyMatrix pose = pose_arr.slice(i);
-    TinyMatrix jacobian =
+    SlicedMatrix pose = pose_arr.slice(i);
+    SlicedMatrix jacobian =
         jacobian_arr.block(dim_jacobi * i, 0, dim_jacobi, dim_dof);
-    _solve_forward_kinematics(elink_id, joint_ids, with_rot, with_base, pose,
-                              jacobian);
+    solve_forward_kinematics(elink_id, joint_ids, with_rot, with_base, pose,
+                             jacobian);
   }
 }
 
 // lower level jacobian function, which directly iterate over poitner
-void RobotModel::_solve_forward_kinematics(int elink_id,
-                                           const std::vector<size_t> &joint_ids,
-                                           bool with_rot, bool with_base,
-                                           TinyMatrix &pose,
-                                           TinyMatrix &jacobian) const {
+void RobotModel::solve_forward_kinematics(int elink_id,
+                                          const std::vector<size_t> &joint_ids,
+                                          bool with_rot, bool with_base,
+                                          SlicedMatrix &pose,
+                                          SlicedMatrix &jacobian) const {
 
   // Forward kinematics computation
   // tf_rlink_to_elink and epos, erot, erpy will be also used in jacobian
   // computation
   urdf::Pose tf_rlink_to_elink;
-  this->get_link_point_withcache(elink_id, tf_rlink_to_elink, with_base);
+  this->get_link_pose(elink_id, tf_rlink_to_elink, with_base);
   urdf::Vector3 &epos = tf_rlink_to_elink.position;
   urdf::Rotation &erot = tf_rlink_to_elink.rotation;
   urdf::Vector3 erpy; // will be used only with_rot
@@ -197,7 +199,7 @@ void RobotModel::_solve_forward_kinematics(int elink_id,
                                   // clink is ok.
 
       urdf::Pose tf_rlink_to_clink;
-      this->get_link_point_withcache(clink->id, tf_rlink_to_clink, with_base);
+      this->get_link_pose(clink->id, tf_rlink_to_clink, with_base);
 
       urdf::Rotation &crot = tf_rlink_to_clink.rotation;
       urdf::Vector3 &&world_axis = crot * hjoint->axis; // axis w.r.t root link
@@ -234,7 +236,7 @@ void RobotModel::_solve_forward_kinematics(int elink_id,
     urdf::Vector3 epos_local =
         epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
     int dim_dof = joint_ids.size();
-    TinyMatrix base_jacobian = jacobian.block(0, dim_dof, dim_jacobi, 3);
+    SlicedMatrix base_jacobian = jacobian.block(0, dim_dof, dim_jacobi, 3);
     get_base_jacobian(epos_local, base_jacobian, with_rot);
   }
 }
