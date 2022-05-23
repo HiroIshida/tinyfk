@@ -25,32 +25,18 @@ namespace tinyfk {
 void RobotModel::get_link_point_withcache(size_t link_id,
                                           urdf::Pose &out_tf_rlink_to_elink,
                                           bool usebase) const {
-  // one may consider this procedure is redundant becaues
-  // _tf_cache.get_cache() in _get_link_point_creating_cache does
-  // the same thing. However, because we cannot avoid additional procedures
-  // in _get_link_point_creating_cache like while-loop and comparison of
-  // counter etc, directly calling here and return immediately leads to
-  // much efficiency.
   urdf::Pose *pose_ptr = transform_cache_.get_cache(link_id);
   if (pose_ptr) {
     out_tf_rlink_to_elink = *pose_ptr;
     return;
   }
-  // If cache does not found, get link pose creating cache
   this->_get_link_point_creating_cache(link_id, out_tf_rlink_to_elink, usebase);
 }
 
 void RobotModel::_get_link_point_creating_cache(
     size_t link_id, urdf::Pose &out_tf_rlink_to_elink, bool usebase) const {
-  // the first part basically compute transforms between adjacent link pair
-  // starting from the specifid endeffector link. The copmuted tfs are stored
-  // into _nasty_stack.hid_stack and _nasty_stack.tf_stack maybe bit complicated
-  // because I use _tf_caceh
   urdf::LinkSharedPtr hlink = links_[link_id];
 
-  // tf rlink_to_blink is set to a unit transform or _base_pose according to if
-  // usebase is enabled. If a cached transform from root link to here link, then
-  // tf_rlink_to_blink is overwrite to the cached value.
   urdf::Pose tf_rlink_to_blink;
   if (usebase) {
     tf_rlink_to_blink = base_pose_.pose_;
