@@ -88,8 +88,8 @@ void RobotModel::_get_link_point_creating_cache(
 
     // update
     counter++; // counter must be here
-    nasty_stack_.hid_stack_[counter] = hlink->id;
-    nasty_stack_.tf_stack_[counter] = std::move(tf_plink_to_hlink);
+    transform_stack_.hid_stack_[counter] = hlink->id;
+    transform_stack_.tf_stack_[counter] = std::move(tf_plink_to_hlink);
     hlink = std::move(plink);
   }
 
@@ -97,8 +97,8 @@ void RobotModel::_get_link_point_creating_cache(
   // note that counter inclimented in the first is directry used here
   urdf::Pose tf_rlink_to_plink = std::move(tf_rlink_to_blink);
   while (counter >= 0) {
-    int hid = nasty_stack_.hid_stack_[counter];
-    urdf::Pose &tf_plink_to_hlink = nasty_stack_.tf_stack_[counter];
+    int hid = transform_stack_.hid_stack_[counter];
+    urdf::Pose &tf_plink_to_hlink = transform_stack_.tf_stack_[counter];
     urdf::Pose tf_rlink_to_hlink =
         pose_transform(tf_rlink_to_plink, tf_plink_to_hlink);
 

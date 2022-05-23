@@ -85,15 +85,6 @@ struct TinyMatrix // coll major (same as eigen)
   }
 };
 
-struct NastyStack {
-  std::vector<urdf::Pose> tf_stack_;
-  std::vector<size_t> hid_stack_; // here id stack
-  NastyStack(){};
-  NastyStack(size_t N_link)
-      : tf_stack_(std::vector<urdf::Pose>(N_link)),
-        hid_stack_(std::vector<size_t>(N_link)) {}
-};
-
 struct RelevancePredicateTable {
   std::vector<std::vector<bool>> table_;
   RelevancePredicateTable(){};
@@ -136,7 +127,7 @@ public: // members
   BasePose base_pose_;
   int num_dof_;
 
-  mutable NastyStack nasty_stack_; // TODO add constructor??
+  mutable SizedStack<urdf::Pose> transform_stack_;
   mutable SizedCache<urdf::Pose> transform_cache_;
 
 public: // functions
