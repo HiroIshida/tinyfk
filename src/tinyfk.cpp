@@ -5,36 +5,11 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
 #include "tinyfk.hpp"
+#include "urdf_model/pose.h"
 #include <cmath>
 #include <fstream>
 
 namespace tinyfk {
-
-void TransformCache::set_cache(size_t link_id, const urdf::Pose &tf) {
-  assert(!isCachedVec_[link_id] && "attempt to break an existing cache");
-  cache_predicate_vector_[link_id] = true;
-  data_[link_id] = tf;
-}
-
-urdf::Pose *TransformCache::get_cache(size_t link_id) {
-  bool isAlreadyCached = (cache_predicate_vector_[link_id] == true);
-  if (!isAlreadyCached) {
-    return nullptr;
-  } // the cache does not exists
-  return &data_[link_id];
-}
-
-void TransformCache::extend() {
-  cache_size_++;
-  data_.push_back(urdf::Pose());
-  cache_predicate_vector_.push_back(false);
-  this->clear();
-}
-
-void TransformCache::clear() { // performance critical
-  // bool's default value is false.
-  cache_predicate_vector_ = std::vector<bool>(cache_size_);
-}
 
 RobotModel::RobotModel(const std::string &xml_string) {
   urdf::ModelInterfaceSharedPtr robot_urdf_interface =
@@ -87,7 +62,7 @@ RobotModel::RobotModel(const std::string &xml_string) {
   std::vector<double> joint_angles(num_dof, 0.0);
 
   nasty_stack_ = NastyStack(N_link);
-  tf_cache_ = TransformCache(N_link);
+  transform_cache_ = SizedCache<urdf::Pose>(N_link);
   root_link_ = robot_urdf_interface->root_link_;
   links_ = links;
   link_ids_ = link_ids;
@@ -101,7 +76,7 @@ RobotModel::RobotModel(const std::string &xml_string) {
 void RobotModel::set_joint_angles(const std::vector<size_t> &joint_ids,
                                   const std::vector<double> &joint_angles) {
   this->_set_joint_angles(joint_ids, joint_angles);
-  tf_cache_.clear();
+  transform_cache_.clear();
 }
 
 void RobotModel::_set_joint_angles(const std::vector<size_t> &joint_ids,
@@ -113,18 +88,18 @@ void RobotModel::_set_joint_angles(const std::vector<size_t> &joint_ids,
 
 void RobotModel::set_base_pose(double x, double y, double theta) {
   _set_base_pose(x, y, theta);
-  tf_cache_.clear();
+  transform_cache_.clear();
 }
 void RobotModel::_set_base_pose(double x, double y, double theta) {
   base_pose_.set(x, y, theta);
 }
 
-void RobotModel::clear_cache() { tf_cache_.clear(); }
+void RobotModel::clear_cache() { transform_cache_.clear(); }
 
 void RobotModel::set_init_angles() {
   std::vector<double> joint_angles(num_dof_, 0.0);
   joint_angles_ = joint_angles;
-  tf_cache_.clear();
+  transform_cache_.clear();
 }
 
 std::vector<double>

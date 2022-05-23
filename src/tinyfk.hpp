@@ -19,6 +19,8 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <stdexcept>
 #include <unordered_map>
 
+#include "data_structure.hpp"
+
 namespace tinyfk {
 
 using MatrixXdC =
@@ -83,25 +85,6 @@ struct TinyMatrix // coll major (same as eigen)
   }
 };
 
-class TransformCache {
-
-public:
-  explicit TransformCache(size_t cache_size)
-      : cache_size_(cache_size), data_(std::vector<urdf::Pose>(cache_size)),
-        cache_predicate_vector_(std::vector<bool>(cache_size, false)) {}
-
-  TransformCache() : TransformCache(0) {}
-  void set_cache(size_t link_id, const urdf::Pose &tf);
-  urdf::Pose *get_cache(size_t link_id);
-  void extend();
-  void clear();
-
-private:
-  int cache_size_;
-  std::vector<urdf::Pose> data_;
-  std::vector<bool> cache_predicate_vector_;
-};
-
 struct NastyStack {
   std::vector<urdf::Pose> tf_stack_;
   std::vector<size_t> hid_stack_; // here id stack
@@ -154,7 +137,7 @@ public: // members
   int num_dof_;
 
   mutable NastyStack nasty_stack_; // TODO add constructor??
-  mutable TransformCache tf_cache_;
+  mutable SizedCache<urdf::Pose> transform_cache_;
 
 public: // functions
   RobotModel(const std::string &xml_string);
@@ -257,7 +240,7 @@ public: // functions
     link_ids_[link_name] = link_id;
     links_.push_back(new_link);
     links_[parent_id]->child_links.push_back(new_link);
-    tf_cache_.extend();
+    transform_cache_.extend();
 
     this->_update_rptable(); // set _rptable
   }

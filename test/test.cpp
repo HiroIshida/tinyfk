@@ -134,7 +134,7 @@ int main() {
   }
   robot.set_base_pose(angle_vector[n_joints], angle_vector[n_joints + 1],
                       angle_vector[n_joints + 2]);
-  robot.tf_cache_.clear();
+  robot.transform_cache_.clear();
   for (int i = 0; i < link_names.size(); i++) {
     bool rot_also =
         true; // rotatio part of the geometric jacobian is not yet checked

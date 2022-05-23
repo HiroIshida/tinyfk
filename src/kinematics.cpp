@@ -31,7 +31,7 @@ void RobotModel::get_link_point_withcache(size_t link_id,
   // in _get_link_point_creating_cache like while-loop and comparison of
   // counter etc, directly calling here and return immediately leads to
   // much efficiency.
-  urdf::Pose *pose_ptr = tf_cache_.get_cache(link_id);
+  urdf::Pose *pose_ptr = transform_cache_.get_cache(link_id);
   if (pose_ptr) {
     out_tf_rlink_to_elink = *pose_ptr;
     return;
@@ -64,7 +64,7 @@ void RobotModel::_get_link_point_creating_cache(
       break;
     } // hit the root link
 
-    urdf::Pose *tf_rlink_to_blink_ptr = tf_cache_.get_cache(hlink->id);
+    urdf::Pose *tf_rlink_to_blink_ptr = transform_cache_.get_cache(hlink->id);
     if (tf_rlink_to_blink_ptr) {
       tf_rlink_to_blink = *tf_rlink_to_blink_ptr;
       break;
@@ -102,7 +102,7 @@ void RobotModel::_get_link_point_creating_cache(
     urdf::Pose tf_rlink_to_hlink =
         pose_transform(tf_rlink_to_plink, tf_plink_to_hlink);
 
-    tf_cache_.set_cache(hid, tf_rlink_to_hlink);
+    transform_cache_.set_cache(hid, tf_rlink_to_hlink);
     tf_rlink_to_plink = std::move(tf_rlink_to_hlink);
     counter--;
     if (counter == -1) {
