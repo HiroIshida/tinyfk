@@ -5,6 +5,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
 #include "tinyfk.hpp"
+#include "urdf_model/pose.h"
 #include <cmath>
 #include <fstream>
 
@@ -60,8 +61,8 @@ RobotModel::RobotModel(const std::string &xml_string) {
   int num_dof = joint_ids.size();
   std::vector<double> joint_angles(num_dof, 0.0);
 
-  nasty_stack_ = NastyStack(N_link);
-  tf_cache_ = TransformCache(N_link);
+  transform_stack_ = SizedStack<LinkIdAndPose>(N_link);
+  transform_cache_ = SizedCache<urdf::Pose>(N_link);
   root_link_ = robot_urdf_interface->root_link_;
   links_ = links;
   link_ids_ = link_ids;
@@ -69,13 +70,13 @@ RobotModel::RobotModel(const std::string &xml_string) {
   joint_ids_ = joint_ids;
   num_dof_ = num_dof;
   joint_angles_ = joint_angles;
-  this->_update_rptable(); // update _rptable
+  this->update_rptable(); // update _rptable
 }
 
 void RobotModel::set_joint_angles(const std::vector<size_t> &joint_ids,
                                   const std::vector<double> &joint_angles) {
   this->_set_joint_angles(joint_ids, joint_angles);
-  tf_cache_.clear();
+  transform_cache_.clear();
 }
 
 void RobotModel::_set_joint_angles(const std::vector<size_t> &joint_ids,
@@ -87,18 +88,18 @@ void RobotModel::_set_joint_angles(const std::vector<size_t> &joint_ids,
 
 void RobotModel::set_base_pose(double x, double y, double theta) {
   _set_base_pose(x, y, theta);
-  tf_cache_.clear();
+  transform_cache_.clear();
 }
 void RobotModel::_set_base_pose(double x, double y, double theta) {
   base_pose_.set(x, y, theta);
 }
 
-void RobotModel::clear_cache() { tf_cache_.clear(); }
+void RobotModel::clear_cache() { transform_cache_.clear(); }
 
 void RobotModel::set_init_angles() {
   std::vector<double> joint_angles(num_dof_, 0.0);
   joint_angles_ = joint_angles;
-  tf_cache_.clear();
+  transform_cache_.clear();
 }
 
 std::vector<double>
@@ -151,6 +152,64 @@ RobotModel::get_link_ids(std::vector<std::string> link_names) const {
     link_ids[i] = iter->second;
   }
   return link_ids;
+}
+
+void RobotModel::add_new_link(std::string link_name, size_t parent_id,
+                              std::array<double, 3> position,
+                              std::array<double, 3> rotation) {
+  bool link_name_exists = (link_ids_.find(link_name) != link_ids_.end());
+  if (link_name_exists) {
+    std::string message = "link name " + link_name + " already exists";
+    throw std::invalid_argument("link name : " + link_name + " already exists");
+  }
+
+  auto fixed_joint = std::make_shared<urdf::Joint>();
+  auto &&vec = urdf::Vector3(position[0], position[1], position[2]);
+  auto rot = urdf::Rotation();
+  rot.setFromRPY(rotation[0], rotation[1], rotation[2]);
+
+  fixed_joint->parent_to_joint_origin_transform.position = vec;
+  fixed_joint->parent_to_joint_origin_transform.rotation = rot;
+  fixed_joint->type = urdf::Joint::FIXED;
+
+  int link_id = links_.size();
+  auto new_link = std::make_shared<urdf::Link>();
+  new_link->parent_joint = fixed_joint;
+  new_link->setParent(links_[parent_id]);
+  new_link->name = link_name;
+  new_link->id = link_id;
+
+  link_ids_[link_name] = link_id;
+  links_.push_back(new_link);
+  links_[parent_id]->child_links.push_back(new_link);
+  transform_cache_.extend();
+
+  this->update_rptable(); // set _rptable
+}
+
+void RobotModel::update_rptable() {
+  // this function usually must come in the end of a function
+
+  // we must recreate from scratch
+  int n_link = link_ids_.size();
+  int n_dof = joint_ids_.size();
+  auto rptable = RelevancePredicateTable(n_link, n_dof);
+
+  for (urdf::JointSharedPtr joint : joints_) {
+    int joint_id = joint_ids_.at(joint->name);
+    urdf::LinkSharedPtr clink = joint->getChildLink();
+    std::stack<urdf::LinkSharedPtr> link_stack;
+    link_stack.push(clink);
+    while (!link_stack.empty()) {
+      auto here_link = link_stack.top();
+      link_stack.pop();
+      rptable.table_[joint_id][here_link->id] = true;
+      for (auto &link : here_link->child_links) {
+        link_stack.push(link);
+      }
+    }
+  }
+  rptable_ = rptable;
 }
 
 RobotModel construct_from_urdfpath(const std::string &urdf_path) {

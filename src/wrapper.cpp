@@ -4,7 +4,7 @@ This software is released under the MIT License, see LICENSE.
 tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
-#include "../src/tinyfk.hpp"
+#include "tinyfk.hpp"
 #include <Eigen/Dense>
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
@@ -75,8 +75,8 @@ public:
         P_trajectory.block(0, i * n_links, n_pose_dim, n_links) = P;
       } else {
         urdf::Pose pose;
-        for (int j = 0; j < elink_ids.size(); j++) {
-          robot_model_.get_link_point_withcache(elink_ids[j], pose, basealso);
+        for (size_t j = 0; j < elink_ids.size(); j++) {
+          robot_model_.get_link_pose(elink_ids[j], pose, basealso);
           P_trajectory(0, i * n_links + j) = pose.position.x;
           P_trajectory(1, i * n_links + j) = pose.position.y;
           P_trajectory(2, i * n_links + j) = pose.position.z;
@@ -95,12 +95,12 @@ public:
   }
 
   std::vector<size_t> get_joint_ids(std::vector<std::string> joint_names) {
-    int n_joint = joint_names.size();
+    size_t n_joint = joint_names.size();
     return robot_model_.get_joint_ids(joint_names);
   }
 
   std::vector<size_t> get_link_ids(std::vector<std::string> link_names) {
-    int n_link = link_names.size();
+    size_t n_link = link_names.size();
     return robot_model_.get_link_ids(link_names);
   }
 

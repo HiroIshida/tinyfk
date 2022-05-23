@@ -22,8 +22,8 @@ int main() {
   vector<string> link_names = js["link_names"];
   vector<vector<double>> pose_list = js["pose_list"];
 
-  int n_joints = joint_names.size();
-  int n_links = link_names.size();
+  size_t n_joints = joint_names.size();
+  size_t n_links = link_names.size();
 
   // test main
   std::string urdf_file = "../data/pr2.urdf";
@@ -91,7 +91,7 @@ int main() {
   auto joint_ids = robot.get_joint_ids(joint_names);
   auto link_ids = robot.get_link_ids(link_names);
 
-  for (int i = 0; i < n_joints; i++) {
+  for (size_t i = 0; i < n_joints; i++) {
     robot.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
   robot.set_base_pose(angle_vector[n_joints + 0], angle_vector[n_joints + 1],
@@ -100,7 +100,7 @@ int main() {
   urdf::Pose pose, pose_naive;
   for (size_t i = 0; i < n_links; i++) {
     int link_id = link_ids[i];
-    robot.get_link_point_withcache(link_id, pose, base_also);
+    robot.get_link_pose(link_id, pose, base_also);
 
     if (!isNear(pose.position.x, pose_list[i][0]) ||
         !isNear(pose.position.y, pose_list[i][1]) ||
@@ -129,17 +129,17 @@ int main() {
   std::cout << "[PASS] get_link_point_withcache" << std::endl;
 
   // Now we comapre jacobian computed by finite diff with the analytical one
-  for (int i = 0; i < n_joints; i++) {
+  for (size_t i = 0; i < n_joints; i++) {
     robot.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
   robot.set_base_pose(angle_vector[n_joints], angle_vector[n_joints + 1],
                       angle_vector[n_joints + 2]);
-  robot.tf_cache_.clear();
-  for (int i = 0; i < link_names.size(); i++) {
+  robot.transform_cache_.clear();
+  for (size_t i = 0; i < link_names.size(); i++) {
     bool rot_also =
         true; // rotatio part of the geometric jacobian is not yet checked
     int link_id = link_ids[i];
-    vector<size_t> link_ids_ = {link_id};
+    vector<int> link_ids_ = {link_id};
     auto J_numerical =
         robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
     auto tmpo =
