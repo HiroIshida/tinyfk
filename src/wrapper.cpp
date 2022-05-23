@@ -4,7 +4,7 @@ This software is released under the MIT License, see LICENSE.
 tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
-#include "../src/tinyfk.hpp"
+#include "tinyfk.hpp"
 #include <Eigen/Dense>
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
