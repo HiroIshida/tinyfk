@@ -56,7 +56,7 @@ void RobotModel::_get_link_point_creating_cache(
     tf_rlink_to_blink = base_pose_.pose_;
   }
 
-  int counter = -1;
+  transform_stack_.reset();
   while (true) {
 
     urdf::LinkSharedPtr plink = hlink->getParent();
@@ -87,27 +87,22 @@ void RobotModel::_get_link_point_creating_cache(
     }
 
     // update
-    counter++; // counter must be here
-    transform_stack_.hid_stack_[counter] = hlink->id;
-    transform_stack_.tf_stack_[counter] = std::move(tf_plink_to_hlink);
-    hlink = std::move(plink);
+    transform_stack_.push(LinkIdAndPose{
+        hlink->id, std::move(tf_plink_to_hlink)}); // TODO(HiroIshida): move?
+    hlink = plink;
   }
 
-  // the second part then, compute tf_root_to_here bt iteration
-  // note that counter inclimented in the first is directry used here
   urdf::Pose tf_rlink_to_plink = std::move(tf_rlink_to_blink);
-  while (counter >= 0) {
-    int hid = transform_stack_.hid_stack_[counter];
-    urdf::Pose &tf_plink_to_hlink = transform_stack_.tf_stack_[counter];
+  while (!transform_stack_.empty()) {
+
+    const auto &pose_id_pair = transform_stack_.top();
+    const urdf::Pose &tf_plink_to_hlink = pose_id_pair.pose;
+    const size_t hid = pose_id_pair.id;
+    transform_stack_.pop();
     urdf::Pose tf_rlink_to_hlink =
         pose_transform(tf_rlink_to_plink, tf_plink_to_hlink);
-
     transform_cache_.set_cache(hid, tf_rlink_to_hlink);
     tf_rlink_to_plink = std::move(tf_rlink_to_hlink);
-    counter--;
-    if (counter == -1) {
-      break;
-    }
   }
   out_tf_rlink_to_elink = std::move(tf_rlink_to_plink);
 }

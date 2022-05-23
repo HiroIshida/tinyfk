@@ -1,3 +1,5 @@
+#include <vector>
+
 namespace tinyfk {
 
 template <class DataT> class SizedCache {
@@ -20,7 +22,8 @@ private:
 
 template <class DataT>
 void SizedCache<DataT>::set_cache(size_t id, const DataT &tf) {
-  assert(!isCachedVec_[id] && "attempt to break an existing cache");
+  // assert(!cache_predicate_vector_[id] && "attempt to break an existing
+  // cache");
   cache_predicate_vector_[id] = true;
   data_[id] = tf;
 }
@@ -45,13 +48,25 @@ template <class DataT> void SizedCache<DataT>::clear() { // performance critical
   cache_predicate_vector_ = std::vector<bool>(cache_size_);
 }
 
-template <class DataT> struct SizedStack {
-  std::vector<DataT> tf_stack_;
-  std::vector<size_t> hid_stack_; // here id stack
-  SizedStack(){};
-  SizedStack(size_t N_link)
-      : tf_stack_(std::vector<DataT>(N_link)),
-        hid_stack_(std::vector<size_t>(N_link)) {}
+template <class ElementT> class SizedStack {
+public:
+  SizedStack() : SizedStack(0) {}
+  SizedStack(size_t max_stack_size)
+      : data_(std::vector<ElementT>(max_stack_size)), current_idx_(0) {}
+
+  inline size_t size() { return current_idx_; }
+  inline bool empty() { return current_idx_ == 0; }
+  inline void reset() { current_idx_ = 0; }
+  inline void push(const ElementT &elem) {
+    data_[current_idx_] = elem;
+    current_idx_++;
+  }
+  inline ElementT &top() { return data_[current_idx_ - 1]; }
+  inline void pop() { current_idx_--; }
+
+private:
+  size_t current_idx_;
+  std::vector<ElementT> data_;
 };
 
 } // namespace tinyfk

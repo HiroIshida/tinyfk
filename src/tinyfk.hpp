@@ -111,6 +111,11 @@ struct BasePose {
   }
 };
 
+struct LinkIdAndPose {
+  size_t id;
+  urdf::Pose pose;
+};
+
 class RobotModel {
 public: // members
   // change them all to private later
@@ -127,7 +132,7 @@ public: // members
   BasePose base_pose_;
   int num_dof_;
 
-  mutable SizedStack<urdf::Pose> transform_stack_;
+  mutable SizedStack<LinkIdAndPose> transform_stack_;
   mutable SizedCache<urdf::Pose> transform_cache_;
 
 public: // functions
