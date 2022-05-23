@@ -10,7 +10,6 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 urdf::Vector3 rpy_derivative(const urdf::Vector3 &rpy,
                              const urdf::Vector3 &axis) {
   urdf::Vector3 drpy_dt;
-  double a1 = -rpy.x;
   double a2 = -rpy.y;
   double a3 = -rpy.z;
   drpy_dt.x = cos(a3) / cos(a2) * axis.x - sin(a3) / cos(a2) * axis.y;
@@ -107,7 +106,6 @@ void get_base_jacobian(const urdf::Vector3 &epos_local,
    * [0, 0, 0]
    * [0, 0, 1]
    */
-  int dim_pose = (with_rot ? 6 : 3);
   base_jacobian(0, 0) = 1.0;
   base_jacobian(1, 1) = 1.0;
   base_jacobian(0, 2) = -epos_local.y;
@@ -144,10 +142,9 @@ void RobotModel::solve_batch_forward_kinematics(
     bool with_rot, bool with_base, SlicedMatrix &pose_arr,
     SlicedMatrix &jacobian_arr) const {
   int dim_jacobi = (with_rot ? 6 : 3);
-  int dim_pose = (with_rot ? 6 : 3);
   int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
 
-  for (int i = 0; i < elink_ids.size(); i++) {
+  for (size_t i = 0; i < elink_ids.size(); i++) {
     int elink_id = elink_ids[i];
     SlicedMatrix pose = pose_arr.slice(i);
     SlicedMatrix jacobian =
@@ -186,7 +183,7 @@ void RobotModel::solve_forward_kinematics(int elink_id,
 
   // Jacobian computation
   int dim_jacobi = (with_rot ? 6 : 3);
-  for (int i = 0; i < joint_ids.size(); i++) {
+  for (size_t i = 0; i < joint_ids.size(); i++) {
     int jid = joint_ids[i];
     if (rptable_.isRelevant(jid, elink_id)) {
       const urdf::JointSharedPtr &hjoint = joints_[jid];

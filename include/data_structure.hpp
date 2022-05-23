@@ -68,8 +68,8 @@ public:
   inline void pop() { current_idx_--; }
 
 private:
-  size_t current_idx_;
   std::vector<ElementT> data_;
+  size_t current_idx_;
 };
 
 } // namespace tinyfk

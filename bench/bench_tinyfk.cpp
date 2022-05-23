@@ -5,7 +5,7 @@
 using namespace tinyfk;
 
 int main(){
-  int N = 100000;
+  size_t N = 100000;
   std::string urdf_file = "../data/fetch.urdf";
   std::vector<std::string> link_names = {
     "l_gripper_finger_link", 
@@ -32,7 +32,7 @@ int main(){
   {// bench tinyfk FK : without using cache
     clock_t start = clock();
     urdf::Pose out;
-    for(int i=0; i<N; i++){
+    for(size_t i=0; i<N; i++){
       for(int lid : link_ids){
         robot.get_link_pose_naive(lid, out, false);
       }
@@ -44,7 +44,7 @@ int main(){
   {// bench tinyfk FK : with cache
     clock_t start = clock();
     urdf::Pose out;
-    for(int i=0; i<N; i++){
+    for(size_t i=0; i<N; i++){
       robot.set_joint_angles(joint_ids, angle_vector); // this clear cached TFs
       for(int lid : link_ids){
         robot.get_link_pose(lid, out, false);
@@ -56,9 +56,9 @@ int main(){
   {
     clock_t start = clock();
     urdf::Pose out;
-    for(int i=0; i<N; i++){
+    for(size_t i=0; i<N; i++){
       robot.set_joint_angles(joint_ids, angle_vector); // this clear cached TFs
-      for(int j=0; j<link_ids.size(); j++){
+      for(size_t j=0; j<link_ids.size(); j++){
         robot.get_jacobians_withcache(link_ids, joint_ids, true, true);
       }
     }
