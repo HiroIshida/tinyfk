@@ -10,6 +10,32 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 namespace tinyfk {
 
+void TransformCache::set_cache(size_t link_id, const urdf::Pose &tf) {
+  assert(!isCachedVec_[link_id] && "attempt to break an existing cache");
+  cache_predicate_vector_[link_id] = true;
+  data_[link_id] = tf;
+}
+
+urdf::Pose *TransformCache::get_cache(size_t link_id) {
+  bool isAlreadyCached = (cache_predicate_vector_[link_id] == true);
+  if (!isAlreadyCached) {
+    return nullptr;
+  } // the cache does not exists
+  return &data_[link_id];
+}
+
+void TransformCache::extend() {
+  cache_size_++;
+  data_.push_back(urdf::Pose());
+  cache_predicate_vector_.push_back(false);
+  this->clear();
+}
+
+void TransformCache::clear() { // performance critical
+  // bool's default value is false.
+  cache_predicate_vector_ = std::vector<bool>(cache_size_);
+}
+
 RobotModel::RobotModel(const std::string &xml_string) {
   urdf::ModelInterfaceSharedPtr robot_urdf_interface =
       urdf::parseURDF(xml_string);

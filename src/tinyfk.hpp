@@ -83,41 +83,23 @@ struct TinyMatrix // coll major (same as eigen)
   }
 };
 
-struct TransformCache {
-  int N_link_;
+class TransformCache {
+
+public:
+  explicit TransformCache(size_t cache_size)
+      : cache_size_(cache_size), data_(std::vector<urdf::Pose>(cache_size)),
+        cache_predicate_vector_(std::vector<bool>(cache_size, false)) {}
+
+  TransformCache() : TransformCache(0) {}
+  void set_cache(size_t link_id, const urdf::Pose &tf);
+  urdf::Pose *get_cache(size_t link_id);
+  void extend();
+  void clear();
+
+private:
+  int cache_size_;
   std::vector<urdf::Pose> data_;
-  std::vector<bool> isCachedVec_;
-
-  TransformCache() {}
-  TransformCache(size_t N_link)
-      : N_link_(N_link), data_(std::vector<urdf::Pose>(N_link)),
-        isCachedVec_(std::vector<bool>(N_link, false)) {}
-
-  void set_cache(size_t link_id, const urdf::Pose &tf) {
-    assert(!isCachedVec_[link_id] && "attempt to break an existing cache");
-    isCachedVec_[link_id] = true;
-    data_[link_id] = tf;
-  }
-
-  urdf::Pose *get_cache(size_t link_id) {
-    bool isAlreadyCached = (isCachedVec_[link_id] == true);
-    if (!isAlreadyCached) {
-      return nullptr;
-    } // the cache does not exists
-    return &data_[link_id];
-  }
-
-  void extend() {
-    N_link_++;
-    data_.push_back(urdf::Pose());
-    isCachedVec_.push_back(false);
-    this->clear();
-  }
-
-  void clear() { // performance critical
-    // bool's default value is false.
-    isCachedVec_ = std::vector<bool>(N_link_);
-  }
+  std::vector<bool> cache_predicate_vector_;
 };
 
 struct NastyStack {
