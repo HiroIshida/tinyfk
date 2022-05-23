@@ -10,7 +10,7 @@ public:
 
   SizedCache() : SizedCache(0) {}
   void set_cache(size_t id, const DataT &data);
-  DataT *get_cache(size_t id);
+  DataT const * get_cache(size_t id) const;
   void extend();
   void clear();
 
@@ -28,12 +28,12 @@ void SizedCache<DataT>::set_cache(size_t id, const DataT &tf) {
   data_[id] = tf;
 }
 
-template <class DataT> DataT *SizedCache<DataT>::get_cache(size_t id) {
+template <class DataT> DataT const * SizedCache<DataT>::get_cache(size_t id) const {
   bool isAlreadyCached = (cache_predicate_vector_[id] == true);
   if (!isAlreadyCached) {
     return nullptr;
   } // the cache does not exists
-  return &data_[id];
+  return const_cast<DataT const *>(&data_[id]);
 }
 
 template <class DataT> void SizedCache<DataT>::extend() {
@@ -54,14 +54,14 @@ public:
   SizedStack(size_t max_stack_size)
       : data_(std::vector<ElementT>(max_stack_size)), current_idx_(0) {}
 
-  inline size_t size() { return current_idx_; }
-  inline bool empty() { return current_idx_ == 0; }
+  inline size_t size() const { return current_idx_; }
+  inline bool empty() const { return current_idx_ == 0; }
   inline void reset() { current_idx_ = 0; }
   inline void push(const ElementT &elem) {
     data_[current_idx_] = elem;
     current_idx_++;
   }
-  inline ElementT &top() { return data_[current_idx_ - 1]; }
+  inline ElementT &top() const { return const_cast<ElementT &>(data_[current_idx_ - 1]); }
   inline void pop() { current_idx_--; }
 
 private:

@@ -25,7 +25,7 @@ namespace tinyfk {
 void RobotModel::get_link_point_withcache(size_t link_id,
                                           urdf::Pose &out_tf_rlink_to_elink,
                                           bool usebase) const {
-  urdf::Pose *pose_ptr = transform_cache_.get_cache(link_id);
+  urdf::Pose const * pose_ptr = transform_cache_.get_cache(link_id);
   if (pose_ptr) {
     out_tf_rlink_to_elink = *pose_ptr;
     return;
@@ -50,7 +50,7 @@ void RobotModel::_get_link_point_creating_cache(
       break;
     } // hit the root link
 
-    urdf::Pose *tf_rlink_to_blink_ptr = transform_cache_.get_cache(hlink->id);
+    urdf::Pose const * tf_rlink_to_blink_ptr = transform_cache_.get_cache(hlink->id);
     if (tf_rlink_to_blink_ptr) {
       tf_rlink_to_blink = *tf_rlink_to_blink_ptr;
       break;

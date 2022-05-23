@@ -56,11 +56,11 @@ struct TinyMatrix // coll major (same as eigen)
       : data_(data), i_begin_(i_begin), j_begin_(j_begin), n_block_(n),
         m_block_(m), n_whole_(n_whole), m_whole_(m_whole) {}
 
-  inline int rows() { return n_block_; }
+  inline int rows() const { return n_block_; }
 
-  inline int cols() { return m_block_; }
+  inline int cols() const { return m_block_; }
 
-  inline int get_idx(int i, int j) {
+  inline int get_idx(int i, int j) const {
     assert(i < n_whole_ && "out of index");
     assert(j < m_whole_ && "out of index");
 
@@ -68,26 +68,26 @@ struct TinyMatrix // coll major (same as eigen)
     return idx;
   }
 
-  TinyMatrix block(int i, int j, int n, int m) {
+  TinyMatrix block(int i, int j, int n, int m) const {
     TinyMatrix mat = {data_, i_begin_ + i, j_begin_ + j, n,
                       m,     n_whole_,     m_whole_};
     return mat;
   }
 
-  TinyMatrix slice(int i) { // we consider matrix is coll major.
+  TinyMatrix slice(int i) const { // we consider matrix is coll major.
     return this->block(0, i, n_block_, 1);
   }
 
-  double &operator()(int i, int j) { return data_[this->get_idx(i, j)]; }
+  double &operator()(int i, int j) const { return data_[this->get_idx(i, j)]; }
 
-  double &operator[](int i) { // access to sliced matrix
+  double &operator[](int i) const { // access to sliced matrix
     return data_[this->get_idx(i, 0)];
   }
 };
 
 struct RelevancePredicateTable {
   std::vector<std::vector<bool>> table_;
-  RelevancePredicateTable(){};
+  RelevancePredicateTable() : RelevancePredicateTable(0, 0) {};
   RelevancePredicateTable(int N_link, int N_joint) {
     for (int i = 0; i < N_joint; i++) {
       table_.push_back(std::vector<bool>(N_link));
