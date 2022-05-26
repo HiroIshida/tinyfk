@@ -30,7 +30,7 @@ endfunction()
 
 setup_tinyfk_test(test_data_structure test/test_data_structure.cpp)
 
-setup_tinyfk_test(test_kinematics test/test.cpp)
+setup_tinyfk_test(test_kinematics test/test_kinematics.cpp)
 set(nlohmann_json_INCLUDE_DIRS third_party/json/include)
 target_include_directories(test_kinematics PUBLIC ${nlohmann_json_INCLUDE_DIRS})
 
