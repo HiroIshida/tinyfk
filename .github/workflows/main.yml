@@ -25,7 +25,7 @@ jobs:
 
             - name: Install apt packages
               run: |
-                  sudo apt-get install libeigen3-dev
+                  sudo apt-get install libeigen3-dev libgtest-dev
 
             - name: Build c++ via cmake
               run: |
