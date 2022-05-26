@@ -30,9 +30,8 @@ endfunction()
 
 setup_tinyfk_test(test_data_structure test/test_data_structure.cpp)
 
-add_executable(test_kinematics test/test.cpp)
+setup_tinyfk_test(test_kinematics test/test.cpp)
 set(nlohmann_json_INCLUDE_DIRS third_party/json/include)
-target_link_libraries(test_kinematics tinyfk)
 target_include_directories(test_kinematics PUBLIC ${nlohmann_json_INCLUDE_DIRS})
 
 # benchmark (kdl)
