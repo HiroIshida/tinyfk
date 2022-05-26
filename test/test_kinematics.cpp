@@ -15,7 +15,7 @@ bool isNear(double x, double y) { return (abs(x - y) < 1e-5); }
 
 TEST(KINEMATICS, AllTest) {
   // loading test data
-  ifstream test_data("../test/test_data.json");
+  ifstream test_data("../test/data/test_data.json");
   nlohmann::json js;
   test_data >> js;
   vector<double> angle_vector = js["angle_vector"];
