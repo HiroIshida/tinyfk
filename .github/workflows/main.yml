@@ -38,7 +38,7 @@ jobs:
             - name: Test c++
               run: |
                   cd build
-                  ./test_kinematics
+                  ctest --verbose
                   ./bench_tinyfk
 
             - name: pip install tinyfk from source
