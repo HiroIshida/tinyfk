@@ -1,0 +1,37 @@
+name: test_cpp_core
+
+on:
+    push:
+        branches:
+            - master
+    pull_request:
+        branches:
+            - master
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v2
+
+            - name: update submodule
+              run: git submodule update --init --depth=1
+
+            - name: Install apt packages
+              run: |
+                  sudo apt-get install libeigen3-dev libgtest-dev
+
+            - name: Build c++ via cmake
+              run: |
+                  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/lib/x86_64-linux-gnu/pkgconfig"
+                  mkdir build
+                  cd build
+                  cmake -DBUILD_PYTHON_INTERFACE=OFF -DCMAKE_BUILD_TYPE=Debug ..
+                  make
+
+            - name: Test c++
+              run: |
+                  cd build
+                  ctest --verbose
+                  ./bench_tinyfk
