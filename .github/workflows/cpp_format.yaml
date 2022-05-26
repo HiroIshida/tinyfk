@@ -19,5 +19,5 @@ jobs:
       with:
         source: '.'
         exclude: './third_party ./urdf_parser'
-        extensions: 'h,cpp'
+        extensions: 'h,cpp,hpp'
         clangFormatVersion: 12
