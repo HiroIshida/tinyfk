@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
@@ -20,10 +20,23 @@ add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk urdfdom_model)
 
 # testing
+find_package(GTest REQUIRED)
+
+function(setup_tinyfk_test test_name test_src)
+    add_executable(${test_name} ${test_src})
+    target_link_libraries(${test_name} tinyfk ${GTEST_LIBRARIES} pthread)
+    target_include_directories(${test_name} PUBLIC ${GTEST_INCLUDE_DIRS})
+endfunction()
+
+setup_tinyfk_test(test_data_structure test/test_data_structure.cpp)
+
+setup_tinyfk_test(test_kinematics test/test_kinematics.cpp)
 set(nlohmann_json_INCLUDE_DIRS third_party/json/include)
-add_executable(test_kinematics test/test.cpp)
-target_link_libraries(test_kinematics tinyfk)
-target_include_directories(test_kinematics PRIVATE ${nlohmann_json_INCLUDE_DIRS})
+target_include_directories(test_kinematics PUBLIC ${nlohmann_json_INCLUDE_DIRS})
+
+enable_testing()
+gtest_discover_tests(test_data_structure)
+gtest_discover_tests(test_kinematics)
 
 # benchmark (kdl)
 option(BENCH_KDL "benchmarking kdl" OFF)
