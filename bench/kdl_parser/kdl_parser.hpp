@@ -43,7 +43,7 @@
 //#include <tinyxml2.h>
 #include <tinyxml.h> // NOLINT
 
-#include "kdl_parser/visibility_control.hpp"
+#include "visibility_control.hpp"
 
 namespace kdl_parser {
 

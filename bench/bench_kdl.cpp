@@ -1,4 +1,4 @@
-#include "kdl_parser.hpp"
+#include "kdl_parser/kdl_parser.hpp"
 #include "urdf_model/joint.h"
 #include "urdf_model/pose.h"
 #include "urdf_parser/urdf_parser.h"

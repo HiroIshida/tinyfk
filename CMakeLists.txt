@@ -46,9 +46,14 @@ option(BENCH_KDL "benchmarking kdl" OFF)
 if(BENCH_KDL)
     find_package(orocos_kdl REQUIRED)
     message(${orocos_kdl_INCLUDE_DIRS})
-    include_directories(${orocos_kdl_INCLUDE_DIRS})
-    add_executable(bench_kdl bench/bench_kdl.cpp bench/kdl_parser.cpp)
-    target_link_libraries(bench_kdl urdfdom_model ${orocos_kdl_LIBRARIES})
+
+    add_library(kdl_parser STATIC bench/kdl_parser/kdl_parser.cpp)
+    target_link_libraries(kdl_parser ${orocos_kdl_LIBRARIES})
+    target_include_directories(kdl_parser PUBLIC ${orocos_kdl_INCLUDE_DIRS} bench/kdl_parser)
+
+    add_executable(bench_kdl bench/bench_kdl.cpp)
+    target_link_libraries(bench_kdl urdfdom_model ${orocos_kdl_LIBRARIES} kdl_parser)
+    target_include_directories(bench_kdl PUBLIC ${orocos_kdl_INCLUDE_DIRS} bench/kdl_parser)
 endif(BENCH_KDL)
 
 # benchmark (tinyfk)
