@@ -9,45 +9,33 @@ public:
         cache_predicate_vector_(std::vector<bool>(cache_size, false)) {}
 
   SizedCache() : SizedCache(0) {}
-  void set_cache(size_t id, const DataT &data);
-  DataT const *get_cache(size_t id) const;
-  void extend();
-  void clear();
+
+  void set_cache(size_t id, const DataT &data) {
+    cache_predicate_vector_[id] = true;
+    data_[id] = data;
+  }
+
+  DataT const *get_cache(size_t id) const {
+    const bool isAlreadyCached = (cache_predicate_vector_[id] == true);
+    if (!isAlreadyCached) {
+      return nullptr;
+    } // the cache does not exists
+    return const_cast<DataT const *>(&data_[id]);
+  }
+
+  void extend() {
+    cache_size_++;
+    data_.push_back(DataT());
+    cache_predicate_vector_.push_back(false);
+    this->clear();
+  }
+  void clear() { cache_predicate_vector_ = std::vector<bool>(cache_size_); }
 
 private:
   int cache_size_;
   std::vector<DataT> data_;
   std::vector<bool> cache_predicate_vector_;
 };
-
-template <class DataT>
-void SizedCache<DataT>::set_cache(size_t id, const DataT &tf) {
-  // assert(!cache_predicate_vector_[id] && "attempt to break an existing
-  // cache");
-  cache_predicate_vector_[id] = true;
-  data_[id] = tf;
-}
-
-template <class DataT>
-DataT const *SizedCache<DataT>::get_cache(size_t id) const {
-  bool isAlreadyCached = (cache_predicate_vector_[id] == true);
-  if (!isAlreadyCached) {
-    return nullptr;
-  } // the cache does not exists
-  return const_cast<DataT const *>(&data_[id]);
-}
-
-template <class DataT> void SizedCache<DataT>::extend() {
-  cache_size_++;
-  data_.push_back(DataT());
-  cache_predicate_vector_.push_back(false);
-  this->clear();
-}
-
-template <class DataT> void SizedCache<DataT>::clear() { // performance critical
-  // bool's default value is false.
-  cache_predicate_vector_ = std::vector<bool>(cache_size_);
-}
 
 template <class ElementT> class SizedStack {
 public:
