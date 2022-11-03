@@ -42,5 +42,5 @@ COPY check_glibcxx.sh $HOME/
 RUN bash ./check_glibcxx.sh
 
 RUN \
-  pyenv global $(head -n1 python_versions.txt) && \
+  pyenv global $(tail -n1 python_versions.txt) && \
   pip install twine
