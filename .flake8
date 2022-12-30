@@ -1,0 +1,8 @@
+[flake8]
+ignore = 
+    I, H
+    E501
+    E203
+    E741
+    W503
+    A, B, C, CNL, D, Q
