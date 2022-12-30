@@ -91,6 +91,9 @@ class RobotModel(object):
             rotation = [0, 0, 0]
         return self._robot.add_new_link(link_name, parent_id, position, rotation)
 
+    def compute_inter_link_sqdists(self, angle_vectors, link_ids1, link_ids2, joint_ids, with_base=False, with_jacobian=False, use_cache=False):
+        return self._robot.compute_inter_link_squared_dists(angle_vectors, link_ids1, link_ids2, joint_ids, with_base, with_jacobian, use_cache)
+
     def clear_cache(self):
         self._robot.clear_cache()
 
