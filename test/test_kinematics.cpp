@@ -28,7 +28,7 @@ TEST(KINEMATICS, AllTest) {
 
   // test main
   std::string urdf_file = "../data/pr2.urdf";
-  auto robot = construct_from_urdfpath(urdf_file);
+  auto robot = load_urdf(urdf_file);
 
   { // add new link to the robot
     std::vector<std::string> strvec = {"r_upper_arm_link"};

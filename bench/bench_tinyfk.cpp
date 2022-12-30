@@ -1,60 +1,47 @@
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <tinyfk.hpp>
 
 using namespace tinyfk;
 
-int main() {
-  size_t N = 100000;
-  std::string urdf_file = "../data/fetch.urdf";
+void benchmark_fk(const std::shared_ptr<RobotModelBase> &kin, size_t n_iter,
+                  const std::string &bench_name) {
   std::vector<std::string> link_names = {
       "l_gripper_finger_link", "r_gripper_finger_link", "wrist_flex_link",
       "wrist_roll_link",       "shoulder_lift_link",    "upperarm_roll_link"};
   std::cout << "\n start benchmarking" << std::endl;
 
-  auto robot = construct_from_urdfpath(urdf_file);
   std::vector<std::string> joint_names = {
       // all joints to drive fetch arm
       "torso_lift_joint",    "shoulder_pan_joint", "shoulder_lift_joint",
       "upperarm_roll_joint", "elbow_flex_joint",   "forearm_roll_joint",
       "wrist_flex_joint",    "wrist_roll_joint"};
-  auto joint_ids = robot.get_joint_ids(joint_names);
-  auto link_ids = robot.get_link_ids(link_names);
-  std::vector<double> angle_vector = {0, 0, 0, 0, 0, 0, 0, 0};
-  { // bench tinyfk FK : without using cache
-    clock_t start = clock();
-    urdf::Pose out;
-    for (size_t i = 0; i < N; i++) {
-      for (int lid : link_ids) {
-        robot.get_link_pose_naive(lid, out, false);
-      }
-    }
-    clock_t end = clock();
-    std::cout << "tinyfk.FK_naive : " << end - start << std::endl;
-  }
+  const auto joint_ids = kin->get_joint_ids(joint_names);
+  const auto link_ids = kin->get_link_ids(link_names);
 
+  const std::vector<double> q = {0, 0, 0, 0, 0, 0, 0, 0};
   { // bench tinyfk FK : with cache
     clock_t start = clock();
     urdf::Pose out;
-    for (size_t i = 0; i < N; i++) {
-      robot.set_joint_angles(joint_ids, angle_vector); // this clear cached TFs
+    for (size_t i = 0; i < n_iter; i++) {
+      kin->set_joint_angles(joint_ids, q); // this clear cached TFs
       for (int lid : link_ids) {
-        robot.get_link_pose(lid, out, false);
+        kin->get_link_pose(lid, out, false);
       }
     }
     clock_t end = clock();
     std::cout << "tinyfk.FK_with_cache : " << end - start << std::endl;
   }
-  {
-    clock_t start = clock();
-    urdf::Pose out;
-    for (size_t i = 0; i < N; i++) {
-      robot.set_joint_angles(joint_ids, angle_vector); // this clear cached TFs
-      for (size_t j = 0; j < link_ids.size(); j++) {
-        robot.get_jacobians_withcache(link_ids, joint_ids, true, true);
-      }
-    }
-    clock_t end = clock();
-    std::cout << "tinyfk.jaocbian_with_cache : " << end - start << std::endl;
-  }
+}
+
+int main() {
+  const std::string urdf_file = "../data/fetch.urdf";
+  const auto urdf_string = load_urdf(urdf_file);
+  const auto kin = std::make_shared<CacheUtilizedRobotModel>(urdf_string);
+  const auto kin_naive = std::make_shared<NaiveRobotModel>(urdf_string);
+
+  const size_t N = 100000;
+  benchmark_fk(kin_naive, N, "naive");
+  benchmark_fk(kin, N, "with_cache");
 }

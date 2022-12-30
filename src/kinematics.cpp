@@ -21,9 +21,9 @@ urdf::Vector3 rpy_derivative(const urdf::Vector3 &rpy,
 
 namespace tinyfk {
 
-void RobotModel::get_link_pose(size_t link_id,
-                               urdf::Pose &out_tf_rlink_to_elink,
-                               bool usebase) const {
+void CacheUtilizedRobotModel::get_link_pose(size_t link_id,
+                                            urdf::Pose &out_tf_rlink_to_elink,
+                                            bool usebase) const {
   urdf::Pose const *pose_ptr = transform_cache_.get_cache(link_id);
   if (pose_ptr) {
     out_tf_rlink_to_elink = *pose_ptr;
@@ -32,9 +32,8 @@ void RobotModel::get_link_pose(size_t link_id,
   this->get_link_pose_inner(link_id, out_tf_rlink_to_elink, usebase);
 }
 
-void RobotModel::get_link_pose_inner(size_t link_id,
-                                     urdf::Pose &out_tf_rlink_to_elink,
-                                     bool usebase) const {
+void CacheUtilizedRobotModel::get_link_pose_inner(
+    size_t link_id, urdf::Pose &out_tf_rlink_to_elink, bool usebase) const {
   urdf::LinkSharedPtr hlink = links_[link_id];
 
   urdf::Pose tf_rlink_to_blink;
@@ -118,10 +117,9 @@ void get_base_jacobian(const urdf::Vector3 &epos_local,
   }
 }
 
-std::array<Eigen::MatrixXd, 2>
-RobotModel::get_jacobians_withcache(const std::vector<size_t> &elink_ids,
-                                    const std::vector<size_t> &joint_ids,
-                                    bool with_rot, bool with_base) const {
+std::array<Eigen::MatrixXd, 2> CacheUtilizedRobotModel::get_jacobians_withcache(
+    const std::vector<size_t> &elink_ids, const std::vector<size_t> &joint_ids,
+    bool with_rot, bool with_base) const {
   int dim_pose = (with_rot ? 6 : 3);
   int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
   int dim_feature = elink_ids.size();
@@ -137,7 +135,7 @@ RobotModel::get_jacobians_withcache(const std::vector<size_t> &elink_ids,
   return ret;
 }
 
-void RobotModel::solve_batch_forward_kinematics(
+void CacheUtilizedRobotModel::solve_batch_forward_kinematics(
     std::vector<size_t> elink_ids, const std::vector<size_t> &joint_ids,
     bool with_rot, bool with_base, SlicedMatrix &pose_arr,
     SlicedMatrix &jacobian_arr) const {
@@ -155,11 +153,9 @@ void RobotModel::solve_batch_forward_kinematics(
 }
 
 // lower level jacobian function, which directly iterate over poitner
-void RobotModel::solve_forward_kinematics(int elink_id,
-                                          const std::vector<size_t> &joint_ids,
-                                          bool with_rot, bool with_base,
-                                          SlicedMatrix &pose,
-                                          SlicedMatrix &jacobian) const {
+void CacheUtilizedRobotModel::solve_forward_kinematics(
+    int elink_id, const std::vector<size_t> &joint_ids, bool with_rot,
+    bool with_base, SlicedMatrix &pose, SlicedMatrix &jacobian) const {
 
   // Forward kinematics computation
   // tf_rlink_to_elink and epos, erot, erpy will be also used in jacobian

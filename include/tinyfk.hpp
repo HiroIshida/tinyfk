@@ -116,7 +116,7 @@ struct LinkIdAndPose {
   urdf::Pose pose;
 };
 
-class RobotModel {
+class RobotModelBase {
 public: // members
   // change them all to private later
   urdf::ModelInterfaceSharedPtr robot_urdf_interface_;
@@ -136,8 +136,9 @@ public: // members
   mutable SizedCache<urdf::Pose> transform_cache_;
 
 public: // functions
-  RobotModel(const std::string &xml_string);
-  RobotModel() {}
+  RobotModelBase(const std::string &xml_string);
+
+  virtual ~RobotModelBase() {}
 
   void set_joint_angles( // this will clear all the cache stored
       const std::vector<size_t> &joint_ids,
@@ -156,25 +157,31 @@ public: // functions
 
   std::vector<double>
   get_joint_angles(const std::vector<size_t> &joint_ids) const;
+
   std::vector<size_t> get_joint_ids(std::vector<std::string> joint_names) const;
+
   std::vector<AngleLimit>
   get_joint_limits(const std::vector<size_t> &joint_ids) const;
+
   std::vector<size_t> get_link_ids(std::vector<std::string> link_names) const;
 
-  // private (I wanna make these function private, but
-  // don't know who to do unit test after that
-  // anyway, don't use it
+  virtual void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
+                             bool usebase) const = 0;
+
   void set_joint_angle(size_t joint_id, double angle) {
     joint_angles_[joint_id] = angle;
   }
 
-  // perfromance of returning array of eigen is actually almost same as pass by
-  // reference thanks to the compiler's optimization
-  std::array<Eigen::MatrixXd, 2> get_jacobians_withcache(
-      const std::vector<size_t> &elink_ids,
-      const std::vector<size_t> &joint_ids,
-      bool rpyalso = false, // only point jacobian is computed by default
-      bool basealso = false) const;
+  void add_new_link(std::string link_name, size_t parent_id,
+                    std::array<double, 3> position,
+                    std::array<double, 3> rotation);
+
+private:
+  void update_rptable();
+};
+
+class CacheUtilizedRobotModel : public RobotModelBase {
+  using RobotModelBase::RobotModelBase;
 
   void solve_forward_kinematics(int elink_id,
                                 const std::vector<size_t> &joint_ids,
@@ -188,28 +195,35 @@ public: // functions
                                       SlicedMatrix &pose_arr,
                                       SlicedMatrix &jacobian_arr) const;
 
+  // perfromance of returning array of eigen is actually almost same as pass by
+  // reference thanks to the compiler's optimization
+  std::array<Eigen::MatrixXd, 2> get_jacobians_withcache(
+      const std::vector<size_t> &elink_ids,
+      const std::vector<size_t> &joint_ids,
+      bool rpyalso = false, // only point jacobian is computed by default
+      bool basealso = false) const;
+
   void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                      bool usebase) const;
 
-  void get_link_pose_naive(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                           bool basealso) const;
+private:
+  void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,
+                           bool usebase) const;
+};
+
+class NaiveRobotModel : public RobotModelBase {
+  using RobotModelBase::RobotModelBase;
+
+  void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
+                     bool basealso) const;
 
   Eigen::MatrixXd get_jacobian_naive(size_t elink_id,
                                      const std::vector<size_t> &joint_ids,
                                      bool rotalso = false,
                                      bool basealso = false);
-
-  void add_new_link(std::string link_name, size_t parent_id,
-                    std::array<double, 3> position,
-                    std::array<double, 3> rotation);
-
-private:
-  void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                           bool usebase) const;
-  void update_rptable();
 };
 
-RobotModel construct_from_urdfpath(const std::string &urdf_path);
+std::string load_urdf(const std::string &urdf_path);
 }; // namespace tinyfk
 
 #endif // include guard

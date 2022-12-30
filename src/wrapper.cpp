@@ -15,9 +15,9 @@ using namespace tinyfk;
 
 class RobotModelPyWrapper {
 public:
-  RobotModel robot_model_;
+  RobotModelBase robot_model_;
   RobotModelPyWrapper(const std::string &xml_string)
-      : robot_model_(RobotModel(xml_string)) {}
+      : robot_model_(RobotModelBase(xml_string)) {}
 
   void set_joint_angles(const std::vector<size_t> &joint_ids,
                         const std::vector<double> &joint_angles) {
