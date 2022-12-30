@@ -27,23 +27,26 @@ TEST(KINEMATICS, AllTest) {
   size_t n_links = link_names.size();
 
   // test main
-  std::string urdf_file = "../data/pr2.urdf";
-  auto robot = construct_from_urdfpath(urdf_file);
+  const std::string urdf_file = "../data/pr2.urdf";
+  const auto xml_string = load_urdf(urdf_file);
+  auto kin = CacheUtilizedRobotModel(xml_string);
+  auto kin_naive = NaiveRobotModel(xml_string);
 
   { // add new link to the robot
     std::vector<std::string> strvec = {"r_upper_arm_link"};
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
     std::array<double, 3> rot = {0.3, 0.2, 0.1};
-    int parent_link_id = robot.get_link_ids(strvec)[0];
-    robot.add_new_link("mylink", parent_link_id, pos, rot);
+    int parent_link_id = kin.get_link_ids(strvec)[0];
+    kin.add_new_link("mylink", parent_link_id, pos, rot);
+    kin_naive.add_new_link("mylink", parent_link_id, pos, rot);
   }
 
   { // must raise exception when add link with the same name
     std::vector<std::string> strvec = {"r_upper_arm_link"};
     std::array<double, 3> pos = {0.1, 0.1, 0.1};
     std::array<double, 3> rot = {0.3, 0.2, 0.1};
-    int parent_link_id = robot.get_link_ids(strvec)[0];
-    EXPECT_THROW(robot.add_new_link("mylink", parent_link_id, pos, rot),
+    int parent_link_id = kin.get_link_ids(strvec)[0];
+    EXPECT_THROW(kin.add_new_link("mylink", parent_link_id, pos, rot),
                  std::exception);
   }
 
@@ -52,29 +55,29 @@ TEST(KINEMATICS, AllTest) {
                                             "r_wrist_flex_joint"};
     std::vector<std::string> link_names = {"mylink", "head_pan_link",
                                            "fl_caster_rotation_link"};
-    auto joint_ids = robot.get_joint_ids(joint_names);
-    auto link_ids = robot.get_link_ids(link_names);
-    EXPECT_TRUE(robot.rptable_.isRelevant(joint_ids[0], link_ids[0]));
-    EXPECT_FALSE(robot.rptable_.isRelevant(joint_ids[1], link_ids[0]));
-    EXPECT_TRUE(robot.rptable_.isRelevant(joint_ids[0], link_ids[1]));
-    EXPECT_FALSE(robot.rptable_.isRelevant(joint_ids[0], link_ids[2]));
+    auto joint_ids = kin.get_joint_ids(joint_names);
+    auto link_ids = kin.get_link_ids(link_names);
+    EXPECT_TRUE(kin.rptable_.isRelevant(joint_ids[0], link_ids[0]));
+    EXPECT_FALSE(kin.rptable_.isRelevant(joint_ids[1], link_ids[0]));
+    EXPECT_TRUE(kin.rptable_.isRelevant(joint_ids[0], link_ids[1]));
+    EXPECT_FALSE(kin.rptable_.isRelevant(joint_ids[0], link_ids[2]));
   }
 
-  auto joint_ids = robot.get_joint_ids(joint_names);
-  auto link_ids = robot.get_link_ids(link_names);
+  auto joint_ids = kin.get_joint_ids(joint_names);
+  auto link_ids = kin.get_link_ids(link_names);
 
   for (size_t i = 0; i < n_joints; i++) {
-    robot.set_joint_angle(joint_ids[i], angle_vector[i]);
+    kin.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
-  robot.set_base_pose(angle_vector[n_joints + 0], angle_vector[n_joints + 1],
-                      angle_vector[n_joints + 2]);
+  kin.set_base_pose(angle_vector[n_joints + 0], angle_vector[n_joints + 1],
+                    angle_vector[n_joints + 2]);
 
   bool base_also = true;
   urdf::Pose pose, pose_naive;
   for (size_t i = 0; i < n_links; i++) {
     int link_id = link_ids[i];
 
-    robot.get_link_pose(link_id, pose, base_also);
+    kin.get_link_pose(link_id, pose, base_also);
     EXPECT_TRUE(isNear(pose.position.x, pose_list[i][0]));
     EXPECT_TRUE(isNear(pose.position.y, pose_list[i][1]));
     EXPECT_TRUE(isNear(pose.position.z, pose_list[i][2]));
@@ -87,25 +90,25 @@ TEST(KINEMATICS, AllTest) {
 
   // Now we comapre jacobian computed by finite diff with the analytical one
   for (size_t i = 0; i < n_joints; i++) {
-    robot.set_joint_angle(joint_ids[i], angle_vector[i]);
+    kin.set_joint_angle(joint_ids[i], angle_vector[i]);
+    kin_naive.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
-  robot.set_base_pose(angle_vector[n_joints], angle_vector[n_joints + 1],
-                      angle_vector[n_joints + 2]);
-  robot.transform_cache_.clear();
+  kin.set_base_pose(angle_vector[n_joints], angle_vector[n_joints + 1],
+                    angle_vector[n_joints + 2]);
+  kin_naive.set_base_pose(angle_vector[n_joints], angle_vector[n_joints + 1],
+                          angle_vector[n_joints + 2]);
+
+  kin.transform_cache_.clear();
   for (size_t i = 0; i < link_names.size(); i++) {
     bool rot_also =
         true; // rotatio part of the geometric jacobian is not yet checked
-    int link_id = link_ids[i];
-    vector<int> link_ids_ = {link_id};
+    size_t link_id = link_ids[i];
     auto J_numerical =
-        robot.get_jacobian_naive(link_id, joint_ids, rot_also, true);
-    auto tmpo =
-        robot.get_jacobians_withcache(link_ids, joint_ids, rot_also, true);
-    auto J_analytical_whole = tmpo[0];
-    auto J_analytical_block = J_analytical_whole.block(6 * i, 0, 6, 10);
+        kin_naive.get_jacobian(link_id, joint_ids, rot_also, true);
+    auto J_analytical = kin.get_jacobian(link_id, joint_ids, rot_also, true);
 
     bool jacobian_equal =
-        (J_analytical_block - J_numerical).array().abs().maxCoeff() < 1e-5;
+        (J_analytical - J_numerical).array().abs().maxCoeff() < 1e-5;
     EXPECT_TRUE(jacobian_equal);
   }
 }

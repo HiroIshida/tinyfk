@@ -10,7 +10,7 @@ on:
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Code
               uses: actions/checkout@v2
@@ -27,7 +27,7 @@ jobs:
                   export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/lib/x86_64-linux-gnu/pkgconfig"
                   mkdir build
                   cd build
-                  cmake -DBUILD_PYTHON_INTERFACE=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_TEST=ON ..
+                  cmake -DBUILD_PYTHON_INTERFACE=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=ON ..
                   make
 
             - name: Test c++

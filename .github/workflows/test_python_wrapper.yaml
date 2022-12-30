@@ -10,7 +10,7 @@ on:
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Code
               uses: actions/checkout@v2
@@ -30,7 +30,7 @@ jobs:
             - name: pip install tinyfk from source
               run: |
                   pip install numpy pytest
-                  pip install . 
+                  pip install . -v
 
             - name: Test python wrapper
               run: |
