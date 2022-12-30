@@ -97,3 +97,21 @@ def test_jacobian(test_data):
         testing.assert_almost_equal(J_numerical[:3, :], J_analytical[:3, :])
         # test rpy jacobian
         testing.assert_almost_equal(J_numerical[3:, :], J_analytical[3:, :])
+
+
+def test_trajectory_fk(test_data):
+    # test cases where multiple angles vectors are given
+    angle_vector, gt_pose_list, fksolver, link_ids, joint_ids, joint_limits = test_data
+    n_dof = len(joint_ids) + 3  # 3 for base
+    n_repeat = 3
+    angle_vectors = [angle_vector] * n_repeat
+    P, J = fksolver.solve_forward_kinematics(angle_vectors, link_ids, joint_ids, True, True, True)
+    assert P.shape == (n_repeat * len(link_ids), 6)
+    assert J.shape == (n_repeat * len(link_ids) * 6, n_dof)
+
+    posess = P.reshape(n_repeat, len(link_ids), 6)
+    jacss = J.reshape(n_repeat, len(link_ids), 6, n_dof)
+
+    for i in range(n_repeat):
+        np.testing.assert_almost_equal(posess[0], posess[i])
+        np.testing.assert_almost_equal(jacss[0], jacss[i])
