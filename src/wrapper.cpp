@@ -15,9 +15,9 @@ using namespace tinyfk;
 
 class RobotModelPyWrapper {
 public:
-  RobotModelBase robot_model_;
+  CacheUtilizedRobotModel robot_model_;
   RobotModelPyWrapper(const std::string &xml_string)
-      : robot_model_(RobotModelBase(xml_string)) {}
+      : robot_model_(CacheUtilizedRobotModel(xml_string)) {}
 
   void set_joint_angles(const std::vector<size_t> &joint_ids,
                         const std::vector<double> &joint_angles) {
@@ -36,7 +36,7 @@ public:
 
     size_t n_pose_dim = (rotalso ? 6 : 3); // 7 if rot enabled
     auto n_wp = joint_angles_sequence.size();
-    auto n_links = elink_ids.size();
+    auto n_link = elink_ids.size();
     auto n_joints = joint_ids.size();
     auto n_dof = (basealso ? n_joints + 3 : n_joints);
 
@@ -45,13 +45,6 @@ public:
           "dof mismatch!! Probably you forget base's (x, y, theta)");
       // TODO this check try to prevent the potentionally buggy procedure below
     }
-
-    Eigen::MatrixXd J_trajectory =
-        with_jacobian
-            ? Eigen::MatrixXd::Zero(n_wp * (n_links * n_pose_dim), n_dof)
-            : Eigen::MatrixXd::Zero(0, 0);
-    Eigen::MatrixXd P_trajectory =
-        Eigen::MatrixXd::Zero(n_pose_dim, n_wp * n_links);
 
     for (size_t i = 0; i < n_wp; i++) {
       robot_model_._set_joint_angles(joint_ids, joint_angles_sequence[i]);
@@ -64,34 +57,40 @@ public:
       if (!use_cache) {
         robot_model_.clear_cache();
       }
+    }
 
-      if (with_jacobian) {
-        auto tmp = robot_model_.get_jacobians_withcache(elink_ids, joint_ids,
-                                                        rotalso, basealso);
-        auto &J = tmp[0];
-        auto &P = tmp[1];
-        J_trajectory.block(i * (n_links * n_pose_dim), 0, n_links * n_pose_dim,
-                           n_dof) = J;
-        P_trajectory.block(0, i * n_links, n_pose_dim, n_links) = P;
-      } else {
+    // compute points
+    Eigen::MatrixXd P = Eigen::MatrixXd::Zero(n_pose_dim, n_wp * n_link);
+    for (size_t i = 0; i < n_wp; ++i) {
+      for (size_t j = 0; j < n_link; ++j) {
+        const size_t head = i * n_link + j;
         urdf::Pose pose;
-        for (size_t j = 0; j < elink_ids.size(); j++) {
-          robot_model_.get_link_pose(elink_ids[j], pose, basealso);
-          P_trajectory(0, i * n_links + j) = pose.position.x;
-          P_trajectory(1, i * n_links + j) = pose.position.y;
-          P_trajectory(2, i * n_links + j) = pose.position.z;
-          if (rotalso) {
-            urdf::Vector3 &&rpy = pose.rotation.getRPY();
-            P_trajectory(3, i * n_links + j) = rpy.x;
-            P_trajectory(4, i * n_links + j) = rpy.y;
-            P_trajectory(5, i * n_links + j) = rpy.z;
-          }
+        robot_model_.get_link_pose(elink_ids[j], pose, basealso);
+        P(0, head) = pose.position.x;
+        P(1, head) = pose.position.y;
+        P(2, head) = pose.position.z;
+        if (rotalso) {
+          urdf::Vector3 rpy = pose.rotation.getRPY();
+          P(3, head) = rpy.x;
+          P(4, head) = rpy.y;
+          P(5, head) = rpy.z;
         }
       }
     }
-    std::array<Eigen::MatrixXd, 2> ret = {P_trajectory.transpose(),
-                                          J_trajectory};
-    return ret;
+
+    Eigen::MatrixXd J;
+    if (with_jacobian) {
+      J = Eigen::MatrixXd::Zero(n_wp * n_link * n_pose_dim, n_dof);
+      for (size_t i = 0; i < n_wp; ++i) {
+        for (size_t j = 0; j < n_link; ++j) {
+          const size_t head = i * n_link + j * n_pose_dim;
+          const size_t elink_id = elink_ids[j];
+          J.block(head, 0, n_pose_dim, n_dof) =
+              robot_model_.get_jacobian(elink_id, joint_ids, rotalso, basealso);
+        }
+      }
+    }
+    return std::array<Eigen::MatrixXd, 2>{P.transpose(), J};
   }
 
   std::vector<size_t> get_joint_ids(std::vector<std::string> joint_names) {
