@@ -12,7 +12,7 @@ namespace tinyfk {
 
 void NaiveRobotModel::get_link_pose(size_t link_id,
                                     urdf::Pose &out_tf_rlink_to_elink,
-                                    bool basealso) const {
+                                    bool with_base) const {
   // h : here , e: endeffector , r: root, p: parent
   // e.g. hlink means here_link and rlink means root_link
 
@@ -26,7 +26,7 @@ void NaiveRobotModel::get_link_pose(size_t link_id,
 
     const urdf::JointSharedPtr &pjoint = hlink->parent_joint;
     if (pjoint == nullptr) {
-      if (basealso) {
+      if (with_base) {
         tf_hlink_to_elink = pose_transform(base_pose_.pose_, tf_hlink_to_elink);
       }
       break;
@@ -57,21 +57,21 @@ void NaiveRobotModel::get_link_pose(size_t link_id,
 Eigen::MatrixXd
 NaiveRobotModel::get_jacobian(size_t elink_id,
                               const std::vector<size_t> &joint_ids,
-                              bool rotalso, bool basealso) {
-  size_t n_pose_dim = (rotalso ? 6 : 3);
+                              bool with_rpy, bool with_base) {
+  size_t n_pose_dim = (with_rpy ? 6 : 3);
   size_t n_joints = joint_ids.size();
-  size_t n_dof = (basealso ? n_joints + 3 : n_joints);
+  size_t n_dof = (with_base ? n_joints + 3 : n_joints);
   Eigen::MatrixXd J = Eigen::MatrixXd::Zero(n_pose_dim, n_dof);
 
   double dx = 1e-7;
   std::vector<double> q0 = this->get_joint_angles(joint_ids);
   urdf::Pose pose0, pose1;
-  this->get_link_pose(elink_id, pose0, basealso);
+  this->get_link_pose(elink_id, pose0, with_base);
   for (size_t i = 0; i < n_joints; i++) {
     int jid = joint_ids[i];
 
     this->set_joint_angle(jid, q0[i] + dx);
-    this->get_link_pose(elink_id, pose1, basealso);
+    this->get_link_pose(elink_id, pose1, with_base);
     this->set_joint_angle(jid, q0[i]); // must to set to the original
 
     urdf::Vector3 &pos0 = pose0.position;
@@ -80,7 +80,7 @@ NaiveRobotModel::get_jacobian(size_t elink_id,
     J(0, i) = (pos1.x - pos0.x) / dx;
     J(1, i) = (pos1.y - pos0.y) / dx;
     J(2, i) = (pos1.z - pos0.z) / dx;
-    if (rotalso) {
+    if (with_rpy) {
       urdf::Vector3 &&rpy0 = pose0.rotation.getRPY();
       urdf::Vector3 &&rpy1 = pose1.rotation.getRPY();
       urdf::Vector3 rpy_diff = rpy1 - rpy0;
@@ -90,7 +90,7 @@ NaiveRobotModel::get_jacobian(size_t elink_id,
     }
   }
 
-  if (basealso) {
+  if (with_base) {
     for (size_t i = 0; i < 3; i++) {
       std::array<double, 3> &tmp = base_pose_.pose3d_;
       tmp[i] += dx;
@@ -104,7 +104,7 @@ NaiveRobotModel::get_jacobian(size_t elink_id,
       J(0, n_joints + i) = (pos1.x - pos0.x) / dx;
       J(1, n_joints + i) = (pos1.y - pos0.y) / dx;
       J(2, n_joints + i) = (pos1.z - pos0.z) / dx;
-      if (rotalso) {
+      if (with_rpy) {
         urdf::Vector3 &&rpy0 = pose0.rotation.getRPY();
         urdf::Vector3 &&rpy1 = pose1.rotation.getRPY();
         urdf::Vector3 rpy_diff = rpy1 - rpy0;
