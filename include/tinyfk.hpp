@@ -110,8 +110,8 @@ public: // functions
 
   virtual Eigen::MatrixXd get_jacobian(size_t elink_id,
                                        const std::vector<size_t> &joint_ids,
-                                       bool rotalso = false,
-                                       bool basealso = false) = 0;
+                                       bool with_rpy = false,
+                                       bool with_base = false) = 0;
 
   void set_joint_angle(size_t joint_id, double angle) {
     joint_angles_[joint_id] = angle;
@@ -134,7 +134,7 @@ public:
 
   Eigen::MatrixXd get_jacobian(size_t elink_id,
                                const std::vector<size_t> &joint_ids,
-                               bool rotalso = false, bool basealso = false);
+                               bool with_rpy = false, bool with_base = false);
 
 private:
   void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,
@@ -146,11 +146,11 @@ public:
   using RobotModelBase::RobotModelBase;
 
   void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                     bool basealso) const;
+                     bool with_base) const;
 
   Eigen::MatrixXd get_jacobian(size_t elink_id,
                                const std::vector<size_t> &joint_ids,
-                               bool rotalso = false, bool basealso = false);
+                               bool with_rpy = false, bool with_base = false);
 };
 
 std::string load_urdf(const std::string &urdf_path);

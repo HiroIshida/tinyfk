@@ -31,16 +31,16 @@ public:
   std::array<Eigen::MatrixXd, 2> solve_forward_kinematics(
       const std::vector<std::vector<double>> joint_angles_sequence,
       const std::vector<size_t> &elink_ids,
-      const std::vector<size_t> &joint_ids, bool rotalso, bool basealso,
+      const std::vector<size_t> &joint_ids, bool with_rpy, bool with_base,
       bool with_jacobian, bool use_cache) {
 
-    size_t n_pose_dim = (rotalso ? 6 : 3); // 7 if rot enabled
+    size_t n_pose_dim = (with_rpy ? 6 : 3); // 7 if rot enabled
     auto n_wp = joint_angles_sequence.size();
     auto n_link = elink_ids.size();
     auto n_joints = joint_ids.size();
-    auto n_dof = (basealso ? n_joints + 3 : n_joints);
+    auto n_dof = (with_base ? n_joints + 3 : n_joints);
 
-    if (basealso && (n_joints != joint_angles_sequence[0].size() - 3)) {
+    if (with_base && (n_joints != joint_angles_sequence[0].size() - 3)) {
       throw std::invalid_argument(
           "dof mismatch!! Probably you forget base's (x, y, theta)");
       // TODO this check try to prevent the potentionally buggy procedure below
@@ -48,7 +48,7 @@ public:
 
     for (size_t i = 0; i < n_wp; i++) {
       robot_model_._set_joint_angles(joint_ids, joint_angles_sequence[i]);
-      if (basealso) {
+      if (with_base) {
         double x = joint_angles_sequence[i][n_joints + 0];
         double y = joint_angles_sequence[i][n_joints + 1];
         double theta = joint_angles_sequence[i][n_joints + 2];
@@ -65,11 +65,11 @@ public:
       for (size_t j = 0; j < n_link; ++j) {
         const size_t head = i * n_link + j;
         urdf::Pose pose;
-        robot_model_.get_link_pose(elink_ids[j], pose, basealso);
+        robot_model_.get_link_pose(elink_ids[j], pose, with_base);
         P(0, head) = pose.position.x;
         P(1, head) = pose.position.y;
         P(2, head) = pose.position.z;
-        if (rotalso) {
+        if (with_rpy) {
           urdf::Vector3 rpy = pose.rotation.getRPY();
           P(3, head) = rpy.x;
           P(4, head) = rpy.y;
@@ -85,8 +85,8 @@ public:
         for (size_t j = 0; j < n_link; ++j) {
           const size_t head = i * n_link + j * n_pose_dim;
           const size_t elink_id = elink_ids[j];
-          J.block(head, 0, n_pose_dim, n_dof) =
-              robot_model_.get_jacobian(elink_id, joint_ids, rotalso, basealso);
+          J.block(head, 0, n_pose_dim, n_dof) = robot_model_.get_jacobian(
+              elink_id, joint_ids, with_rpy, with_base);
         }
       }
     }
