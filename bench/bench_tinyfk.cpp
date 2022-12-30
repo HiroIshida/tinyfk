@@ -21,7 +21,7 @@ void benchmark_fk(const std::shared_ptr<RobotModelBase> &kin, size_t n_iter,
   const auto link_ids = kin->get_link_ids(link_names);
 
   const std::vector<double> q = {0, 0, 0, 0, 0, 0, 0, 0};
-  { // bench tinyfk FK : with cache
+  {
     clock_t start = clock();
     urdf::Pose out;
     for (size_t i = 0; i < n_iter; i++) {
@@ -31,7 +31,22 @@ void benchmark_fk(const std::shared_ptr<RobotModelBase> &kin, size_t n_iter,
       }
     }
     clock_t end = clock();
-    std::cout << "tinyfk.FK_with_cache : " << end - start << std::endl;
+    std::cout << bench_name << " fk : " << end - start << std::endl;
+  }
+
+  {
+    clock_t start = clock();
+    urdf::Pose out;
+    for (size_t i = 0; i < n_iter; i++) {
+      kin->set_joint_angles(joint_ids, q); // this clear cached TFs
+      for (size_t j = 0; j < link_ids.size(); j++) {
+        for (size_t lid : link_ids) {
+          kin->get_jacobian(lid, joint_ids, true, true);
+        }
+      }
+    }
+    clock_t end = clock();
+    std::cout << bench_name << " jacobian : " << end - start << std::endl;
   }
 }
 

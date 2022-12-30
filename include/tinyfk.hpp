@@ -168,6 +168,11 @@ public: // functions
   virtual void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                              bool usebase) const = 0;
 
+  virtual Eigen::MatrixXd get_jacobian(size_t elink_id,
+                                       const std::vector<size_t> &joint_ids,
+                                       bool rotalso = false,
+                                       bool basealso = false) = 0;
+
   void set_joint_angle(size_t joint_id, double angle) {
     joint_angles_[joint_id] = angle;
   }
@@ -206,6 +211,10 @@ class CacheUtilizedRobotModel : public RobotModelBase {
   void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                      bool usebase) const;
 
+  Eigen::MatrixXd get_jacobian(size_t elink_id,
+                               const std::vector<size_t> &joint_ids,
+                               bool rotalso = false, bool basealso = false);
+
 private:
   void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                            bool usebase) const;
@@ -217,10 +226,9 @@ class NaiveRobotModel : public RobotModelBase {
   void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                      bool basealso) const;
 
-  Eigen::MatrixXd get_jacobian_naive(size_t elink_id,
-                                     const std::vector<size_t> &joint_ids,
-                                     bool rotalso = false,
-                                     bool basealso = false);
+  Eigen::MatrixXd get_jacobian(size_t elink_id,
+                               const std::vector<size_t> &joint_ids,
+                               bool rotalso = false, bool basealso = false);
 };
 
 std::string load_urdf(const std::string &urdf_path);

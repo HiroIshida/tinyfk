@@ -55,9 +55,9 @@ void NaiveRobotModel::get_link_pose(size_t link_id,
 }
 
 Eigen::MatrixXd
-NaiveRobotModel::get_jacobian_naive(size_t elink_id,
-                                    const std::vector<size_t> &joint_ids,
-                                    bool rotalso, bool basealso) {
+NaiveRobotModel::get_jacobian(size_t elink_id,
+                              const std::vector<size_t> &joint_ids,
+                              bool rotalso, bool basealso) {
   size_t n_pose_dim = (rotalso ? 6 : 3);
   size_t n_joints = joint_ids.size();
   size_t n_dof = (basealso ? n_joints + 3 : n_joints);
