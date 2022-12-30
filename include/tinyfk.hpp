@@ -186,6 +186,7 @@ private:
 };
 
 class CacheUtilizedRobotModel : public RobotModelBase {
+public:
   using RobotModelBase::RobotModelBase;
 
   void solve_forward_kinematics(int elink_id,
@@ -221,6 +222,7 @@ private:
 };
 
 class NaiveRobotModel : public RobotModelBase {
+public:
   using RobotModelBase::RobotModelBase;
 
   void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,

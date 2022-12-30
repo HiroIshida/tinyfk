@@ -242,7 +242,7 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
   int dim_jacobi = (with_rot ? 6 : 3);
   int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
 
-  auto jacobian = Eigen::MatrixXd(dim_jacobi, dim_dof);
+  Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(dim_jacobi, dim_dof);
   // Forward kinematics computation
   // tf_rlink_to_elink and epos, erot, erpy will be also used in jacobian
   // computation
