@@ -120,3 +120,45 @@ def test_trajectory_fk(test_data):
         )
         np.testing.assert_almost_equal(Ps[i], P_single)
         np.testing.assert_almost_equal(Js[i], J_single)
+
+
+def test_hoge(test_data):
+    angle_vector, gt_pose_list, fksolver, link_ids, joint_ids, joint_limits = test_data
+    q = angle_vector
+
+    rarm_joint_names = [
+        "r_shoulder_pan_joint",
+        "r_shoulder_lift_joint",
+        "r_upper_arm_roll_joint",
+        "r_elbow_flex_joint",
+        "r_forearm_roll_joint",
+        "r_wrist_flex_joint",
+        "r_wrist_roll_joint",
+    ]
+    larm_joint_names = [
+        "l_shoulder_pan_joint",
+        "l_shoulder_lift_joint",
+        "l_upper_arm_roll_joint",
+        "l_elbow_flex_joint",
+        "l_forearm_roll_joint",
+        "l_wrist_flex_joint",
+        "l_wrist_roll_joint",
+    ]
+
+    link_ids1 = fksolver.get_joint_ids(rarm_joint_names)
+    link_ids2 = fksolver.get_joint_ids(larm_joint_names)
+    values, J_analytical = fksolver.compute_inter_link_sqdists(
+        [q], link_ids1, link_ids2, joint_ids, with_base=True, with_jacobian=True
+    )
+
+    eps = 1e-7
+    grads = []
+    for i in range(len(q)):
+        q1 = copy.deepcopy(q)
+        q1[i] += eps
+        values1, _ = fksolver.compute_inter_link_sqdists(
+            [q1], link_ids1, link_ids2, joint_ids, with_base=True, with_jacobian=False
+        )
+        grads.append((values1 - values) / eps)
+    J_numerical = np.array(grads).T
+    np.testing.assert_almost_equal(J_numerical, J_analytical, decimal=5)
