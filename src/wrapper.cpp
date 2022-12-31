@@ -119,7 +119,7 @@ public:
                                    bool with_base, bool with_grads,
                                    bool use_cache) {
     const size_t n_wp = qs.size();
-    const size_t n_joint = joint_ids.size();
+    const size_t n_joint = joint_ids.size() + with_base * 3;
     const size_t n_check = link_ids1.size();
 
     Eigen::VectorXd sqdists = Eigen::VectorXd::Zero(n_check * n_wp);
@@ -138,9 +138,7 @@ public:
       if (!use_cache) {
         robot_model_.clear_cache();
       }
-    }
 
-    for (size_t i = 0; i < n_wp; ++i) {
       for (size_t j = 0; j < n_check; ++j) {
         const size_t head = i * n_check + j;
         urdf::Pose pose1, pose2;
