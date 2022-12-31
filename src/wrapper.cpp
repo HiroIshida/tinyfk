@@ -9,6 +9,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <stdexcept>
 #include <utility>
 
 namespace py = pybind11;
@@ -47,6 +48,10 @@ public:
       // TODO this check try to prevent the potentionally buggy procedure below
     }
 
+    Eigen::MatrixXd P = Eigen::MatrixXd::Zero(n_pose_dim, n_wp * n_link);
+    Eigen::MatrixXd J =
+        Eigen::MatrixXd::Zero(n_wp * n_link * n_pose_dim, n_dof);
+
     for (size_t i = 0; i < n_wp; i++) {
       robot_model_._set_joint_angles(joint_ids, joint_angles_sequence[i]);
       if (with_base) {
@@ -58,11 +63,7 @@ public:
       if (!use_cache) {
         robot_model_.clear_cache();
       }
-    }
 
-    // compute points
-    Eigen::MatrixXd P = Eigen::MatrixXd::Zero(n_pose_dim, n_wp * n_link);
-    for (size_t i = 0; i < n_wp; ++i) {
       for (size_t j = 0; j < n_link; ++j) {
         const size_t head = i * n_link + j;
         urdf::Pose pose;
@@ -77,14 +78,9 @@ public:
           P(5, head) = rpy.z;
         }
       }
-    }
-
-    Eigen::MatrixXd J;
-    if (with_jacobian) {
-      J = Eigen::MatrixXd::Zero(n_wp * n_link * n_pose_dim, n_dof);
-      for (size_t i = 0; i < n_wp; ++i) {
+      if (with_jacobian) {
         for (size_t j = 0; j < n_link; ++j) {
-          const size_t head = i * n_link + j * n_pose_dim;
+          const size_t head = i * (n_link * n_pose_dim) + j * n_pose_dim;
           const size_t elink_id = elink_ids[j];
           J.block(head, 0, n_pose_dim, n_dof) = robot_model_.get_jacobian(
               elink_id, joint_ids, with_rpy, with_base);
@@ -162,7 +158,6 @@ public:
           const auto &&jac2 = robot_model_.get_jacobian(link_ids2[j], joint_ids,
                                                         false, with_base);
           const auto grad = 2 * (jac1 - jac2).transpose() * diff_vec;
-          std::cout << grad << std::endl;
           grads.block(head, 0, 1, n_joint) = grad.transpose();
         }
       }
