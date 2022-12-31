@@ -147,8 +147,9 @@ def test_hoge(test_data):
 
     link_ids1 = fksolver.get_joint_ids(rarm_joint_names)
     link_ids2 = fksolver.get_joint_ids(larm_joint_names)
+    link_id_pairs = list(zip(link_ids1, link_ids2))
     values, J_analytical = fksolver.compute_inter_link_sqdists(
-        [q], link_ids1, link_ids2, joint_ids, with_base=True, with_jacobian=True
+        [q], link_id_pairs, joint_ids, with_base=True, with_jacobian=True
     )
 
     eps = 1e-7
@@ -157,7 +158,7 @@ def test_hoge(test_data):
         q1 = copy.deepcopy(q)
         q1[i] += eps
         values1, _ = fksolver.compute_inter_link_sqdists(
-            [q1], link_ids1, link_ids2, joint_ids, with_base=True, with_jacobian=False
+            [q1], link_id_pairs, joint_ids, with_base=True, with_jacobian=False
         )
         grads.append((values1 - values) / eps)
     J_numerical = np.array(grads).T

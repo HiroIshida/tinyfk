@@ -120,17 +120,17 @@ class RobotModel(object):
     def compute_inter_link_sqdists(
         self,
         angle_vectors,
-        link_ids1,
-        link_ids2,
+        link_id_pairs,
         joint_ids,
         with_base=False,
         with_jacobian=False,
         use_cache=False,
     ):
+        link_ids1, link_ids2 = zip(*link_id_pairs)
         return self._robot.compute_inter_link_squared_dists(
             angle_vectors,
-            link_ids1,
-            link_ids2,
+            list(link_ids1),
+            list(link_ids2),
             joint_ids,
             with_base,
             with_jacobian,
