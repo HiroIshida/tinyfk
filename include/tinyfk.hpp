@@ -103,7 +103,23 @@ public: // functions
   std::vector<AngleLimit>
   get_joint_limits(const std::vector<size_t> &joint_ids) const;
 
+  std::vector<std::string> get_joint_names() const {
+    std::vector<std::string> joint_names;
+    for (auto &joint : joints_) {
+      joint_names.push_back(joint->name);
+    }
+    return joint_names;
+  }
+
   std::vector<size_t> get_link_ids(std::vector<std::string> link_names) const;
+
+  std::vector<std::string> get_link_names() const {
+    std::vector<std::string> link_names;
+    for (auto &link : links_) {
+      link_names.push_back(link->name);
+    }
+    return link_names;
+  }
 
   virtual void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                              bool usebase) const = 0;

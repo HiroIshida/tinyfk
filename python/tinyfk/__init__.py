@@ -93,6 +93,9 @@ class RobotModel(object):
             use_cache,
         )
 
+    def get_joint_names(self):
+        return self._robot.get_joint_names()
+
     def get_joint_ids(self, joint_names):
         return self._robot.get_joint_ids(joint_names)
 

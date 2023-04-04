@@ -10,6 +10,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace py = pybind11;
@@ -90,13 +91,19 @@ public:
     return std::array<Eigen::MatrixXd, 2>{P.transpose(), J};
   }
 
+  std::vector<std::string> get_joint_names() {
+    return robot_model_.get_joint_names();
+  }
+
   std::vector<size_t> get_joint_ids(std::vector<std::string> joint_names) {
-    size_t n_joint = joint_names.size();
     return robot_model_.get_joint_ids(joint_names);
   }
 
+  std::vector<std::string> get_link_names() {
+    return robot_model_.get_link_names();
+  }
+
   std::vector<size_t> get_link_ids(std::vector<std::string> link_names) {
-    size_t n_link = link_names.size();
     return robot_model_.get_link_ids(link_names);
   }
 
@@ -173,10 +180,12 @@ PYBIND11_MODULE(_tinyfk, m) {
       .def("solve_forward_kinematics",
            &RobotModelPyWrapper::solve_forward_kinematics)
       .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)
+      .def("get_joint_names", &RobotModelPyWrapper::get_joint_names)
       .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
       .def("get_joint_limits", &RobotModelPyWrapper::get_joint_limits)
       .def("set_base_pose", &RobotModelPyWrapper::set_base_pose)
       .def("get_link_ids", &RobotModelPyWrapper::get_link_ids)
+      .def("get_link_names", &RobotModelPyWrapper::get_link_names)
       .def("add_new_link", &RobotModelPyWrapper::add_new_link)
       .def("compute_inter_link_squared_dists",
            &RobotModelPyWrapper::compute_inter_link_squared_dists)
