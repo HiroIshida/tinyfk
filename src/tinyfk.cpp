@@ -91,14 +91,6 @@ void RobotModelBase::_set_joint_angles(
   }
 }
 
-void RobotModelBase::set_base_pose(double x, double y, double theta) {
-  _set_base_pose(x, y, theta);
-  transform_cache_.clear();
-}
-void RobotModelBase::_set_base_pose(double x, double y, double theta) {
-  base_pose_.set(x, y, theta);
-}
-
 void RobotModelBase::clear_cache() { transform_cache_.clear(); }
 
 void RobotModelBase::set_init_angles() {

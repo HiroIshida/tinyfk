@@ -98,7 +98,7 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
                                       const std::vector<size_t> &joint_ids,
                                       bool with_rot, bool with_base) {
   int dim_jacobi = (with_rot ? 6 : 3);
-  int dim_dof = joint_ids.size() + (with_base ? 3 : 0);
+  int dim_dof = joint_ids.size() + (with_base ? 6 : 0);
 
   Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(dim_jacobi, dim_dof);
   // Forward kinematics computation
@@ -160,9 +160,8 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
     // NOTE that epos is wrt global not wrt root link!
     // so we first compute epos w.r.t root link then take a
     // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
-    const std::array<double, 3> &basepose3d = base_pose_.pose3d_;
-    urdf::Vector3 epos_local =
-        epos - urdf::Vector3(basepose3d[0], basepose3d[1], 0);
+    
+    urdf::Vector3 epos_local = epos - base_pose_.position;
     const size_t dim_dof = joint_ids.size();
 
     /*
@@ -175,9 +174,15 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
      * [0, 0, 0]
      * [0, 0, 1]
      */
-    Eigen::Matrix3d m;
+    Eigen::Matrix3d d;
     jacobian(0, dim_dof + 0) = 1.0;
     jacobian(1, dim_dof + 1) = 1.0;
+    jacobian(2, dim_dof + 2) = 1.0;
+
+    base_pose_.rotation * epos_local;
+
+
+
     jacobian(0, dim_dof + 2) = -epos_local.y;
     jacobian(1, dim_dof + 2) = epos_local.x;
     if (with_rot) {
