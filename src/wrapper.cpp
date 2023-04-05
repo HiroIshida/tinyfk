@@ -31,6 +31,8 @@ public:
     robot_model_.set_base_pose(xytheta[0], xytheta[1], xytheta[2]);
   }
 
+  std::string get_root_link_name() { return robot_model_.root_link_->name; }
+
   std::array<Eigen::MatrixXd, 2> solve_forward_kinematics(
       const std::vector<std::vector<double>> joint_angles_sequence,
       const std::vector<size_t> &elink_ids,
@@ -177,6 +179,7 @@ PYBIND11_MODULE(_tinyfk, m) {
   m.doc() = "tiny fast forward kinematics solver"; // optional module docstring
   py::class_<RobotModelPyWrapper>(m, "RobotModel")
       .def(py::init<std::string &>())
+      .def("get_root_link_name", &RobotModelPyWrapper::get_root_link_name)
       .def("solve_forward_kinematics",
            &RobotModelPyWrapper::solve_forward_kinematics)
       .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)

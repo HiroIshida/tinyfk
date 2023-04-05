@@ -52,6 +52,10 @@ class RobotModel(object):
         self._xml_text = xml_text  # solely for pickling & unpickling
         self._robot = _tinyfk.RobotModel(xml_text)
 
+    @property
+    def root_link_name(self) -> str:
+        return self._robot.get_root_link_name()
+
     def set_joint_angles(self, joint_ids, joint_angles_, with_base=False):
         if with_base:
             joint_angles, base_pose = joint_angles_[:-3], joint_angles_[-3:]

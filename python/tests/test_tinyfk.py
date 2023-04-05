@@ -37,6 +37,12 @@ def test_data():
     return angle_vector, gt_pose_list, fksolver, link_ids, joint_ids, joint_limits
 
 
+def test_root_link_id():
+    urdf_model_path = tinyfk.pr2_urdfpath()
+    fksolver = tinyfk.RobotModel(urdf_model_path)
+    assert fksolver.root_link_name == "base_footprint"
+
+
 def test_joint_limit(test_data):
     angle_vector, gt_pose_list, fksolver, link_ids, joint_ids, joint_limits = test_data
 
