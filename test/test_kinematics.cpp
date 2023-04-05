@@ -1,4 +1,5 @@
 #include "tinyfk.hpp"
+#include "urdf_model/pose.h"
 #include <cmath>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -66,37 +67,42 @@ TEST(KINEMATICS, AllTest) {
   auto joint_ids = kin.get_joint_ids(joint_names);
   auto link_ids = kin.get_link_ids(link_names);
 
-  // for (size_t i = 0; i < n_joints; i++) {
-  //   kin.set_joint_angle(joint_ids[i], angle_vector[i]);
-  // }
-  // kin.set_base_pose(angle_vector[n_joints + 0], angle_vector[n_joints + 1],
-  //                   angle_vector[n_joints + 2]);
+  auto base_pose = urdf::Pose();
+  base_pose.position.x = angle_vector[n_joints + 0];
+  base_pose.position.y = angle_vector[n_joints + 1];
+  base_pose.rotation.setFromRPY(0, 0, angle_vector[n_joints + 2]);
 
-  // bool base_also = true;
-  // urdf::Pose pose, pose_naive;
-  // for (size_t i = 0; i < n_links; i++) {
-  //   int link_id = link_ids[i];
+  for (size_t i = 0; i < n_joints; i++) {
+    kin.set_joint_angle(joint_ids[i], angle_vector[i]);
+  }
+  kin.set_base_pose(base_pose);
 
-  //   kin.get_link_pose(link_id, pose, base_also);
-  //   EXPECT_TRUE(isNear(pose.position.x, pose_list[i][0]));
-  //   EXPECT_TRUE(isNear(pose.position.y, pose_list[i][1]));
-  //   EXPECT_TRUE(isNear(pose.position.z, pose_list[i][2]));
+  bool base_also = true;
+  urdf::Pose pose, pose_naive;
+  for (size_t i = 0; i < n_links; i++) {
+    int link_id = link_ids[i];
 
-  //   auto rpy = pose.rotation.getRPY();
-  //   EXPECT_TRUE(isNear(rpy.z, pose_list[i][3]));
-  //   EXPECT_TRUE(isNear(rpy.y, pose_list[i][4]));
-  //   EXPECT_TRUE(isNear(rpy.x, pose_list[i][5]));
-  // }
+    kin.get_link_pose(link_id, pose, base_also);
+    EXPECT_TRUE(isNear(pose.position.x, pose_list[i][0]));
+    EXPECT_TRUE(isNear(pose.position.y, pose_list[i][1]));
+    EXPECT_TRUE(isNear(pose.position.z, pose_list[i][2]));
+
+    auto rpy = pose.rotation.getRPY();
+    EXPECT_TRUE(isNear(rpy.z, pose_list[i][3]));
+    EXPECT_TRUE(isNear(rpy.y, pose_list[i][4]));
+    EXPECT_TRUE(isNear(rpy.x, pose_list[i][5]));
+  }
 
   // Now we comapre jacobian computed by finite diff with the analytical one
+  // modify rpy to test general case
+  base_pose.rotation.setFromRPY(0.2, 0.3, 0.4);
+
   for (size_t i = 0; i < n_joints; i++) {
     kin.set_joint_angle(joint_ids[i], angle_vector[i]);
     kin_naive.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
-  // kin.set_base_pose(angle_vector[n_joints], angle_vector[n_joints + 1],
-  //                   angle_vector[n_joints + 2]);
-  // kin_naive.set_base_pose(angle_vector[n_joints], angle_vector[n_joints + 1],
-  //                         angle_vector[n_joints + 2]);
+  kin.set_base_pose(base_pose);
+  kin_naive.set_base_pose(base_pose);
 
   kin.transform_cache_.clear();
   for (size_t i = 0; i < link_names.size(); i++) {
@@ -107,6 +113,8 @@ TEST(KINEMATICS, AllTest) {
         kin_naive.get_jacobian(link_id, joint_ids, rot_also, true);
     auto J_analytical = kin.get_jacobian(link_id, joint_ids, rot_also, true);
 
+    std::cout << J_analytical << std::endl;
+    std::cout << J_numerical << std::endl;
     bool jacobian_equal =
         (J_analytical - J_numerical).array().abs().maxCoeff() < 1e-5;
     EXPECT_TRUE(jacobian_equal);

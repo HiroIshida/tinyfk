@@ -114,6 +114,8 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
   if (with_rot) {
     erpy = erot.getRPY();
   }
+  std::cout << "base rotomat" << std::endl;
+  std::cout << this->base_rotmat_ << std::endl;
 
   // Jacobian computation
   for (size_t i = 0; i < joint_ids.size(); i++) {
@@ -172,8 +174,8 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
 
     for (size_t rpy_idx = 0; rpy_idx < 3; rpy_idx++) {
       const size_t idx_col = dim_dof + 3 + rpy_idx;
-      urdf::Vector3 rot_axis(base_rotmat_(rpy_idx, 0), base_rotmat_(rpy_idx, 1),
-                             base_rotmat_(rpy_idx, 2));
+      urdf::Vector3 rot_axis(base_rotmat_(0, rpy_idx), base_rotmat_(1, rpy_idx),
+                             base_rotmat_(2, rpy_idx));
       urdf::Vector3 dpos;
       cross_product(rot_axis, epos_local, dpos);
       jacobian(0, idx_col) = dpos.x;

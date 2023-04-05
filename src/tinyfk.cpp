@@ -97,7 +97,7 @@ void RobotModelBase::_set_joint_angles(
 void RobotModelBase::_set_base_pose(urdf::Pose pose) {
   this->base_pose_ = pose;
   const auto &tmp = pose.rotation;
-  Eigen::Quaterniond q(tmp.w, tmp.y, tmp.z, tmp.x);
+  Eigen::Quaterniond q(tmp.w, tmp.x, tmp.y, tmp.z);
   this->base_rotmat_ = q.toRotationMatrix();
 }
 
