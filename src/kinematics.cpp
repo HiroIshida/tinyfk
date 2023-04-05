@@ -5,6 +5,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
 #include "tinyfk.hpp"
+#include <Eigen/Dense>
 #include <cmath>
 
 urdf::Vector3 rpy_derivative(const urdf::Vector3 &rpy,
@@ -38,7 +39,7 @@ void CacheUtilizedRobotModel::get_link_pose_inner(
 
   urdf::Pose tf_rlink_to_blink;
   if (usebase) {
-    tf_rlink_to_blink = base_pose_.pose_;
+    tf_rlink_to_blink = base_pose_;
   }
 
   transform_stack_.reset();
@@ -160,36 +161,22 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
     // NOTE that epos is wrt global not wrt root link!
     // so we first compute epos w.r.t root link then take a
     // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
-    
+
     urdf::Vector3 epos_local = epos - base_pose_.position;
     const size_t dim_dof = joint_ids.size();
 
-    /*
-     * [1, 0,-y]
-     * [0, 1, x]
-     * [0, 0, 0]
-     *
-     * with_rot
-     * [0, 0, 0]
-     * [0, 0, 0]
-     * [0, 0, 1]
-     */
-    Eigen::Matrix3d d;
     jacobian(0, dim_dof + 0) = 1.0;
     jacobian(1, dim_dof + 1) = 1.0;
     jacobian(2, dim_dof + 2) = 1.0;
 
-    base_pose_.rotation * epos_local;
-
-
-
-    jacobian(0, dim_dof + 2) = -epos_local.y;
-    jacobian(1, dim_dof + 2) = epos_local.x;
-    if (with_rot) {
-      jacobian(5, dim_dof + 2) = 1.0;
-      // NOTE : thanks to the definition of rpy, if rotation axis is [0, 0, 1]
-      // then drpy/dt = [0, 0, 1], so we don't have to multiply kinematic matrix
-      // here.
+    for (size_t rpy_idx = 0; rpy_idx < 3; rpy_idx++) {
+      urdf::Vector3 rot_axis(base_rotmat_(0, rpy_idx), base_rotmat_(1, rpy_idx),
+                             base_rotmat_(2, rpy_idx));
+      urdf::Vector3 drpy_dt = rpy_derivative(erpy, rot_axis);
+      const size_t idx_col = dim_dof + 3 + rpy_idx;
+      jacobian(3, idx_col) = drpy_dt.x;
+      jacobian(4, idx_col) = drpy_dt.y;
+      jacobian(5, idx_col) = drpy_dt.z;
     }
   }
   return jacobian;

@@ -6,6 +6,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 #include "tinyfk.hpp"
 #include "urdf_model/pose.h"
+#include <Eigen/Geometry>
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
@@ -89,6 +90,13 @@ void RobotModelBase::_set_joint_angles(
   for (size_t i = 0; i < joint_ids.size(); i++) {
     joint_angles_[joint_ids[i]] = joint_angles[i];
   }
+}
+
+void RobotModelBase::_set_base_pose(urdf::Pose pose) {
+  this->base_pose_ = pose;
+  const auto &tmp = pose.rotation;
+  Eigen::Quaterniond q(tmp.x, tmp.y, tmp.z, tmp.w);
+  this->base_rotmat_ = q.toRotationMatrix();
 }
 
 void RobotModelBase::clear_cache() { transform_cache_.clear(); }

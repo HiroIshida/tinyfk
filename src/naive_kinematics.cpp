@@ -65,7 +65,7 @@ NaiveRobotModel::get_jacobian(size_t elink_id,
 
   urdf::Pose base_pose_orgiinal = this->base_pose_;
   urdf::Vector3 base_pos, base_rpy;
-  if(with_base){
+  if (with_base) {
     base_pos = base_pose_.position;
     base_rpy = base_pose_.rotation.getRPY();
   }
@@ -102,20 +102,20 @@ NaiveRobotModel::get_jacobian(size_t elink_id,
   if (with_base) {
     for (size_t i = 0; i < 6; i++) {
 
-      const auto create_diffed_pose = [&](const size_t i){
+      const auto create_diffed_pose = [&](const size_t i) {
         auto pos = base_pos;
         auto rpy = base_rpy;
-        if(i == 0){
+        if (i == 0) {
           pos.x = pos.x + dx;
-        }else if(i == 1){
+        } else if (i == 1) {
           pos.y = pos.y + dx;
-        }else if(i == 2){
+        } else if (i == 2) {
           pos.z = pos.z + dx;
-        }else if(i == 3){
+        } else if (i == 3) {
           rpy.x = rpy.x + dx;
-        }else if(i == 4){
+        } else if (i == 4) {
           rpy.y = rpy.y + dx;
-        }else if(i == 5){
+        } else if (i == 5) {
           rpy.z = rpy.z + dx;
         }
         auto pose = urdf::Pose();
