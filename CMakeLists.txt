@@ -30,9 +30,10 @@ if(BUILD_TEST)
         target_include_directories(${test_name} PUBLIC ${GTEST_INCLUDE_DIRS})
     endfunction()
 
+    setup_tinyfk_test(test_others test/test_others.cpp)
     setup_tinyfk_test(test_data_structure test/test_data_structure.cpp)
-
     setup_tinyfk_test(test_kinematics test/test_kinematics.cpp)
+
     set(nlohmann_json_INCLUDE_DIRS third_party/json/include)
     target_include_directories(test_kinematics PUBLIC ${nlohmann_json_INCLUDE_DIRS})
 
@@ -59,32 +60,32 @@ endif(BENCH_KDL)
 # benchmark (tinyfk)
 add_executable(bench_tinyfk bench/bench_tinyfk.cpp)
 target_link_libraries(bench_tinyfk tinyfk)
-
-option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
-if(BUILD_PYTHON_INTERFACE)
-    option(INSTALL_VIA_PIP "if you install via pip install . " ON)
-
-    set(LIBRARY_NAME _tinyfk)
-    add_subdirectory(third_party/pybind11)
-    pybind11_add_module(_tinyfk src/wrapper.cpp)
-    target_link_libraries(_tinyfk PRIVATE tinyfk)
-
-    if(INSTALL_VIA_PIP)
-        install(TARGETS _tinyfk DESTINATION .) # for pip install 
-    else() # gdb friendly. 
-        option(PYTHON_GLOBAL_SITE_PKG 
-            "install into global site package. if OFF, or by default, will be installed into per-user site-packages" 
-            OFF)
-        if(PYTHON_GLOBAL_SITE_PKG)
-            set(CMD_SITE_PKG "import site; import sys;sys.stdout.write(site.getsitepackages()[0])")
-        else(PYTHON_GLOBAL_SITE_PKG)
-            set(CMD_SITE_PKG "import site; import sys;sys.stdout.write(site.getusersitepackages())")
-        endif(PYTHON_GLOBAL_SITE_PKG)
-        execute_process(
-            COMMAND ${PYTHON_EXECUTABLE} -c "${CMD_SITE_PKG}"
-            OUTPUT_VARIABLE PYTHON_SITE_PACKAGES_INSTALL_DIR
-            )
-        install(TARGETS _tinyfk DESTINATION ${PYTHON_SITE_PACKAGES_INSTALL_DIR})
-        message("destination site-packages:" ${PYTHON_SITE_PACKAGES_INSTALL_DIR})
-    endif()
-endif(BUILD_PYTHON_INTERFACE)
+# 
+# option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
+# if(BUILD_PYTHON_INTERFACE)
+#     option(INSTALL_VIA_PIP "if you install via pip install . " ON)
+# 
+#     set(LIBRARY_NAME _tinyfk)
+#     add_subdirectory(third_party/pybind11)
+#     pybind11_add_module(_tinyfk src/wrapper.cpp)
+#     target_link_libraries(_tinyfk PRIVATE tinyfk)
+# 
+#     if(INSTALL_VIA_PIP)
+#         install(TARGETS _tinyfk DESTINATION .) # for pip install 
+#     else() # gdb friendly. 
+#         option(PYTHON_GLOBAL_SITE_PKG 
+#             "install into global site package. if OFF, or by default, will be installed into per-user site-packages" 
+#             OFF)
+#         if(PYTHON_GLOBAL_SITE_PKG)
+#             set(CMD_SITE_PKG "import site; import sys;sys.stdout.write(site.getsitepackages()[0])")
+#         else(PYTHON_GLOBAL_SITE_PKG)
+#             set(CMD_SITE_PKG "import site; import sys;sys.stdout.write(site.getusersitepackages())")
+#         endif(PYTHON_GLOBAL_SITE_PKG)
+#         execute_process(
+#             COMMAND ${PYTHON_EXECUTABLE} -c "${CMD_SITE_PKG}"
+#             OUTPUT_VARIABLE PYTHON_SITE_PACKAGES_INSTALL_DIR
+#             )
+#         install(TARGETS _tinyfk DESTINATION ${PYTHON_SITE_PACKAGES_INSTALL_DIR})
+#         message("destination site-packages:" ${PYTHON_SITE_PACKAGES_INSTALL_DIR})
+#     endif()
+# endif(BUILD_PYTHON_INTERFACE)

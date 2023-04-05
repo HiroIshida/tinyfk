@@ -6,6 +6,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 #include "tinyfk.hpp"
 #include "urdf_model/pose.h"
+#include <Eigen/Geometry>
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
@@ -68,13 +69,16 @@ RobotModelBase::RobotModelBase(const std::string &xml_string) {
   transform_stack_ = SizedStack<LinkIdAndPose>(N_link);
   transform_cache_ = SizedCache<urdf::Pose>(N_link);
   root_link_ = robot_urdf_interface->root_link_;
+  root_link_id_ = link_ids[root_link_->name];
   links_ = links;
   link_ids_ = link_ids;
   joints_ = joints;
   joint_ids_ = joint_ids;
   num_dof_ = num_dof;
   joint_angles_ = joint_angles;
-  this->update_rptable(); // update _rptable
+
+  this->set_base_pose(urdf::Pose()); // initial base pose
+  this->update_rptable();            // update _rptable
 }
 
 void RobotModelBase::set_joint_angles(const std::vector<size_t> &joint_ids,
@@ -91,12 +95,11 @@ void RobotModelBase::_set_joint_angles(
   }
 }
 
-void RobotModelBase::set_base_pose(double x, double y, double theta) {
-  _set_base_pose(x, y, theta);
-  transform_cache_.clear();
-}
-void RobotModelBase::_set_base_pose(double x, double y, double theta) {
-  base_pose_.set(x, y, theta);
+void RobotModelBase::_set_base_pose(urdf::Pose pose) {
+  this->base_pose_ = pose;
+  const auto &tmp = pose.rotation;
+  Eigen::Quaterniond q(tmp.w, tmp.x, tmp.y, tmp.z);
+  this->base_rotmat_ = q.toRotationMatrix();
 }
 
 void RobotModelBase::clear_cache() { transform_cache_.clear(); }

@@ -7,6 +7,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 // inefficient methods which will be used only in test
 
 #include "tinyfk.hpp"
+#include "urdf_model/pose.h"
 
 namespace tinyfk {
 
@@ -27,7 +28,7 @@ void NaiveRobotModel::get_link_pose(size_t link_id,
     const urdf::JointSharedPtr &pjoint = hlink->parent_joint;
     if (pjoint == nullptr) {
       if (with_base) {
-        tf_hlink_to_elink = pose_transform(base_pose_.pose_, tf_hlink_to_elink);
+        tf_hlink_to_elink = pose_transform(base_pose_, tf_hlink_to_elink);
       }
       break;
     }
@@ -60,7 +61,15 @@ NaiveRobotModel::get_jacobian(size_t elink_id,
                               bool with_rpy, bool with_base) {
   size_t n_pose_dim = (with_rpy ? 6 : 3);
   size_t n_joints = joint_ids.size();
-  size_t n_dof = (with_base ? n_joints + 3 : n_joints);
+  size_t n_dof = (with_base ? n_joints + 6 : n_joints);
+
+  urdf::Pose base_pose_orgiinal = this->base_pose_;
+  urdf::Vector3 base_pos, base_rpy;
+  if (with_base) {
+    base_pos = base_pose_.position;
+    base_rpy = base_pose_.rotation.getRPY();
+  }
+
   Eigen::MatrixXd J = Eigen::MatrixXd::Zero(n_pose_dim, n_dof);
 
   double dx = 1e-7;
@@ -91,13 +100,33 @@ NaiveRobotModel::get_jacobian(size_t elink_id,
   }
 
   if (with_base) {
-    for (size_t i = 0; i < 3; i++) {
-      std::array<double, 3> &tmp = base_pose_.pose3d_;
-      tmp[i] += dx;
-      this->set_base_pose(tmp[0], tmp[1], tmp[2]);
+    for (size_t i = 0; i < 6; i++) {
+
+      const auto create_diffed_pose = [&](const size_t i) {
+        auto pos = base_pos;
+        auto rpy = base_rpy;
+        if (i == 0) {
+          pos.x = pos.x + dx;
+        } else if (i == 1) {
+          pos.y = pos.y + dx;
+        } else if (i == 2) {
+          pos.z = pos.z + dx;
+        } else if (i == 3) {
+          rpy.x = rpy.x + dx;
+        } else if (i == 4) {
+          rpy.y = rpy.y + dx;
+        } else if (i == 5) {
+          rpy.z = rpy.z + dx;
+        }
+        auto pose = urdf::Pose();
+        pose.position = pos;
+        pose.rotation.setFromRPY(rpy.x, rpy.y, rpy.z);
+        return pose;
+      };
+
+      this->set_base_pose(create_diffed_pose(i));
       this->get_link_pose(elink_id, pose1, true);
-      tmp[i] -= dx;
-      this->set_base_pose(tmp[0], tmp[1], tmp[2]);
+      // this->set_base_pose(base_pose_orgiinal);
 
       urdf::Vector3 &pos0 = pose0.position;
       urdf::Vector3 &pos1 = pose1.position;
