@@ -119,6 +119,7 @@ NaiveRobotModel::get_jacobian(size_t elink_id,
           rpy.z = rpy.z + dx;
         }
         auto pose = urdf::Pose();
+        pose.position = pos;
         pose.rotation.setFromRPY(rpy.x, rpy.y, rpy.z);
         return pose;
       };

@@ -75,7 +75,9 @@ RobotModelBase::RobotModelBase(const std::string &xml_string) {
   joint_ids_ = joint_ids;
   num_dof_ = num_dof;
   joint_angles_ = joint_angles;
-  this->update_rptable(); // update _rptable
+
+  this->set_base_pose(urdf::Pose()); // initial base pose
+  this->update_rptable();            // update _rptable
 }
 
 void RobotModelBase::set_joint_angles(const std::vector<size_t> &joint_ids,
@@ -95,7 +97,7 @@ void RobotModelBase::_set_joint_angles(
 void RobotModelBase::_set_base_pose(urdf::Pose pose) {
   this->base_pose_ = pose;
   const auto &tmp = pose.rotation;
-  Eigen::Quaterniond q(tmp.x, tmp.y, tmp.z, tmp.w);
+  Eigen::Quaterniond q(tmp.w, tmp.y, tmp.z, tmp.x);
   this->base_rotmat_ = q.toRotationMatrix();
 }
 

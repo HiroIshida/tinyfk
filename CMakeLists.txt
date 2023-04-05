@@ -19,31 +19,28 @@ include_directories(include/)
 add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk urdfdom_model)
 
-# add_executable(tmp tmp.cpp)
-# target_link_libraries(tmp tinyfk)
+# testing
+option(BUILD_TEST "build google test" OFF)
+if(BUILD_TEST)
+    find_package(GTest REQUIRED)
 
-# # testing
-# option(BUILD_TEST "build google test" OFF)
-# if(BUILD_TEST)
-#     find_package(GTest REQUIRED)
-# 
-#     function(setup_tinyfk_test test_name test_src)
-#         add_executable(${test_name} ${test_src})
-#         target_link_libraries(${test_name} tinyfk ${GTEST_LIBRARIES} pthread)
-#         target_include_directories(${test_name} PUBLIC ${GTEST_INCLUDE_DIRS})
-#     endfunction()
-# 
-#     setup_tinyfk_test(test_data_structure test/test_data_structure.cpp)
-# 
-#     setup_tinyfk_test(test_kinematics test/test_kinematics.cpp)
-#     set(nlohmann_json_INCLUDE_DIRS third_party/json/include)
-#     target_include_directories(test_kinematics PUBLIC ${nlohmann_json_INCLUDE_DIRS})
-# 
-#     enable_testing()
-#     gtest_discover_tests(test_data_structure)
-#     gtest_discover_tests(test_kinematics)
-# endif(BUILD_TEST)
-# 
+    function(setup_tinyfk_test test_name test_src)
+        add_executable(${test_name} ${test_src})
+        target_link_libraries(${test_name} tinyfk ${GTEST_LIBRARIES} pthread)
+        target_include_directories(${test_name} PUBLIC ${GTEST_INCLUDE_DIRS})
+    endfunction()
+
+    setup_tinyfk_test(test_data_structure test/test_data_structure.cpp)
+
+    setup_tinyfk_test(test_kinematics test/test_kinematics.cpp)
+    set(nlohmann_json_INCLUDE_DIRS third_party/json/include)
+    target_include_directories(test_kinematics PUBLIC ${nlohmann_json_INCLUDE_DIRS})
+
+    enable_testing()
+    gtest_discover_tests(test_data_structure)
+    gtest_discover_tests(test_kinematics)
+endif(BUILD_TEST)
+
 # # benchmark (kdl)
 # option(BENCH_KDL "benchmarking kdl" OFF)
 # if(BENCH_KDL)

@@ -5,6 +5,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
 #include "tinyfk.hpp"
+#include "urdf_model/pose.h"
 #include <Eigen/Dense>
 #include <cmath>
 
@@ -170,13 +171,20 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
     jacobian(2, dim_dof + 2) = 1.0;
 
     for (size_t rpy_idx = 0; rpy_idx < 3; rpy_idx++) {
-      urdf::Vector3 rot_axis(base_rotmat_(0, rpy_idx), base_rotmat_(1, rpy_idx),
-                             base_rotmat_(2, rpy_idx));
-      urdf::Vector3 drpy_dt = rpy_derivative(erpy, rot_axis);
       const size_t idx_col = dim_dof + 3 + rpy_idx;
-      jacobian(3, idx_col) = drpy_dt.x;
-      jacobian(4, idx_col) = drpy_dt.y;
-      jacobian(5, idx_col) = drpy_dt.z;
+      urdf::Vector3 rot_axis(base_rotmat_(rpy_idx, 0), base_rotmat_(rpy_idx, 1),
+                             base_rotmat_(rpy_idx, 2));
+      urdf::Vector3 dpos;
+      cross_product(rot_axis, epos_local, dpos);
+      jacobian(0, idx_col) = dpos.x;
+      jacobian(1, idx_col) = dpos.y;
+      jacobian(2, idx_col) = dpos.z;
+      if (with_rot) {
+        urdf::Vector3 drpy_dt = rpy_derivative(erpy, rot_axis);
+        jacobian(3, idx_col) = drpy_dt.x;
+        jacobian(4, idx_col) = drpy_dt.y;
+        jacobian(5, idx_col) = drpy_dt.z;
+      }
     }
   }
   return jacobian;
