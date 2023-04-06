@@ -102,22 +102,30 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
   int dim_jacobi = (with_rot ? 6 : 3);
   int dim_dof = joint_ids.size() + (with_base ? 6 : 0);
 
-  Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(dim_jacobi, dim_dof);
-  // Forward kinematics computation
-  // tf_rlink_to_elink and epos, erot, erpy will be also used in jacobian
-  // computation
+  // compute values shared through the loop
   urdf::Pose tf_rlink_to_elink;
   this->get_link_pose(elink_id, tf_rlink_to_elink, with_base);
   urdf::Vector3 &epos = tf_rlink_to_elink.position;
   urdf::Rotation &erot = tf_rlink_to_elink.rotation;
+
   urdf::Vector3 erpy; // will be used only with_rot
   if (with_rot) {
     erpy = erot.getRPY();
   }
-  std::cout << "base rotomat" << std::endl;
-  std::cout << this->base_rotmat_ << std::endl;
+
+  urdf::Pose tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
+  urdf::Vector3 rpy_rlink_to_blink;
+  if (with_base) {
+    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink,
+                        true); // confusing but root_link_id -> base_link
+    tf_blink_to_rlink = tf_rlink_to_blink.inverse();
+    rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
+    tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
+  }
 
   // Jacobian computation
+  Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(dim_jacobi, dim_dof);
+
   for (size_t i = 0; i < joint_ids.size(); i++) {
     int jid = joint_ids[i];
     if (rptable_.isRelevant(jid, elink_id)) {
@@ -161,31 +169,38 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
   }
 
   if (with_base) {
-    // NOTE that epos is wrt global not wrt root link!
-    // so we first compute epos w.r.t root link then take a
-    // cross product of [0, 0, 1] and local = {-local.y, local.x, 0}
-
-    urdf::Vector3 epos_local = epos - base_pose_.position;
     const size_t dim_dof = joint_ids.size();
 
     jacobian(0, dim_dof + 0) = 1.0;
     jacobian(1, dim_dof + 1) = 1.0;
     jacobian(2, dim_dof + 2) = 1.0;
 
+    // we resort to numerical method to base pose jacobian (just because I don't have time)
+    // TODO(HiroIshida): compute using analytical method.
+    constexpr double eps = 1e-7;
     for (size_t rpy_idx = 0; rpy_idx < 3; rpy_idx++) {
       const size_t idx_col = dim_dof + 3 + rpy_idx;
-      urdf::Vector3 rot_axis(base_rotmat_(0, rpy_idx), base_rotmat_(1, rpy_idx),
-                             base_rotmat_(2, rpy_idx));
-      urdf::Vector3 dpos;
-      cross_product(rot_axis, epos_local, dpos);
-      jacobian(0, idx_col) = dpos.x;
-      jacobian(1, idx_col) = dpos.y;
-      jacobian(2, idx_col) = dpos.z;
+
+      auto rpy_tweaked = rpy_rlink_to_blink;
+      rpy_tweaked[rpy_idx] += eps;
+
+      urdf::Pose tf_rlink_to_blink_tweaked = tf_rlink_to_blink;
+      tf_rlink_to_blink_tweaked.rotation.setFromRPY(
+          rpy_tweaked.x, rpy_tweaked.y, rpy_tweaked.z);
+      urdf::Pose tf_rlink_to_elink_tweaked =
+          pose_transform(tf_rlink_to_blink_tweaked, tf_blink_to_elink);
+
+      const auto pos_diff =
+          tf_rlink_to_elink_tweaked.position - tf_rlink_to_elink.position;
+      jacobian(0, idx_col) = pos_diff.x / eps;
+      jacobian(1, idx_col) = pos_diff.y / eps;
+      jacobian(2, idx_col) = pos_diff.z / eps;
       if (with_rot) {
-        urdf::Vector3 drpy_dt = rpy_derivative(erpy, rot_axis);
-        jacobian(3, idx_col) = drpy_dt.x;
-        jacobian(4, idx_col) = drpy_dt.y;
-        jacobian(5, idx_col) = drpy_dt.z;
+        auto erpy_tweaked = tf_rlink_to_elink_tweaked.rotation.getRPY();
+        const auto erpy_diff = erpy_tweaked - erpy;
+        jacobian(3, idx_col) = erpy_diff.x / eps;
+        jacobian(4, idx_col) = erpy_diff.y / eps;
+        jacobian(5, idx_col) = erpy_diff.z / eps;
       }
     }
   }

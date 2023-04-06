@@ -69,6 +69,7 @@ RobotModelBase::RobotModelBase(const std::string &xml_string) {
   transform_stack_ = SizedStack<LinkIdAndPose>(N_link);
   transform_cache_ = SizedCache<urdf::Pose>(N_link);
   root_link_ = robot_urdf_interface->root_link_;
+  root_link_id_ = link_ids[root_link_->name];
   links_ = links;
   link_ids_ = link_ids;
   joints_ = joints;

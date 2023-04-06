@@ -57,6 +57,15 @@ public:
   double y;
   double z;
 
+  double& operator[](size_t index) {
+    switch (index) {
+      case 0: return x;
+      case 1: return y;
+      case 2: return z;
+      default: throw std::out_of_range("Index out of range");
+    }
+  }
+
   void clear() {this->x=this->y=this->z=0.0;};
   void init(const std::string &vector_str)
   {
@@ -321,6 +330,12 @@ public:
     this->rotation.inverse_inplace();
     this->position.inverse_inplace();
     this->position = this->rotation * this->position;
+  }
+
+  Pose inverse(){
+    Pose pose_out = *this;
+    pose_out.inverse_inplace();
+    return pose_out;
   }
 };
 

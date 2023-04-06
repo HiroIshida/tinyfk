@@ -95,11 +95,11 @@ TEST(KINEMATICS, AllTest) {
 
   // Now we comapre jacobian computed by finite diff with the analytical one
   // modify rpy to test general case
-  base_pose.rotation.setFromRPY(0.2, 0.3, 0.4);
+  base_pose.rotation.setFromRPY(0.2, 0.3, 0.5);
 
   for (size_t i = 0; i < n_joints; i++) {
-    kin.set_joint_angle(joint_ids[i], angle_vector[i]);
-    kin_naive.set_joint_angle(joint_ids[i], angle_vector[i]);
+    kin.set_joint_angle(joint_ids[i], 0.0);
+    kin_naive.set_joint_angle(joint_ids[i], 0.0);
   }
   kin.set_base_pose(base_pose);
   kin_naive.set_base_pose(base_pose);

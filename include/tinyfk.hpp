@@ -49,6 +49,7 @@ public: // members
   urdf::ModelInterfaceSharedPtr robot_urdf_interface_;
 
   urdf::LinkSharedPtr root_link_;
+  size_t root_link_id_;
   std::vector<urdf::LinkSharedPtr> links_;
   std::unordered_map<std::string, int> link_ids_;
 
