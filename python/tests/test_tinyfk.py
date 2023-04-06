@@ -67,7 +67,7 @@ def test_forward_kinematics(test_data):
     )
     with_jacobian = True  # If true, jacobian is computed, otherewise returns J = None.
     P, _ = fksolver.solve_forward_kinematics(
-        [angle_vector], link_ids, joint_ids, use_rotation, use_base, with_jacobian
+        [angle_vector], link_ids, joint_ids, use_rotation, False, use_base, with_jacobian
     )
     testing.assert_almost_equal(P, gt_pose_list)
 
@@ -76,10 +76,10 @@ def test_forward_kinematics(test_data):
     # computed via numerical differentiation.
     for link_id in link_ids:
         P_tmp, J_analytical = fksolver.solve_forward_kinematics(
-            [angle_vector], [link_id], joint_ids, True, True, True
+            [angle_vector], [link_id], joint_ids, True, False, True, True
         )
         P0, _ = fksolver.solve_forward_kinematics(
-            [angle_vector], [link_id], joint_ids, True, True, False
+            [angle_vector], [link_id], joint_ids, True, False, True, False
         )
         testing.assert_almost_equal(P_tmp, P0)  # P computed with and without jacobian must match
 
@@ -88,7 +88,7 @@ def test_jacobian(test_data):
     angle_vector, gt_pose_list, fksolver, link_ids, joint_ids, joint_limits = test_data
     for link_id in link_ids:
         P0, J_analytical = fksolver.solve_forward_kinematics(
-            [angle_vector], [link_id], joint_ids, True, True, True
+            [angle_vector], [link_id], joint_ids, True, False, True, True
         )
         eps = 1e-7
         J_numerical = np.zeros(J_analytical.shape)
@@ -96,7 +96,7 @@ def test_jacobian(test_data):
             angle_vector_p = copy.copy(angle_vector)
             angle_vector_p[i] += eps
             P1, _ = fksolver.solve_forward_kinematics(
-                [angle_vector_p], [link_id], joint_ids, True, True, False
+                [angle_vector_p], [link_id], joint_ids, True, False, True, False
             )
             P_diff = (P1 - P0) / eps
             J_numerical[:, i] = P_diff.flatten()
@@ -114,7 +114,7 @@ def test_trajectory_fk(test_data):
     n_wp = 10
 
     angle_vectors = [angle_vector + np.random.randn(n_dof) * 0.1 for _ in range(n_wp)]
-    P, J = fksolver.solve_forward_kinematics(angle_vectors, link_ids, joint_ids, True, True, True)
+    P, J = fksolver.solve_forward_kinematics(angle_vectors, link_ids, joint_ids, True, False, True, True)
     assert P.shape == (n_wp * len(link_ids), 6)
     assert J.shape == (n_wp * len(link_ids) * 6, n_dof)
 
@@ -124,7 +124,7 @@ def test_trajectory_fk(test_data):
     # check if multiple av cases is consistent with the single av case
     for i, av in enumerate(angle_vectors):
         P_single, J_single = fksolver.solve_forward_kinematics(
-            [av], link_ids, joint_ids, True, True, True
+            [av], link_ids, joint_ids, True, False, True, True
         )
         np.testing.assert_almost_equal(Ps[i], P_single)
         np.testing.assert_almost_equal(Js[i], J_single)
@@ -157,7 +157,7 @@ def test_hoge(test_data):
     link_ids2 = fksolver.get_joint_ids(larm_joint_names)
     link_id_pairs = list(zip(link_ids1, link_ids2))
     values, J_analytical = fksolver.compute_inter_link_sqdists(
-        [q], link_id_pairs, joint_ids, with_base=True, with_jacobian=True
+        [q], link_id_pairs, joint_ids, with_6dof_base=True, with_jacobian=True
     )
 
     eps = 1e-7
@@ -166,7 +166,7 @@ def test_hoge(test_data):
         q1 = copy.deepcopy(q)
         q1[i] += eps
         values1, _ = fksolver.compute_inter_link_sqdists(
-            [q1], link_id_pairs, joint_ids, with_base=True, with_jacobian=False
+            [q1], link_id_pairs, joint_ids, with_6dof_base=True, with_jacobian=False
         )
         grads.append((values1 - values) / eps)
     J_numerical = np.array(grads).T

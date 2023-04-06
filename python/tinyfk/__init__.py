@@ -46,13 +46,27 @@ class RobotModel(object):
     def root_link_name(self) -> str:
         return self._robot.get_root_link_name()
 
-    def set_joint_angles(self, joint_ids, joint_angles_, with_base=False):
-        if with_base:
-            joint_angles, base_pose = joint_angles_[:-3], joint_angles_[-3:]
+    def set_joint_angles(self, joint_ids, q, with_3dof_base=False, with_6dof_base=False):
+        if with_3dof_base:
+            assert not with_6dof_base
+            assert len(q) == len(joint_ids) + 3
+            joint_angles, base_xytheta = joint_angles_[:-3], joint_angles_[-3:]
+            base_pose = np.array([base_xytheta[0], base_xytheta[1], 0.0, 0.0, 0.0, base_xytheta[2]])
             self._robot.set_joint_angles(joint_ids, joint_angles)
             self._robot.set_base_pose(base_pose)
-        else:
+        elif with_6dof_base:
+            assert not with_3dof_base
+            assert len(q) == len(joint_ids) + 6
+            joint_angles, base_pose = joint_angles_[:-6], joint_angles_[-6:]
+            self._robot.set_joint_angles(joint_ids, joint_angles)
+            self._robot.set_base_pose(base_pose)
             self._robot.set_joint_angles(joint_ids, joint_angles_)
+
+    def _modify_input_with_3dof_base(self, joint_angles_sequence):
+        joint_angles_sequence_modified = np.zeros((n_seq, n_dof + 3))
+        joint_angles_sequence_modified[:, :n_joint + 2] = joint_angles_sequence[:, n_joint + 2]
+        joint_angles_sequence_modified[:, -1] = joint_angles_sequence[:, n_joint + 3]
+        return joint_angles_sequence_modified
 
     def solve_forward_kinematics(
         self,
@@ -60,7 +74,8 @@ class RobotModel(object):
         elink_ids,
         joint_ids,
         with_rot=False,
-        with_base=False,
+        with_3dof_base=False,
+        with_6dof_base=False,
         with_jacobian=False,
         use_cache=False,
     ):
@@ -75,9 +90,21 @@ class RobotModel(object):
             if joint_angles_sequence.ndim == 1:
                 joint_angles_sequence = np.expand_dims(joint_angles_sequence, axis=0)
         n_seq, n_dof = joint_angles_sequence.shape
-        assert n_dof == len(joint_ids) + (6 if with_base else 0)
 
-        return self._robot.solve_forward_kinematics(
+        n_joint = len(joint_ids)
+        if with_3dof_base:
+            assert not with_6dof_base
+            assert n_dof == n_joint + 3
+        elif with_6dof_base:
+            assert n_dof == n_joint + 6
+        else:
+            assert n_dof == n_joint
+
+        if with_3dof_base:
+            joint_angles_sequence = self._modify_input_with_3dof_base(joint_angles_sequence)
+
+        with_base = with_3dof_base or with_6dof_base
+        P, J = self._robot.solve_forward_kinematics(
             joint_angles_sequence,
             elink_ids,
             joint_ids,
@@ -86,6 +113,10 @@ class RobotModel(object):
             with_jacobian,
             use_cache,
         )
+        if with_3dof_base:
+            extrac_indices = np.hstack((np.arange(n_joint), np.array([n_joint, n_joint+1, n_joint+5])))
+            J = J[:, extrac_indices]
+        return P, J
 
     def get_joint_names(self):
         return self._robot.get_joint_names()
@@ -119,12 +150,17 @@ class RobotModel(object):
         angle_vectors,
         link_id_pairs,
         joint_ids,
-        with_base=False,
+        with_3dof_base=False,
+        with_6dof_base=False,
         with_jacobian=False,
         use_cache=False,
     ):
+        if with_3dof_base:
+            angle_vectors = self._modify_input_with_3dof_base(angle_vectors)
+
+        with_base = with_3dof_base or with_6dof_base
         link_ids1, link_ids2 = zip(*link_id_pairs)
-        return self._robot.compute_inter_link_squared_dists(
+        V, J = self._robot.compute_inter_link_squared_dists(
             angle_vectors,
             list(link_ids1),
             list(link_ids2),
@@ -133,6 +169,11 @@ class RobotModel(object):
             with_jacobian,
             use_cache,
         )
+
+        if with_3dof_base:
+            extrac_indices = np.hstack((np.arange(n_joint), np.array([n_joint, n_joint+1, n_joint+5])))
+            J = J[:, extrac_indices]
+        return V, J
 
     def clear_cache(self):
         self._robot.clear_cache()
