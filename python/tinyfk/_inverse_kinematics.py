@@ -44,7 +44,7 @@ def solve_multi_endeffector_inverse_kinematics(
         option = {"maxitr": 200, "ftol": 1e-4, "sr_weight": 1.0}
 
     assert len(target_pose_list) == len(elink_ids)
-    n_dof = len(joint_ids) + (3 if with_base else 0)
+    n_dof = len(joint_ids) + (6 if with_base else 0)
     assert (
         len(init_angle_vector) == n_dof
     ), "specified angle vector's dim is {0}, but should be {1}".format(

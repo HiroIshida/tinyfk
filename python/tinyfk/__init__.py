@@ -85,7 +85,7 @@ class RobotModel(object):
             if joint_angles_sequence.ndim == 1:
                 joint_angles_sequence = np.expand_dims(joint_angles_sequence, axis=0)
         n_seq, n_dof = joint_angles_sequence.shape
-        assert n_dof == len(joint_ids) + (3 if with_base else 0)
+        assert n_dof == len(joint_ids) + (6 if with_base else 0)
 
         return self._robot.solve_forward_kinematics(
             joint_angles_sequence,

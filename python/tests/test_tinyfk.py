@@ -108,7 +108,7 @@ def test_jacobian(test_data):
 def test_trajectory_fk(test_data):
     # test cases where multiple angles vectors are given
     angle_vector, gt_pose_list, fksolver, link_ids, joint_ids, joint_limits = test_data
-    n_dof = len(joint_ids) + 3  # 3 for base
+    n_dof = len(joint_ids) + 6  # 6 for base
     n_wp = 10
 
     angle_vectors = [angle_vector + np.random.randn(n_dof) * 0.1 for _ in range(n_wp)]
