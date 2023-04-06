@@ -14,14 +14,8 @@ if not os.path.exists(_cache_dir):
         from urllib import urlretrieve
     addr_pr2 = "https://raw.githubusercontent.com/HiroIshida/tinyfk/master/data/pr2.urdf"
     addr_fetch = "https://raw.githubusercontent.com/HiroIshida/tinyfk/master/data/fetch.urdf"
-    addr_testdata = (
-        "https://raw.githubusercontent.com/HiroIshida/tinyfk/master/test/data/test_data.json"
-    )
     urlretrieve(addr_pr2, os.path.join(_cache_dir, "pr2.urdf"))
     urlretrieve(addr_fetch, os.path.join(_cache_dir, "fetch.urdf"))
-    urlretrieve(
-        addr_testdata, os.path.join(_cache_dir, "test_data.json")
-    )  # used only in the unit test
 
 
 def pr2_urdfpath():
@@ -30,10 +24,6 @@ def pr2_urdfpath():
 
 def fetch_urdfpath():
     return os.path.join(_cache_dir, "fetch.urdf")
-
-
-def _test_data_urdfpath():
-    return os.path.join(_cache_dir, "test_data.json")
 
 
 # higher layer wrap

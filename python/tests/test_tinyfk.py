@@ -3,6 +3,7 @@ import json
 
 import numpy as np
 import pytest
+from pathlib import Path
 from numpy import testing
 
 import tinyfk
@@ -10,9 +11,10 @@ import tinyfk
 
 @pytest.fixture(scope="session")
 def test_data():
-    test_data_path = tinyfk._test_data_urdfpath()
+    current_file_path = Path(__file__).resolve()
+    test_data_path = current_file_path.parent.parent.parent / "test" / "data" / "test_data.json"
 
-    with open(test_data_path, "r") as f:
+    with test_data_path.open(mode = "r") as f:
         test_data = json.load(f)
     joint_names = test_data["joint_names"]
     link_names = test_data["link_names"]
