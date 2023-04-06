@@ -121,15 +121,6 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
     tf_blink_to_rlink = tf_rlink_to_blink.inverse();
     rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
     tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
-
-    // auto tf_rlink_to_elink_again = pose_transform(tf_rlink_to_blink,
-    // tf_blink_to_elink); auto pos_diff_tmp = tf_rlink_to_elink_again.position
-    // - tf_rlink_to_elink.position; auto rpy_diff_tmp =
-    // tf_rlink_to_elink_again.rotation.getRPY() -
-    // tf_rlink_to_elink.rotation.getRPY(); std::cout << "debug..." <<
-    // std::endl; std::cout << pos_diff_tmp.x << ", " << pos_diff_tmp.y << ", "
-    // << pos_diff_tmp.z << std::endl; std::cout << rpy_diff_tmp.x << ", " <<
-    // rpy_diff_tmp.y << ", " << rpy_diff_tmp.z << std::endl;
   }
 
   // Jacobian computation

@@ -57,9 +57,9 @@ endif(BUILD_TEST)
 #     target_include_directories(bench_kdl PUBLIC ${orocos_kdl_INCLUDE_DIRS} bench/kdl_parser)
 # endif(BENCH_KDL)
 # 
-# # benchmark (tinyfk)
-# add_executable(bench_tinyfk bench/bench_tinyfk.cpp)
-# target_link_libraries(bench_tinyfk tinyfk)
+# benchmark (tinyfk)
+add_executable(bench_tinyfk bench/bench_tinyfk.cpp)
+target_link_libraries(bench_tinyfk tinyfk)
 # 
 # option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
 # if(BUILD_PYTHON_INTERFACE)
