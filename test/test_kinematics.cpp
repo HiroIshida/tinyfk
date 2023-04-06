@@ -137,7 +137,10 @@ TEST(KINEMATICS, AllTest) {
   auto base_pose = urdf::Pose();
   base_pose.position.x = angle_vector[n_joints + 0];
   base_pose.position.y = angle_vector[n_joints + 1];
-  base_pose.rotation.setFromRPY(0, 0, angle_vector[n_joints + 2]);
+  base_pose.position.z = angle_vector[n_joints + 2];
+  base_pose.rotation.setFromRPY(angle_vector[n_joints + 3],
+                                angle_vector[n_joints + 4],
+                                angle_vector[n_joints + 5]);
 
   for (size_t i = 0; i < n_joints; i++) {
     kin.set_joint_angle(joint_ids[i], angle_vector[i]);
@@ -160,10 +163,7 @@ TEST(KINEMATICS, AllTest) {
     EXPECT_TRUE(isNear(rpy.x, pose_list[i][5]));
   }
 
-  // Now we comapre jacobian computed by finite diff with the analytical one
-  // modify rpy to test general case
-  base_pose.rotation.setFromRPY(0.2, 0.3, 0.5);
-
+  // compare numerical and analytical jacobian
   kin.set_base_pose(base_pose);
   kin2.set_base_pose(base_pose);
 
