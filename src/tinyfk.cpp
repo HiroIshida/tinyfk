@@ -102,7 +102,11 @@ void RobotModelBase::_set_base_pose(urdf::Pose pose) {
   this->base_rotmat_ = q.toRotationMatrix();
 }
 
-void RobotModelBase::clear_cache() { transform_cache_.clear(); }
+void RobotModelBase::clear_cache() {
+  transform_cache_.clear();
+  tf_rlink_to_blink_tweaked_array_cache_.first = false;
+  tf_blink_to_rlink_cache_.first = false;
+}
 
 void RobotModelBase::set_init_angles() {
   std::vector<double> joint_angles(num_dof_, 0.0);

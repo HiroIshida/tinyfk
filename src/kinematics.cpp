@@ -113,14 +113,38 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
     erpy = erot.getRPY();
   }
 
-  urdf::Pose tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
+  urdf::Pose tf_blink_to_elink;
   urdf::Vector3 rpy_rlink_to_blink;
   if (with_base) {
-    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink,
-                        true); // confusing but root_link_id -> base_link
-    tf_blink_to_rlink = tf_rlink_to_blink.inverse();
-    rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
-    tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
+    if (!tf_blink_to_rlink_cache_.first) {
+      urdf::Pose tf_rlink_to_blink;
+      this->get_link_pose(this->root_link_id_, tf_rlink_to_blink,
+                          true); // confusing but root_link_id -> base_link
+      tf_blink_to_rlink_cache_.second = tf_rlink_to_blink.inverse();
+      tf_blink_to_rlink_cache_.first = true;
+    }
+
+    const bool array_cache_dirty =
+        !tf_rlink_to_blink_tweaked_array_cache_.first;
+    if (array_cache_dirty) {
+      urdf::Pose tf_rlink_to_blink;
+      this->get_link_pose(this->root_link_id_, tf_rlink_to_blink,
+                          true); // confusing but root_link_id -> base_link
+      const auto rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
+
+      auto &arr = tf_rlink_to_blink_tweaked_array_cache_.second;
+      for (size_t rpy_idx = 0; rpy_idx < 3; rpy_idx++) {
+        auto rpy_tweaked = rpy_rlink_to_blink;
+        rpy_tweaked[rpy_idx] += NUMERICAL_DIFF_EPS;
+        arr[rpy_idx] = tf_rlink_to_blink;
+        arr[rpy_idx].rotation.setFromRPY(rpy_tweaked[0], rpy_tweaked[1],
+                                         rpy_tweaked[2]);
+      }
+      tf_rlink_to_blink_tweaked_array_cache_.first = true;
+    }
+
+    tf_blink_to_elink =
+        pose_transform(tf_blink_to_rlink_cache_.second, tf_rlink_to_elink);
   }
 
   // Jacobian computation
@@ -178,30 +202,24 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
     // we resort to numerical method to base pose jacobian (just because I don't
     // have time)
     // TODO(HiroIshida): compute using analytical method.
-    constexpr double eps = 1e-7;
     for (size_t rpy_idx = 0; rpy_idx < 3; rpy_idx++) {
       const size_t idx_col = dim_dof + 3 + rpy_idx;
 
-      auto rpy_tweaked = rpy_rlink_to_blink;
-      rpy_tweaked[rpy_idx] += eps;
-
-      urdf::Pose tf_rlink_to_blink_tweaked = tf_rlink_to_blink;
-      tf_rlink_to_blink_tweaked.rotation.setFromRPY(
-          rpy_tweaked.x, rpy_tweaked.y, rpy_tweaked.z);
       urdf::Pose tf_rlink_to_elink_tweaked =
-          pose_transform(tf_rlink_to_blink_tweaked, tf_blink_to_elink);
+          pose_transform(tf_rlink_to_blink_tweaked_array_cache_.second[rpy_idx],
+                         tf_blink_to_elink);
       auto pose_out = tf_rlink_to_elink_tweaked;
 
       const auto pos_diff = pose_out.position - tf_rlink_to_elink.position;
-      jacobian(0, idx_col) = pos_diff.x / eps;
-      jacobian(1, idx_col) = pos_diff.y / eps;
-      jacobian(2, idx_col) = pos_diff.z / eps;
+      jacobian(0, idx_col) = pos_diff.x / NUMERICAL_DIFF_EPS;
+      jacobian(1, idx_col) = pos_diff.y / NUMERICAL_DIFF_EPS;
+      jacobian(2, idx_col) = pos_diff.z / NUMERICAL_DIFF_EPS;
       if (with_rot) {
         auto erpy_tweaked = pose_out.rotation.getRPY();
         const auto erpy_diff = erpy_tweaked - erpy;
-        jacobian(3, idx_col) = erpy_diff.x / eps;
-        jacobian(4, idx_col) = erpy_diff.y / eps;
-        jacobian(5, idx_col) = erpy_diff.z / eps;
+        jacobian(3, idx_col) = erpy_diff.x / NUMERICAL_DIFF_EPS;
+        jacobian(4, idx_col) = erpy_diff.y / NUMERICAL_DIFF_EPS;
+        jacobian(5, idx_col) = erpy_diff.z / NUMERICAL_DIFF_EPS;
       }
     }
   }

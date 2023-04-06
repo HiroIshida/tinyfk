@@ -23,6 +23,8 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 namespace tinyfk {
 
+constexpr double NUMERICAL_DIFF_EPS = 1e-7;
+
 using AngleLimit = std::pair<double, double>;
 
 struct RelevancePredicateTable {
@@ -65,6 +67,12 @@ public: // members
 
   mutable SizedStack<LinkIdAndPose> transform_stack_;
   mutable SizedCache<urdf::Pose> transform_cache_;
+
+  // only used in jacobian computation if with_base = true
+  // the frist boolean value indicate that array value is active (not dirty)
+  mutable std::pair<bool, std::array<urdf::Pose, 3>>
+      tf_rlink_to_blink_tweaked_array_cache_;
+  mutable std::pair<bool, urdf::Pose> tf_blink_to_rlink_cache_;
 
 public: // functions
   RobotModelBase(const std::string &xml_string);
