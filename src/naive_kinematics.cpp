@@ -126,7 +126,7 @@ NaiveRobotModel::get_jacobian(size_t elink_id,
 
       this->set_base_pose(create_diffed_pose(i));
       this->get_link_pose(elink_id, pose1, true);
-      this->set_base_pose(base_pose_orgiinal);
+      // this->set_base_pose(base_pose_orgiinal);
 
       urdf::Vector3 &pos0 = pose0.position;
       urdf::Vector3 &pos1 = pose1.position;

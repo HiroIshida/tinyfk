@@ -122,10 +122,14 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
     rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
     tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
 
-    auto tf_rlink_to_elink_again = pose_transform(tf_rlink_to_blink, tf_blink_to_elink);
-    auto pos_diff_tmp = tf_rlink_to_elink_again.position - tf_rlink_to_elink.position;
-    std::cout << "debug..." << std::endl;
-    std::cout << pos_diff_tmp.x << ", " << pos_diff_tmp.y << ", " << pos_diff_tmp.z << std::endl;
+    // auto tf_rlink_to_elink_again = pose_transform(tf_rlink_to_blink,
+    // tf_blink_to_elink); auto pos_diff_tmp = tf_rlink_to_elink_again.position
+    // - tf_rlink_to_elink.position; auto rpy_diff_tmp =
+    // tf_rlink_to_elink_again.rotation.getRPY() -
+    // tf_rlink_to_elink.rotation.getRPY(); std::cout << "debug..." <<
+    // std::endl; std::cout << pos_diff_tmp.x << ", " << pos_diff_tmp.y << ", "
+    // << pos_diff_tmp.z << std::endl; std::cout << rpy_diff_tmp.x << ", " <<
+    // rpy_diff_tmp.y << ", " << rpy_diff_tmp.z << std::endl;
   }
 
   // Jacobian computation
@@ -195,14 +199,14 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
           rpy_tweaked.x, rpy_tweaked.y, rpy_tweaked.z);
       urdf::Pose tf_rlink_to_elink_tweaked =
           pose_transform(tf_rlink_to_blink_tweaked, tf_blink_to_elink);
+      auto pose_out = tf_rlink_to_elink_tweaked;
 
-      const auto pos_diff =
-          tf_rlink_to_elink_tweaked.position - tf_rlink_to_elink.position;
+      const auto pos_diff = pose_out.position - tf_rlink_to_elink.position;
       jacobian(0, idx_col) = pos_diff.x / eps;
       jacobian(1, idx_col) = pos_diff.y / eps;
       jacobian(2, idx_col) = pos_diff.z / eps;
       if (with_rot) {
-        auto erpy_tweaked = tf_rlink_to_elink_tweaked.rotation.getRPY();
+        auto erpy_tweaked = pose_out.rotation.getRPY();
         const auto erpy_diff = erpy_tweaked - erpy;
         jacobian(3, idx_col) = erpy_diff.x / eps;
         jacobian(4, idx_col) = erpy_diff.y / eps;
