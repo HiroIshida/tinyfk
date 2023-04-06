@@ -38,19 +38,6 @@ struct RelevancePredicateTable {
   }
 };
 
-struct BasePose {
-  std::array<double, 3> pose3d_;
-  urdf::Pose pose_;
-  void set(double x, double y, double theta) {
-    pose_.position = urdf::Vector3(x, y, 0.0);
-    pose_.rotation =
-        urdf::Rotation(0.0, 0.0, 1.0 * sin(0.5 * theta), cos(0.5 * theta));
-    pose3d_[0] = x;
-    pose3d_[1] = y;
-    pose3d_[2] = theta;
-  }
-};
-
 struct LinkIdAndPose {
   size_t id;
   urdf::Pose pose;
@@ -62,14 +49,18 @@ public: // members
   urdf::ModelInterfaceSharedPtr robot_urdf_interface_;
 
   urdf::LinkSharedPtr root_link_;
+  size_t root_link_id_;
   std::vector<urdf::LinkSharedPtr> links_;
   std::unordered_map<std::string, int> link_ids_;
 
   std::vector<urdf::JointSharedPtr> joints_;
   std::unordered_map<std::string, int> joint_ids_;
   std::vector<double> joint_angles_;
+
+  urdf::Pose base_pose_;
+  Eigen::Matrix3d base_rotmat_; // must be set when base_pose is set
+
   RelevancePredicateTable rptable_;
-  BasePose base_pose_;
   int num_dof_;
 
   mutable SizedStack<LinkIdAndPose> transform_stack_;
@@ -88,8 +79,11 @@ public: // functions
       const std::vector<size_t> &joint_ids,
       const std::vector<double> &joint_angles);
 
-  void set_base_pose(double x, double y, double theta);
-  void _set_base_pose(double x, double y, double theta);
+  void set_base_pose(urdf::Pose pose) {
+    this->_set_base_pose(pose);
+    this->clear_cache();
+  }
+  void _set_base_pose(urdf::Pose pose);
 
   void clear_cache();
 

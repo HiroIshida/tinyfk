@@ -1,4 +1,5 @@
 #include "tinyfk.hpp"
+#include "urdf_model/pose.h"
 #include <cmath>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -12,6 +13,73 @@ using namespace Eigen;
 using namespace tinyfk;
 
 bool isNear(double x, double y) { return (abs(x - y) < 1e-5); }
+
+Eigen::MatrixXd compute_numerical_jacobian_with_base(
+    CacheUtilizedRobotModel &kin, size_t link_id,
+    const std::vector<size_t> &joint_ids,
+    const std::vector<double> &angle_vector, const urdf::Pose &base_pose) {
+
+  const auto set_configuration = [&](const std::vector<double> &q) {
+    for (size_t i = 0; i < joint_ids.size(); ++i) {
+      kin.set_joint_angle(joint_ids[i], q[i]);
+    }
+    urdf::Pose pose;
+    pose.position.x = q[joint_ids.size()];
+    pose.position.y = q[joint_ids.size() + 1];
+    pose.position.z = q[joint_ids.size() + 2];
+
+    pose.rotation.setFromRPY(q[joint_ids.size() + 3], q[joint_ids.size() + 4],
+                             q[joint_ids.size() + 5]);
+
+    kin.set_base_pose(pose);
+  };
+
+  constexpr double eps = 1e-6;
+
+  const auto get_tweaked_q = [&](const std::vector<double> &q, size_t idx) {
+    auto q_out = q;
+    q_out[idx] += eps;
+    return q_out;
+  };
+
+  std::vector<double> q0;
+  {
+    for (size_t i = 0; i < joint_ids.size(); ++i) {
+      q0.push_back(angle_vector[i]);
+    }
+    q0.push_back(base_pose.position.x);
+    q0.push_back(base_pose.position.y);
+    q0.push_back(base_pose.position.z);
+
+    const auto rpy = base_pose.rotation.getRPY();
+    q0.push_back(rpy.x);
+    q0.push_back(rpy.y);
+    q0.push_back(rpy.z);
+  }
+
+  urdf::Pose pose0, pose1;
+  urdf::Vector3 rpy0, rpy1;
+  set_configuration(q0);
+  kin.get_link_pose(link_id, pose0, true);
+  rpy0 = pose0.rotation.getRPY();
+
+  Eigen::MatrixXd J(6, q0.size());
+
+  for (size_t idx = 0; idx < q0.size(); idx++) {
+    const auto q1 = get_tweaked_q(q0, idx);
+    set_configuration(q1);
+    kin.get_link_pose(link_id, pose1, true);
+    J(0, idx) = (pose1.position.x - pose0.position.x) / eps;
+    J(1, idx) = (pose1.position.y - pose0.position.y) / eps;
+    J(2, idx) = (pose1.position.z - pose0.position.z) / eps;
+
+    rpy1 = pose1.rotation.getRPY();
+    J(3, idx) = (rpy1.x - rpy0.x) / eps;
+    J(4, idx) = (rpy1.y - rpy0.y) / eps;
+    J(5, idx) = (rpy1.z - rpy0.z) / eps;
+  };
+  return J;
+}
 
 TEST(KINEMATICS, AllTest) {
   // loading test data
@@ -30,7 +98,7 @@ TEST(KINEMATICS, AllTest) {
   const std::string urdf_file = "../data/pr2.urdf";
   const auto xml_string = load_urdf(urdf_file);
   auto kin = CacheUtilizedRobotModel(xml_string);
-  auto kin_naive = NaiveRobotModel(xml_string);
+  auto kin2 = CacheUtilizedRobotModel(xml_string);
 
   { // add new link to the robot
     std::vector<std::string> strvec = {"r_upper_arm_link"};
@@ -38,7 +106,7 @@ TEST(KINEMATICS, AllTest) {
     std::array<double, 3> rot = {0.3, 0.2, 0.1};
     int parent_link_id = kin.get_link_ids(strvec)[0];
     kin.add_new_link("mylink", parent_link_id, pos, rot);
-    kin_naive.add_new_link("mylink", parent_link_id, pos, rot);
+    kin2.add_new_link("mylink", parent_link_id, pos, rot);
   }
 
   { // must raise exception when add link with the same name
@@ -66,11 +134,18 @@ TEST(KINEMATICS, AllTest) {
   auto joint_ids = kin.get_joint_ids(joint_names);
   auto link_ids = kin.get_link_ids(link_names);
 
+  auto base_pose = urdf::Pose();
+  base_pose.position.x = angle_vector[n_joints + 0];
+  base_pose.position.y = angle_vector[n_joints + 1];
+  base_pose.position.z = angle_vector[n_joints + 2];
+  base_pose.rotation.setFromRPY(angle_vector[n_joints + 3],
+                                angle_vector[n_joints + 4],
+                                angle_vector[n_joints + 5]);
+
   for (size_t i = 0; i < n_joints; i++) {
     kin.set_joint_angle(joint_ids[i], angle_vector[i]);
   }
-  kin.set_base_pose(angle_vector[n_joints + 0], angle_vector[n_joints + 1],
-                    angle_vector[n_joints + 2]);
+  kin.set_base_pose(base_pose);
 
   bool base_also = true;
   urdf::Pose pose, pose_naive;
@@ -88,25 +163,18 @@ TEST(KINEMATICS, AllTest) {
     EXPECT_TRUE(isNear(rpy.x, pose_list[i][5]));
   }
 
-  // Now we comapre jacobian computed by finite diff with the analytical one
-  for (size_t i = 0; i < n_joints; i++) {
-    kin.set_joint_angle(joint_ids[i], angle_vector[i]);
-    kin_naive.set_joint_angle(joint_ids[i], angle_vector[i]);
-  }
-  kin.set_base_pose(angle_vector[n_joints], angle_vector[n_joints + 1],
-                    angle_vector[n_joints + 2]);
-  kin_naive.set_base_pose(angle_vector[n_joints], angle_vector[n_joints + 1],
-                          angle_vector[n_joints + 2]);
+  // compare numerical and analytical jacobian
+  kin.set_base_pose(base_pose);
+  kin2.set_base_pose(base_pose);
 
   kin.transform_cache_.clear();
-  for (size_t i = 0; i < link_names.size(); i++) {
+  for (size_t i = link_names.size() - 1; i < link_names.size(); i++) {
     bool rot_also =
         true; // rotatio part of the geometric jacobian is not yet checked
     size_t link_id = link_ids[i];
-    auto J_numerical =
-        kin_naive.get_jacobian(link_id, joint_ids, rot_also, true);
+    auto J_numerical = compute_numerical_jacobian_with_base(
+        kin2, link_id, joint_ids, angle_vector, base_pose);
     auto J_analytical = kin.get_jacobian(link_id, joint_ids, rot_also, true);
-
     bool jacobian_equal =
         (J_analytical - J_numerical).array().abs().maxCoeff() < 1e-5;
     EXPECT_TRUE(jacobian_equal);

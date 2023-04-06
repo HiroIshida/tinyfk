@@ -3,6 +3,7 @@ import json
 
 import numpy as np
 import pytest
+from pathlib import Path
 from numpy import testing
 
 import tinyfk
@@ -10,9 +11,10 @@ import tinyfk
 
 @pytest.fixture(scope="session")
 def test_data():
-    test_data_path = tinyfk._test_data_urdfpath()
+    current_file_path = Path(__file__).resolve()
+    test_data_path = current_file_path.parent.parent.parent / "test" / "data" / "test_data.json"
 
-    with open(test_data_path, "r") as f:
+    with test_data_path.open(mode = "r") as f:
         test_data = json.load(f)
     joint_names = test_data["joint_names"]
     link_names = test_data["link_names"]
@@ -108,7 +110,7 @@ def test_jacobian(test_data):
 def test_trajectory_fk(test_data):
     # test cases where multiple angles vectors are given
     angle_vector, gt_pose_list, fksolver, link_ids, joint_ids, joint_limits = test_data
-    n_dof = len(joint_ids) + 3  # 3 for base
+    n_dof = len(joint_ids) + 6  # 6 for base
     n_wp = 10
 
     angle_vectors = [angle_vector + np.random.randn(n_dof) * 0.1 for _ in range(n_wp)]

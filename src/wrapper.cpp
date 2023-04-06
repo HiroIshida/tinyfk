@@ -6,6 +6,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 #include "tinyfk.hpp"
 #include <Eigen/Dense>
+#include <pybind11/detail/common.h>
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -27,8 +28,23 @@ public:
     robot_model_.set_joint_angles(joint_ids, joint_angles);
   }
 
-  void set_base_pose(const std::vector<double> &xytheta) {
-    robot_model_.set_base_pose(xytheta[0], xytheta[1], xytheta[2]);
+  void set_base_pose(std::vector<double>::const_iterator begin) {
+    auto pose = urdf::Pose();
+    pose.position.x = *begin;
+    ++begin;
+    pose.position.y = *begin;
+    ++begin;
+    pose.position.z = *begin;
+    ++begin;
+    pose.rotation.setFromRPY(*begin, *(begin + 1), *(begin + 2));
+    robot_model_.set_base_pose(pose);
+  }
+
+  void set_base_pose(const std::vector<double> &xyzrpy) {
+    if (xyzrpy.size() != 6) {
+      throw std::invalid_argument("argument must have size 6");
+    }
+    set_base_pose(xyzrpy.begin());
   }
 
   std::string get_root_link_name() { return robot_model_.root_link_->name; }
@@ -43,9 +59,9 @@ public:
     auto n_wp = joint_angles_sequence.size();
     auto n_link = elink_ids.size();
     auto n_joints = joint_ids.size();
-    auto n_dof = (with_base ? n_joints + 3 : n_joints);
+    auto n_dof = (with_base ? n_joints + 6 : n_joints);
 
-    if (with_base && (n_joints != joint_angles_sequence[0].size() - 3)) {
+    if (with_base && (n_joints != joint_angles_sequence[0].size() - 6)) {
       throw std::invalid_argument(
           "dof mismatch!! Probably you forget base's (x, y, theta)");
       // TODO this check try to prevent the potentionally buggy procedure below
@@ -58,10 +74,8 @@ public:
     for (size_t i = 0; i < n_wp; i++) {
       robot_model_._set_joint_angles(joint_ids, joint_angles_sequence[i]);
       if (with_base) {
-        double x = joint_angles_sequence[i][n_joints + 0];
-        double y = joint_angles_sequence[i][n_joints + 1];
-        double theta = joint_angles_sequence[i][n_joints + 2];
-        robot_model_._set_base_pose(x, y, theta);
+        auto xyzrpy_begin = std::prev(joint_angles_sequence[i].end(), 6);
+        set_base_pose(xyzrpy_begin);
       }
       if (!use_cache) {
         robot_model_.clear_cache();
@@ -128,7 +142,7 @@ public:
                                    bool with_base, bool with_grads,
                                    bool use_cache) {
     const size_t n_wp = qs.size();
-    const size_t n_joint = joint_ids.size() + with_base * 3;
+    const size_t n_joint = joint_ids.size() + with_base * 6;
     const size_t n_check = link_ids1.size();
 
     Eigen::VectorXd sqdists = Eigen::VectorXd::Zero(n_check * n_wp);
@@ -139,10 +153,8 @@ public:
     for (size_t i = 0; i < n_wp; i++) {
       robot_model_._set_joint_angles(joint_ids, qs[i]);
       if (with_base) {
-        double x = qs[i][n_joint + 0];
-        double y = qs[i][n_joint + 1];
-        double theta = qs[i][n_joint + 2];
-        robot_model_._set_base_pose(x, y, theta);
+        auto xyzrpy_begin = std::prev(qs[i].end(), 6);
+        set_base_pose(xyzrpy_begin);
       }
       if (!use_cache) {
         robot_model_.clear_cache();
@@ -186,7 +198,8 @@ PYBIND11_MODULE(_tinyfk, m) {
       .def("get_joint_names", &RobotModelPyWrapper::get_joint_names)
       .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
       .def("get_joint_limits", &RobotModelPyWrapper::get_joint_limits)
-      .def("set_base_pose", &RobotModelPyWrapper::set_base_pose)
+      .def("set_base_pose", py::overload_cast<const std::vector<double> &>(
+                                &RobotModelPyWrapper::set_base_pose))
       .def("get_link_ids", &RobotModelPyWrapper::get_link_ids)
       .def("get_link_names", &RobotModelPyWrapper::get_link_names)
       .def("add_new_link", &RobotModelPyWrapper::add_new_link)

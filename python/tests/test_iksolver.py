@@ -33,7 +33,7 @@ angle_vector = np.array([0.564, 0.35, -0.74, -0.7, -0.7, -0.17, -0.63, 0.3, 0.5,
 
 def test_iksolver():
     rarm_joint_ids = fksolver.get_joint_ids(rarm_joint_names)
-    dof_base = 3
+    dof_base = 6
     angle_vector = np.zeros(len(rarm_joint_ids) + dof_base)
 
     class Setting:
@@ -43,10 +43,10 @@ def test_iksolver():
             self.with_base = with_base
 
     setting_list = [
-        Setting(angle_vector[:-3], np.array([0.7, -0.6, 0.8]), False),
+        Setting(angle_vector[:-dof_base], np.array([0.7, -0.6, 0.8]), False),
         Setting(angle_vector, np.array([0.7, -0.6, 0.8]), True),
         Setting(angle_vector, np.array([1.7, -0.6, 0.8]), True),
-        Setting(angle_vector[:-3], np.array([0.7, -0.6, 0.8, 0, 0, 0]), False),
+        Setting(angle_vector[:-dof_base], np.array([0.7, -0.6, 0.8, 0, 0, 0]), False),
         Setting(angle_vector, np.array([1.7, -0.6, 0.8, 0, 0, 0]), True),
     ]
 
@@ -77,7 +77,7 @@ def test_iksolver():
 
 def test_multiple_iksolver():
     joint_ids = fksolver.get_joint_ids(rarm_joint_names + larm_joint_names)
-    dof_base = 3
+    dof_base = 6
     angle_vector = np.zeros(len(joint_ids) + dof_base)
     end_link_ids = fksolver.get_link_ids(["r_gripper_tool_frame", "l_gripper_tool_frame"])
 
