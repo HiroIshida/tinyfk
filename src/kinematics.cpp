@@ -121,6 +121,11 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
     tf_blink_to_rlink = tf_rlink_to_blink.inverse();
     rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
     tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
+
+    auto tf_rlink_to_elink_again = pose_transform(tf_rlink_to_blink, tf_blink_to_elink);
+    auto pos_diff_tmp = tf_rlink_to_elink_again.position - tf_rlink_to_elink.position;
+    std::cout << "debug..." << std::endl;
+    std::cout << pos_diff_tmp.x << ", " << pos_diff_tmp.y << ", " << pos_diff_tmp.z << std::endl;
   }
 
   // Jacobian computation
@@ -175,7 +180,8 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
     jacobian(1, dim_dof + 1) = 1.0;
     jacobian(2, dim_dof + 2) = 1.0;
 
-    // we resort to numerical method to base pose jacobian (just because I don't have time)
+    // we resort to numerical method to base pose jacobian (just because I don't
+    // have time)
     // TODO(HiroIshida): compute using analytical method.
     constexpr double eps = 1e-7;
     for (size_t rpy_idx = 0; rpy_idx < 3; rpy_idx++) {
