@@ -28,7 +28,6 @@ def fetch_urdfpath():
 
 # higher layer wrap
 class RobotModel(object):
-
     def __init__(self, urdfpath=None, xml_text=None):
         assert (urdfpath is None) ^ (xml_text is None)
         if not xml_text:
@@ -45,22 +44,24 @@ class RobotModel(object):
         if with_3dof_base:
             assert not with_6dof_base
             assert len(q) == len(joint_ids) + 3
-            joint_angles, base_xytheta = joint_angles_[:-3], joint_angles_[-3:]
+            joint_angles, base_xytheta = q[:-3], q[-3:]
             base_pose = np.array([base_xytheta[0], base_xytheta[1], 0.0, 0.0, 0.0, base_xytheta[2]])
             self._robot.set_joint_angles(joint_ids, joint_angles)
             self._robot.set_base_pose(base_pose)
         elif with_6dof_base:
             assert not with_3dof_base
             assert len(q) == len(joint_ids) + 6
-            joint_angles, base_pose = joint_angles_[:-6], joint_angles_[-6:]
+            joint_angles, base_pose = q[:-6], q[-6:]
             self._robot.set_joint_angles(joint_ids, joint_angles)
             self._robot.set_base_pose(base_pose)
-            self._robot.set_joint_angles(joint_ids, joint_angles_)
+        else:
+            self._robot.set_joint_angles(joint_ids, q)
 
-    def _modify_input_with_3dof_base(self, joint_angles_sequence):
+    def _modify_input_with_3dof_base(self, n_joint, joint_angles_sequence):
+        n_seq, n_dof = joint_angles_sequence.shape
         joint_angles_sequence_modified = np.zeros((n_seq, n_dof + 3))
-        joint_angles_sequence_modified[:, :n_joint + 2] = joint_angles_sequence[:, n_joint + 2]
-        joint_angles_sequence_modified[:, -1] = joint_angles_sequence[:, n_joint + 3]
+        joint_angles_sequence_modified[:, : n_joint + 2] = joint_angles_sequence[:, : n_joint + 2]
+        joint_angles_sequence_modified[:, -1] = joint_angles_sequence[:, n_joint + 2]
         return joint_angles_sequence_modified
 
     def solve_forward_kinematics(
@@ -96,7 +97,9 @@ class RobotModel(object):
             assert n_dof == n_joint
 
         if with_3dof_base:
-            joint_angles_sequence = self._modify_input_with_3dof_base(joint_angles_sequence)
+            joint_angles_sequence = self._modify_input_with_3dof_base(
+                n_joint, joint_angles_sequence
+            )
 
         with_base = with_3dof_base or with_6dof_base
         P, J = self._robot.solve_forward_kinematics(
@@ -109,7 +112,9 @@ class RobotModel(object):
             use_cache,
         )
         if with_3dof_base:
-            extrac_indices = np.hstack((np.arange(n_joint), np.array([n_joint, n_joint+1, n_joint+5])))
+            extrac_indices = np.hstack(
+                (np.arange(n_joint), np.array([n_joint, n_joint + 1, n_joint + 5]))
+            )
             J = J[:, extrac_indices]
         return P, J
 
@@ -151,7 +156,7 @@ class RobotModel(object):
         use_cache=False,
     ):
         if with_3dof_base:
-            angle_vectors = self._modify_input_with_3dof_base(angle_vectors)
+            angle_vectors = self._modify_input_with_3dof_base(len(joint_ids), angle_vectors)
 
         with_base = with_3dof_base or with_6dof_base
         link_ids1, link_ids2 = zip(*link_id_pairs)
@@ -166,7 +171,10 @@ class RobotModel(object):
         )
 
         if with_3dof_base:
-            extrac_indices = np.hstack((np.arange(n_joint), np.array([n_joint, n_joint+1, n_joint+5])))
+            n_joint = len(joint_ids)
+            extrac_indices = np.hstack(
+                (np.arange(n_joint), np.array([n_joint, n_joint + 1, n_joint + 5]))
+            )
             J = J[:, extrac_indices]
         return V, J
 

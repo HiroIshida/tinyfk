@@ -1,9 +1,9 @@
 import copy
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
-from pathlib import Path
 from numpy import testing
 
 import tinyfk
@@ -14,7 +14,7 @@ def test_data():
     current_file_path = Path(__file__).resolve()
     test_data_path = current_file_path.parent.parent.parent / "test" / "data" / "test_data.json"
 
-    with test_data_path.open(mode = "r") as f:
+    with test_data_path.open(mode="r") as f:
         test_data = json.load(f)
     joint_names = test_data["joint_names"]
     link_names = test_data["link_names"]
@@ -102,9 +102,30 @@ def test_jacobian(test_data):
             J_numerical[:, i] = P_diff.flatten()
 
         # test position jacobian
-        testing.assert_almost_equal(J_numerical[:3, :], J_analytical[:3, :])
-        # test rpy jacobian
-        testing.assert_almost_equal(J_numerical[3:, :], J_analytical[3:, :])
+        testing.assert_almost_equal(J_numerical, J_analytical)
+
+
+def test_jacobian_3dof_base(test_data):
+    angle_vector, gt_pose_list, fksolver, link_ids, joint_ids, joint_limits = test_data
+    n_joint = len(joint_ids)
+    extract_indices = np.hstack([np.arange(n_joint), np.array([n_joint, n_joint + 1, n_joint + 5])])
+    angle_vector_3dof_base = [angle_vector[i] for i in extract_indices]
+
+    for link_id in link_ids:
+        P0, J_analytical = fksolver.solve_forward_kinematics(
+            [angle_vector_3dof_base], [link_id], joint_ids, True, True, False, True
+        )
+        eps = 1e-7
+        J_numerical = np.zeros(J_analytical.shape)
+        for i in range(len(angle_vector_3dof_base)):
+            angle_vector_p = copy.copy(angle_vector_3dof_base)
+            angle_vector_p[i] += eps
+            P1, _ = fksolver.solve_forward_kinematics(
+                [angle_vector_p], [link_id], joint_ids, True, True, False, False
+            )
+            P_diff = (P1 - P0) / eps
+            J_numerical[:, i] = P_diff.flatten()
+        testing.assert_almost_equal(J_numerical, J_analytical)
 
 
 def test_trajectory_fk(test_data):
@@ -114,7 +135,9 @@ def test_trajectory_fk(test_data):
     n_wp = 10
 
     angle_vectors = [angle_vector + np.random.randn(n_dof) * 0.1 for _ in range(n_wp)]
-    P, J = fksolver.solve_forward_kinematics(angle_vectors, link_ids, joint_ids, True, False, True, True)
+    P, J = fksolver.solve_forward_kinematics(
+        angle_vectors, link_ids, joint_ids, True, False, True, True
+    )
     assert P.shape == (n_wp * len(link_ids), 6)
     assert J.shape == (n_wp * len(link_ids) * 6, n_dof)
 
@@ -171,3 +194,8 @@ def test_hoge(test_data):
         grads.append((values1 - values) / eps)
     J_numerical = np.array(grads).T
     np.testing.assert_almost_equal(J_numerical, J_analytical, decimal=5)
+
+
+if __name__ == "__main__":
+    data = test_data()
+    test_jacobian_3dof_base(data)
