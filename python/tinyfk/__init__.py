@@ -1,17 +1,15 @@
 import os
-import sys
+from enum import Enum
+from pathlib import Path
+from urllib.request import urlretrieve
 
 import numpy as np
 
 from . import _tinyfk
 
-_cache_dir = os.path.expanduser("~/.tinyfk")
-if not os.path.exists(_cache_dir):
-    os.makedirs(_cache_dir)
-    if sys.version_info[0] >= 3:
-        from urllib.request import urlretrieve
-    else:
-        from urllib import urlretrieve
+_cache_dir = Path("~/.tinyfk").expanduser()
+if not _cache_dir.exists():
+    _cache_dir.mkdir()
     addr_pr2 = "https://raw.githubusercontent.com/HiroIshida/tinyfk/master/data/pr2.urdf"
     addr_fetch = "https://raw.githubusercontent.com/HiroIshida/tinyfk/master/data/fetch.urdf"
     urlretrieve(addr_pr2, os.path.join(_cache_dir, "pr2.urdf"))
@@ -26,8 +24,14 @@ def fetch_urdfpath():
     return os.path.join(_cache_dir, "fetch.urdf")
 
 
+class BaseType(Enum):
+    FIXED = 0
+    PLANER = 1
+    FLOATING = 2
+
+
 # higher layer wrap
-class RobotModel(object):
+class RobotModel:
     def __init__(self, urdfpath=None, xml_text=None):
         assert (urdfpath is None) ^ (xml_text is None)
         if not xml_text:
@@ -40,16 +44,14 @@ class RobotModel(object):
     def root_link_name(self) -> str:
         return self._robot.get_root_link_name()
 
-    def set_joint_angles(self, joint_ids, q, with_3dof_base=False, with_6dof_base=False):
-        if with_3dof_base:
-            assert not with_6dof_base
+    def set_joint_angles(self, joint_ids, q, base_type: BaseType = BaseType.FIXED):
+        if base_type == BaseType.PLANER:
             assert len(q) == len(joint_ids) + 3
             joint_angles, base_xytheta = q[:-3], q[-3:]
             base_pose = np.array([base_xytheta[0], base_xytheta[1], 0.0, 0.0, 0.0, base_xytheta[2]])
             self._robot.set_joint_angles(joint_ids, joint_angles)
             self._robot.set_base_pose(base_pose)
-        elif with_6dof_base:
-            assert not with_3dof_base
+        elif base_type == BaseType.FLOATING:
             assert len(q) == len(joint_ids) + 6
             joint_angles, base_pose = q[:-6], q[-6:]
             self._robot.set_joint_angles(joint_ids, joint_angles)
@@ -70,8 +72,7 @@ class RobotModel(object):
         elink_ids,
         joint_ids,
         with_rot=False,
-        with_3dof_base=False,
-        with_6dof_base=False,
+        base_type: BaseType = BaseType.FIXED,
         with_jacobian=False,
         use_cache=False,
     ):
@@ -88,20 +89,19 @@ class RobotModel(object):
         n_seq, n_dof = joint_angles_sequence.shape
 
         n_joint = len(joint_ids)
-        if with_3dof_base:
-            assert not with_6dof_base
+        if base_type == BaseType.PLANER:
             assert n_dof == n_joint + 3
-        elif with_6dof_base:
-            assert n_dof == n_joint + 6
-        else:
-            assert n_dof == n_joint
-
-        if with_3dof_base:
             joint_angles_sequence = self._modify_input_with_3dof_base(
                 n_joint, joint_angles_sequence
             )
+        elif base_type == BaseType.FLOATING:
+            assert n_dof == n_joint + 6
+        elif base_type == BaseType.FIXED:
+            assert n_dof == n_joint
+        else:
+            assert False
 
-        with_base = with_3dof_base or with_6dof_base
+        with_base = base_type != BaseType.FIXED
         P, J = self._robot.solve_forward_kinematics(
             joint_angles_sequence,
             elink_ids,
@@ -111,7 +111,7 @@ class RobotModel(object):
             with_jacobian,
             use_cache,
         )
-        if with_3dof_base:
+        if base_type == BaseType.PLANER:
             extrac_indices = np.hstack(
                 (np.arange(n_joint), np.array([n_joint, n_joint + 1, n_joint + 5]))
             )
@@ -150,15 +150,14 @@ class RobotModel(object):
         angle_vectors,
         link_id_pairs,
         joint_ids,
-        with_3dof_base=False,
-        with_6dof_base=False,
+        base_type: BaseType = BaseType.FIXED,
         with_jacobian=False,
         use_cache=False,
     ):
-        if with_3dof_base:
+        if base_type == BaseType.PLANER:
             angle_vectors = self._modify_input_with_3dof_base(len(joint_ids), angle_vectors)
 
-        with_base = with_3dof_base or with_6dof_base
+        with_base = base_type != BaseType.FIXED
         link_ids1, link_ids2 = zip(*link_id_pairs)
         V, J = self._robot.compute_inter_link_squared_dists(
             angle_vectors,
@@ -170,7 +169,7 @@ class RobotModel(object):
             use_cache,
         )
 
-        if with_3dof_base:
+        if base_type == BaseType.PLANER:
             n_joint = len(joint_ids)
             extrac_indices = np.hstack(
                 (np.arange(n_joint), np.array([n_joint, n_joint + 1, n_joint + 5]))
