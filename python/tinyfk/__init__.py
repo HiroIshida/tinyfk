@@ -155,6 +155,8 @@ class RobotModel:
         use_cache=False,
     ):
         if base_type == BaseType.PLANER:
+            if isinstance(angle_vectors, list):
+                angle_vectors = np.array(angle_vectors)
             angle_vectors = self._modify_input_with_3dof_base(len(joint_ids), angle_vectors)
 
         with_base = base_type != BaseType.FIXED
@@ -169,7 +171,7 @@ class RobotModel:
             use_cache,
         )
 
-        if base_type == BaseType.PLANER:
+        if base_type == BaseType.PLANER and with_jacobian:
             n_joint = len(joint_ids)
             extrac_indices = np.hstack(
                 (np.arange(n_joint), np.array([n_joint, n_joint + 1, n_joint + 5]))
