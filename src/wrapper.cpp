@@ -42,6 +42,18 @@ public:
     this->set_base_pose(xyzrpy.begin());
   }
 
+  std::vector<double> get_base_pose() {
+    std::vector<double> base_vec(6);
+    base_vec.at(0) = this->base_pose_.position[0];
+    base_vec.at(1) = this->base_pose_.position[1];
+    base_vec.at(2) = this->base_pose_.position[2];
+    const auto rpy = this->base_pose_.rotation.getRPY();
+    base_vec.at(3) = rpy.x;
+    base_vec.at(4) = rpy.y;
+    base_vec.at(5) = rpy.z;
+    return base_vec;
+  }
+
   std::string get_root_link_name() { return this->root_link_->name; }
 
   std::array<Eigen::MatrixXd, 2> solve_forward_kinematics(
@@ -160,10 +172,12 @@ PYBIND11_MODULE(_tinyfk, m) {
       .def("get_root_link_name", &RobotModelPyWrapper::get_root_link_name)
       .def("solve_forward_kinematics",
            &RobotModelPyWrapper::solve_forward_kinematics)
+      .def("get_joint_angles", &RobotModelPyWrapper::get_joint_angles)
       .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)
       .def("get_joint_names", &RobotModelPyWrapper::get_joint_names)
       .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
       .def("get_joint_limits", &RobotModelPyWrapper::get_joint_limits)
+      .def("get_base_pose", &RobotModelPyWrapper::get_base_pose)
       .def("set_base_pose", py::overload_cast<const std::vector<double> &>(
                                 &RobotModelPyWrapper::set_base_pose))
       .def("get_link_ids", &RobotModelPyWrapper::get_link_ids)

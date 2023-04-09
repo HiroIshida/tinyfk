@@ -44,6 +44,19 @@ class RobotModel:
     def root_link_name(self) -> str:
         return self._robot.get_root_link_name()
 
+    def get_joint_angles(self, joint_ids, base_type: BaseType = BaseType.FIXED):
+        base_pose_vec = None
+        if base_type == BaseType.FIXED:
+            base_pose_vec = np.array([])
+        elif base_type == BaseType.PLANER:
+            xyzrpy = self._robot.get_base_pose()
+            base_pose_vec = np.array([xyzrpy[0], xyzrpy[1], xyzrpy[-1]])
+        elif base_type == BaseType.FLOATING:
+            base_pose_vec = self._robot.get_base_pose()
+        joint_angles = self._robot.get_joint_angles(joint_ids)
+        q = np.hstack([joint_angles, base_pose_vec])
+        return q
+
     def set_joint_angles(self, joint_ids, q, base_type: BaseType = BaseType.FIXED):
         if base_type == BaseType.PLANER:
             assert len(q) == len(joint_ids) + 3
