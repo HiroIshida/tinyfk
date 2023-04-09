@@ -20,5 +20,6 @@ jobs:
         pip install setuptools wheel twine scikit-build
     - name: Build and publish
       run: |
+        git submodule update --init
         python setup.py sdist
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
