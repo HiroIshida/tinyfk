@@ -151,18 +151,6 @@ private:
                            bool usebase) const;
 };
 
-class NaiveRobotModel : public RobotModelBase {
-public:
-  using RobotModelBase::RobotModelBase;
-
-  void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                     bool with_base) const;
-
-  Eigen::MatrixXd get_jacobian(size_t elink_id,
-                               const std::vector<size_t> &joint_ids,
-                               bool with_rpy = false, bool with_base = false);
-};
-
 std::string load_urdf(const std::string &urdf_path);
 }; // namespace tinyfk
 

@@ -54,9 +54,7 @@ int main() {
   const std::string urdf_file = "../data/fetch.urdf";
   const auto urdf_string = load_urdf(urdf_file);
   const auto kin = std::make_shared<CacheUtilizedRobotModel>(urdf_string);
-  const auto kin_naive = std::make_shared<NaiveRobotModel>(urdf_string);
 
   const size_t N = 100000;
-  benchmark_fk(kin_naive, N, "naive");
   benchmark_fk(kin, N, "with_cache");
 }

@@ -14,7 +14,7 @@ find_package(Eigen3 REQUIRED)
 ADD_DEFINITIONS(-DEIGEN_NO_DEBUG)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-set(TINYFK_SRC src/tinyfk.cpp src/kinematics.cpp src/naive_kinematics.cpp)
+set(TINYFK_SRC src/tinyfk.cpp src/kinematics.cpp)
 include_directories(include/)
 add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk urdfdom_model)
