@@ -21,6 +21,19 @@ urdf::Vector3 rpy_derivative(const urdf::Vector3 &rpy,
   return drpy_dt;
 }
 
+urdf::Rotation q_derivative(const urdf::Rotation &q,
+                            const urdf::Vector3 &omega) {
+  const double dxdt =
+      0.5 * (0 * q.x + omega.z * q.y - omega.y * q.z + omega.x * q.w);
+  const double dydt =
+      0.5 * (-omega.z * q.x + 0 * q.y + omega.x * q.z + omega.y * q.w);
+  const double dzdt =
+      0.5 * (omega.y * q.x - omega.x * q.y + 0 * q.z + omega.z * q.w);
+  const double dwdt =
+      0.5 * (-omega.x * q.x - omega.y * q.y - omega.z * q.z + 0 * q.w);
+  return urdf::Rotation(dxdt, dydt, dzdt, -dwdt); // TODO: why minus????
+}
+
 namespace tinyfk {
 
 void CacheUtilizedRobotModel::get_link_pose(size_t link_id,
@@ -98,9 +111,10 @@ void CacheUtilizedRobotModel::get_link_pose_inner(
 Eigen::MatrixXd
 CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
                                       const std::vector<size_t> &joint_ids,
-                                      bool with_rot, bool with_base) {
-  int dim_jacobi = (with_rot ? 6 : 3);
-  int dim_dof = joint_ids.size() + (with_base ? 6 : 0);
+                                      RotationType rot_type, bool with_base) {
+  const size_t dim_jacobi = 3 + (rot_type == RotationType::RPY) * 3 +
+                            (rot_type == RotationType::XYZW) * 4;
+  const int dim_dof = joint_ids.size() + (with_base ? 6 : 0);
 
   // compute values shared through the loop
   urdf::Pose tf_rlink_to_elink;
@@ -108,9 +122,13 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
   urdf::Vector3 &epos = tf_rlink_to_elink.position;
   urdf::Rotation &erot = tf_rlink_to_elink.rotation;
 
-  urdf::Vector3 erpy; // will be used only with_rot
-  if (with_rot) {
+  urdf::Vector3 erpy;
+  urdf::Rotation erot_inverse;
+  if (rot_type == RotationType::RPY) {
     erpy = erot.getRPY();
+  }
+  if (rot_type == RotationType::XYZW) {
+    erot_inverse = erot.inverse();
   }
 
   urdf::Pose tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
@@ -155,14 +173,23 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
       jacobian(0, i) = dpos.x;
       jacobian(1, i) = dpos.y;
       jacobian(2, i) = dpos.z;
-      if (with_rot) { // (compute rpy jacobian)
-        if (type == urdf::Joint::PRISMATIC) {
-          // jacobian for rotation is all zero
-        } else {
+      if (type == urdf::Joint::PRISMATIC) {
+        // jacobian for rotation is all zero
+      } else {
+
+        if (rot_type == RotationType::RPY) { // (compute rpy jacobian)
           urdf::Vector3 drpy_dt = rpy_derivative(erpy, world_axis);
           jacobian(3, i) = drpy_dt.x;
           jacobian(4, i) = drpy_dt.y;
           jacobian(5, i) = drpy_dt.z;
+        }
+
+        if (rot_type == RotationType::XYZW) { // (compute quat jacobian)
+          urdf::Rotation dq_dt = q_derivative(erot_inverse, world_axis);
+          jacobian(3, i) = dq_dt.x;
+          jacobian(4, i) = dq_dt.y;
+          jacobian(5, i) = dq_dt.z;
+          jacobian(6, i) = dq_dt.w;
         }
       }
     }
@@ -196,12 +223,18 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
       jacobian(0, idx_col) = pos_diff.x / eps;
       jacobian(1, idx_col) = pos_diff.y / eps;
       jacobian(2, idx_col) = pos_diff.z / eps;
-      if (with_rot) {
+      if (rot_type == RotationType::RPY) {
         auto erpy_tweaked = pose_out.rotation.getRPY();
         const auto erpy_diff = erpy_tweaked - erpy;
         jacobian(3, idx_col) = erpy_diff.x / eps;
         jacobian(4, idx_col) = erpy_diff.y / eps;
         jacobian(5, idx_col) = erpy_diff.z / eps;
+      }
+      if (rot_type == RotationType::XYZW) {
+        jacobian(3, idx_col) = (pose_out.rotation.x - erot.x) / eps;
+        jacobian(4, idx_col) = (pose_out.rotation.y - erot.y) / eps;
+        jacobian(5, idx_col) = (pose_out.rotation.z - erot.z) / eps;
+        jacobian(6, idx_col) = (pose_out.rotation.w - erot.w) / eps;
       }
     }
   }

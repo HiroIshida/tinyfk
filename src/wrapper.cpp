@@ -106,8 +106,10 @@ public:
         for (size_t j = 0; j < n_link; ++j) {
           const size_t head = i * (n_link * n_pose_dim) + j * n_pose_dim;
           const size_t elink_id = elink_ids[j];
+          const auto rot_type =
+              with_rpy ? RotationType::RPY : RotationType::IGNORE;
           J.block(head, 0, n_pose_dim, n_dof) =
-              this->get_jacobian(elink_id, joint_ids, with_rpy, with_base);
+              this->get_jacobian(elink_id, joint_ids, rot_type, with_base);
         }
       }
     }
@@ -152,10 +154,10 @@ public:
         sqdists(head) = sqdist;
 
         if (with_grads) {
-          const auto &&jac1 =
-              this->get_jacobian(link_ids1[j], joint_ids, false, with_base);
-          const auto &&jac2 =
-              this->get_jacobian(link_ids2[j], joint_ids, false, with_base);
+          const auto &&jac1 = this->get_jacobian(
+              link_ids1[j], joint_ids, RotationType::IGNORE, with_base);
+          const auto &&jac2 = this->get_jacobian(
+              link_ids2[j], joint_ids, RotationType::IGNORE, with_base);
           const auto grad = 2 * (jac1 - jac2).transpose() * diff_vec;
           grads.block(head, 0, 1, n_joint) = grad.transpose();
         }

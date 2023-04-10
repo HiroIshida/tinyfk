@@ -41,7 +41,7 @@ void benchmark_fk(const std::shared_ptr<RobotModelBase> &kin, size_t n_iter,
       kin->set_joint_angles(joint_ids, q); // this clear cached TFs
       for (size_t j = 0; j < link_ids.size(); j++) {
         for (size_t lid : link_ids) {
-          kin->get_jacobian(lid, joint_ids, true, true);
+          kin->get_jacobian(lid, joint_ids, RotationType::RPY, true);
         }
       }
     }

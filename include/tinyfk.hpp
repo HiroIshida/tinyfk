@@ -43,6 +43,8 @@ struct LinkIdAndPose {
   urdf::Pose pose;
 };
 
+enum class RotationType { IGNORE, RPY, XYZW };
+
 class RobotModelBase {
 public: // members
   // change them all to private later
@@ -118,10 +120,10 @@ public: // functions
   virtual void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                              bool usebase) const = 0;
 
-  virtual Eigen::MatrixXd get_jacobian(size_t elink_id,
-                                       const std::vector<size_t> &joint_ids,
-                                       bool with_rpy = false,
-                                       bool with_base = false) = 0;
+  virtual Eigen::MatrixXd
+  get_jacobian(size_t elink_id, const std::vector<size_t> &joint_ids,
+               RotationType rot_type = RotationType::IGNORE,
+               bool with_base = false) = 0;
 
   void set_joint_angle(size_t joint_id, double angle) {
     joint_angles_[joint_id] = angle;
@@ -144,7 +146,8 @@ public:
 
   Eigen::MatrixXd get_jacobian(size_t elink_id,
                                const std::vector<size_t> &joint_ids,
-                               bool with_rpy = false, bool with_base = false);
+                               RotationType rot_type = RotationType::IGNORE,
+                               bool with_base = false);
 
 private:
   void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,

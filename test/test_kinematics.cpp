@@ -17,7 +17,8 @@ bool isNear(double x, double y) { return (abs(x - y) < 1e-5); }
 Eigen::MatrixXd compute_numerical_jacobian_with_base(
     CacheUtilizedRobotModel &kin, size_t link_id,
     const std::vector<size_t> &joint_ids,
-    const std::vector<double> &angle_vector, const urdf::Pose &base_pose) {
+    const std::vector<double> &angle_vector, const urdf::Pose &base_pose,
+    RotationType rot_type) {
 
   const auto set_configuration = [&](const std::vector<double> &q) {
     for (size_t i = 0; i < joint_ids.size(); ++i) {
@@ -63,7 +64,9 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
   kin.get_link_pose(link_id, pose0, true);
   rpy0 = pose0.rotation.getRPY();
 
-  Eigen::MatrixXd J(6, q0.size());
+  const size_t dim_jacobi = 3 + (rot_type == RotationType::RPY) * 3 +
+                            (rot_type == RotationType::XYZW) * 4;
+  Eigen::MatrixXd J(dim_jacobi, q0.size());
 
   for (size_t idx = 0; idx < q0.size(); idx++) {
     const auto q1 = get_tweaked_q(q0, idx);
@@ -73,10 +76,18 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
     J(1, idx) = (pose1.position.y - pose0.position.y) / eps;
     J(2, idx) = (pose1.position.z - pose0.position.z) / eps;
 
-    rpy1 = pose1.rotation.getRPY();
-    J(3, idx) = (rpy1.x - rpy0.x) / eps;
-    J(4, idx) = (rpy1.y - rpy0.y) / eps;
-    J(5, idx) = (rpy1.z - rpy0.z) / eps;
+    if (rot_type == RotationType::RPY) {
+      rpy1 = pose1.rotation.getRPY();
+      J(3, idx) = (rpy1.x - rpy0.x) / eps;
+      J(4, idx) = (rpy1.y - rpy0.y) / eps;
+      J(5, idx) = (rpy1.z - rpy0.z) / eps;
+    }
+    if (rot_type == RotationType::XYZW) {
+      J(3, idx) = (pose1.rotation.x - pose0.rotation.x) / eps;
+      J(4, idx) = (pose1.rotation.y - pose0.rotation.y) / eps;
+      J(5, idx) = (pose1.rotation.z - pose0.rotation.z) / eps;
+      J(6, idx) = (pose1.rotation.w - pose0.rotation.w) / eps;
+    }
   };
   return J;
 }
@@ -168,16 +179,22 @@ TEST(KINEMATICS, AllTest) {
   kin2.set_base_pose(base_pose);
 
   kin.transform_cache_.clear();
-  for (size_t i = link_names.size() - 1; i < link_names.size(); i++) {
-    bool rot_also =
-        true; // rotatio part of the geometric jacobian is not yet checked
-    size_t link_id = link_ids[i];
-    auto J_numerical = compute_numerical_jacobian_with_base(
-        kin2, link_id, joint_ids, angle_vector, base_pose);
-    auto J_analytical = kin.get_jacobian(link_id, joint_ids, rot_also, true);
-    bool jacobian_equal =
-        (J_analytical - J_numerical).array().abs().maxCoeff() < 1e-5;
-    EXPECT_TRUE(jacobian_equal);
+  // std::vector<RotationType> rot_types = {RotationType::IGNORE,
+  // RotationType::RPY, RotationType::XYZW};
+  std::vector<RotationType> rot_types = {RotationType::XYZW};
+  for (auto rot_type : rot_types) {
+    for (size_t i = link_names.size() - 1; i < link_names.size(); i++) {
+      size_t link_id = link_ids[i];
+      auto J_numerical = compute_numerical_jacobian_with_base(
+          kin2, link_id, joint_ids, angle_vector, base_pose, rot_type);
+      auto J_analytical = kin.get_jacobian(link_id, joint_ids, rot_type, true);
+      bool jacobian_equal =
+          (J_analytical - J_numerical).array().abs().maxCoeff() < 1e-5;
+      std::cout << J_numerical << std::endl;
+      std::cout << "" << std::endl;
+      std::cout << J_analytical << std::endl;
+      EXPECT_TRUE(jacobian_equal);
+    }
   }
 }
 
