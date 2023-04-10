@@ -30,6 +30,12 @@ class BaseType(Enum):
     FLOATING = 2
 
 
+class RotationType(Enum):
+    IGNORE = _tinyfk.RotationType.IGNORE
+    RPY = _tinyfk.RotationType.RPY
+    XYZW = _tinyfk.RotationType.XYZW
+
+
 # higher layer wrap
 class RobotModel:
     def __init__(self, urdfpath=None, xml_text=None):
@@ -84,7 +90,7 @@ class RobotModel:
         joint_angles_sequence,
         elink_ids,
         joint_ids,
-        with_rot=False,
+        rot_type: RotationType = RotationType.IGNORE,
         base_type: BaseType = BaseType.FIXED,
         with_jacobian=False,
         use_cache=False,
@@ -119,7 +125,7 @@ class RobotModel:
             joint_angles_sequence,
             elink_ids,
             joint_ids,
-            with_rot,
+            rot_type.value,
             with_base,
             with_jacobian,
             use_cache,

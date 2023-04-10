@@ -59,10 +59,12 @@ public:
   std::array<Eigen::MatrixXd, 2> solve_forward_kinematics(
       const std::vector<std::vector<double>> joint_angles_sequence,
       const std::vector<size_t> &elink_ids,
-      const std::vector<size_t> &joint_ids, bool with_rpy, bool with_base,
-      bool with_jacobian, bool use_cache) {
+      const std::vector<size_t> &joint_ids, RotationType rot_type,
+      bool with_base, bool with_jacobian, bool use_cache) {
 
-    size_t n_pose_dim = (with_rpy ? 6 : 3); // 7 if rot enabled
+    const size_t n_pose_dim = 3 + (rot_type == RotationType::RPY) * 3 +
+                              (rot_type == RotationType::XYZW) * 4;
+
     auto n_wp = joint_angles_sequence.size();
     auto n_link = elink_ids.size();
     auto n_joints = joint_ids.size();
@@ -95,19 +97,23 @@ public:
         P(0, head) = pose.position.x;
         P(1, head) = pose.position.y;
         P(2, head) = pose.position.z;
-        if (with_rpy) {
+        if (rot_type == RotationType::RPY) {
           urdf::Vector3 rpy = pose.rotation.getRPY();
           P(3, head) = rpy.x;
           P(4, head) = rpy.y;
           P(5, head) = rpy.z;
+        }
+        if (rot_type == RotationType::XYZW) {
+          P(3, head) = pose.rotation.x;
+          P(4, head) = pose.rotation.y;
+          P(5, head) = pose.rotation.z;
+          P(6, head) = pose.rotation.w;
         }
       }
       if (with_jacobian) {
         for (size_t j = 0; j < n_link; ++j) {
           const size_t head = i * (n_link * n_pose_dim) + j * n_pose_dim;
           const size_t elink_id = elink_ids[j];
-          const auto rot_type =
-              with_rpy ? RotationType::RPY : RotationType::IGNORE;
           J.block(head, 0, n_pose_dim, n_dof) =
               this->get_jacobian(elink_id, joint_ids, rot_type, with_base);
         }
@@ -169,6 +175,12 @@ public:
 
 PYBIND11_MODULE(_tinyfk, m) {
   m.doc() = "tiny fast forward kinematics solver"; // optional module docstring
+
+  py::enum_<RotationType>(m, "RotationType")
+      .value("IGNORE", RotationType::IGNORE)
+      .value("RPY", RotationType::RPY)
+      .value("XYZW", RotationType::XYZW);
+
   py::class_<RobotModelPyWrapper>(m, "RobotModel")
       .def(py::init<std::string &>())
       .def("get_root_link_name", &RobotModelPyWrapper::get_root_link_name)
