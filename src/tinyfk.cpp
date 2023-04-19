@@ -77,8 +77,31 @@ KinematicsModel::KinematicsModel(const std::string &xml_string) {
   num_dof_ = num_dof;
   joint_angles_ = joint_angles;
 
+  // add COM of each link as new link
+  {
+    // NOTE: due to my bad design (add_new_link update internal state)
+    // this procedure must come after initialization of member variables
+    std::vector<urdf::LinkSharedPtr> com_dummy_links;
+    for (const auto &link : links) {
+      if (link->inertial == nullptr) {
+        continue;
+      }
+      const auto com_dummy_link_name = link->name + "_com";
+      std::array<double, 3> pos{link->inertial->origin.position.x,
+                                link->inertial->origin.position.y,
+                                link->inertial->origin.position.z};
+      const auto new_link = this->add_new_link(
+          com_dummy_link_name, link->id, pos, std::array<double, 3>{0, 0, 0});
+      // set new link's inertial as the same as the parent
+      // except its origin is zero
+      new_link->inertial = link->inertial;
+      new_link->inertial->origin = urdf::Pose();
+      com_dummy_links.push_back(new_link);
+    }
+    this->com_dummy_links_ = com_dummy_links;
+  }
+
   this->set_base_pose(urdf::Pose()); // initial base pose
-  this->update_rptable();            // update _rptable
 }
 
 void KinematicsModel::set_joint_angles(
@@ -163,9 +186,10 @@ KinematicsModel::get_link_ids(std::vector<std::string> link_names) const {
   return link_ids;
 }
 
-void KinematicsModel::add_new_link(std::string link_name, size_t parent_id,
-                                   std::array<double, 3> position,
-                                   std::array<double, 3> rotation) {
+urdf::LinkSharedPtr
+KinematicsModel::add_new_link(std::string link_name, size_t parent_id,
+                              std::array<double, 3> position,
+                              std::array<double, 3> rotation) {
   bool link_name_exists = (link_ids_.find(link_name) != link_ids_.end());
   if (link_name_exists) {
     std::string message = "link name " + link_name + " already exists";
@@ -194,6 +218,8 @@ void KinematicsModel::add_new_link(std::string link_name, size_t parent_id,
   transform_cache_.extend();
 
   this->update_rptable(); // set _rptable
+
+  return new_link;
 }
 
 void KinematicsModel::update_rptable() {

@@ -245,27 +245,15 @@ KinematicsModel::get_jacobian(size_t elink_id,
 urdf::Vector3 KinematicsModel::get_com(bool with_base) {
   urdf::Vector3 com_average;
   double mass_total = 0.0;
-
-  for (const auto &link : links_) {
-
-    if (link->inertial == nullptr) {
-      continue;
-    }
-
+  urdf::Pose tf_base_to_com;
+  for (const auto &link : com_dummy_links_) {
     mass_total += link->inertial->mass;
-
-    urdf::Pose tf_base_to_link, tf_link_to_com;
-    this->get_link_pose(link->id, tf_base_to_link, with_base);
-    tf_link_to_com.position.x = link->inertial->origin.position.x;
-    tf_link_to_com.position.y = link->inertial->origin.position.y;
-    tf_link_to_com.position.z = link->inertial->origin.position.z;
-    const auto tf_base_to_com =
-        urdf::pose_transform(tf_base_to_link, tf_link_to_com);
-
+    this->get_link_pose(link->id, tf_base_to_com, with_base);
     com_average.x += link->inertial->mass * tf_base_to_com.position.x;
     com_average.y += link->inertial->mass * tf_base_to_com.position.y;
     com_average.z += link->inertial->mass * tf_base_to_com.position.z;
   }
+
   com_average.x = com_average.x / mass_total;
   com_average.y = com_average.y / mass_total;
   com_average.z = com_average.z / mass_total;

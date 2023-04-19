@@ -193,6 +193,12 @@ public:
     }
     return std::pair<Eigen::VectorXd, Eigen::MatrixXd>{sqdists, grads};
   }
+
+  void add_new_link(std::string link_name, size_t parent_id,
+                    std::array<double, 3> position,
+                    std::array<double, 3> rotation) {
+    KinematicsModel::add_new_link(link_name, parent_id, position, rotation);
+  }
 };
 
 PYBIND11_MODULE(_tinyfk, m) {
