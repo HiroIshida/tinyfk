@@ -15,8 +15,7 @@ using namespace tinyfk;
 bool isNear(double x, double y) { return (abs(x - y) < 1e-5); }
 
 Eigen::MatrixXd compute_numerical_jacobian_with_base(
-    CacheUtilizedRobotModel &kin, size_t link_id,
-    const std::vector<size_t> &joint_ids,
+    KinematicsModel &kin, size_t link_id, const std::vector<size_t> &joint_ids,
     const std::vector<double> &angle_vector, const urdf::Pose &base_pose,
     RotationType rot_type) {
 
@@ -108,8 +107,8 @@ TEST(KINEMATICS, AllTest) {
   // test main
   const std::string urdf_file = "../data/pr2.urdf";
   const auto xml_string = load_urdf(urdf_file);
-  auto kin = CacheUtilizedRobotModel(xml_string);
-  auto kin2 = CacheUtilizedRobotModel(xml_string);
+  auto kin = KinematicsModel(xml_string);
+  auto kin2 = KinematicsModel(xml_string);
 
   { // add new link to the robot
     std::vector<std::string> strvec = {"r_upper_arm_link"};

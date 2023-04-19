@@ -36,9 +36,9 @@ urdf::Rotation q_derivative(const urdf::Rotation &q,
 
 namespace tinyfk {
 
-void CacheUtilizedRobotModel::get_link_pose(size_t link_id,
-                                            urdf::Pose &out_tf_rlink_to_elink,
-                                            bool usebase) const {
+void KinematicsModel::get_link_pose(size_t link_id,
+                                    urdf::Pose &out_tf_rlink_to_elink,
+                                    bool usebase) const {
   urdf::Pose const *pose_ptr = transform_cache_.get_cache(link_id);
   if (pose_ptr) {
     out_tf_rlink_to_elink = *pose_ptr;
@@ -47,8 +47,9 @@ void CacheUtilizedRobotModel::get_link_pose(size_t link_id,
   this->get_link_pose_inner(link_id, out_tf_rlink_to_elink, usebase);
 }
 
-void CacheUtilizedRobotModel::get_link_pose_inner(
-    size_t link_id, urdf::Pose &out_tf_rlink_to_elink, bool usebase) const {
+void KinematicsModel::get_link_pose_inner(size_t link_id,
+                                          urdf::Pose &out_tf_rlink_to_elink,
+                                          bool usebase) const {
   urdf::LinkSharedPtr hlink = links_[link_id];
 
   urdf::Pose tf_rlink_to_blink;
@@ -109,9 +110,9 @@ void CacheUtilizedRobotModel::get_link_pose_inner(
 }
 
 Eigen::MatrixXd
-CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
-                                      const std::vector<size_t> &joint_ids,
-                                      RotationType rot_type, bool with_base) {
+KinematicsModel::get_jacobian(size_t elink_id,
+                              const std::vector<size_t> &joint_ids,
+                              RotationType rot_type, bool with_base) {
   const size_t dim_jacobi = 3 + (rot_type == RotationType::RPY) * 3 +
                             (rot_type == RotationType::XYZW) * 4;
   const int dim_dof = joint_ids.size() + (with_base ? 6 : 0);
@@ -241,7 +242,7 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
   return jacobian;
 }
 
-urdf::Vector3 RobotModelBase::get_com(bool with_base) {
+urdf::Vector3 KinematicsModel::get_com(bool with_base) {
   urdf::Vector3 com_average;
   double mass_total = 0.0;
 
@@ -272,8 +273,8 @@ urdf::Vector3 RobotModelBase::get_com(bool with_base) {
 }
 
 urdf::Vector3
-RobotModelBase::get_com_jacobian(const std::vector<size_t> &joint_ids,
-                                 bool with_base) {
+KinematicsModel::get_com_jacobian(const std::vector<size_t> &joint_ids,
+                                  bool with_base) {
   constexpr size_t jac_rank = 3;
   const size_t dim_dof = joint_ids.size() + with_base * 6;
   Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(jac_rank, dim_dof);

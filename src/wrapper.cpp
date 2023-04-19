@@ -17,10 +17,10 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 namespace py = pybind11;
 using namespace tinyfk;
 
-class RobotModelPyWrapper : public CacheUtilizedRobotModel {
+class KinematicsModelPyWrapper : public KinematicsModel {
 
 public:
-  using CacheUtilizedRobotModel::CacheUtilizedRobotModel;
+  using KinematicsModel::KinematicsModel;
 
   void set_base_pose(std::vector<double>::const_iterator begin) {
     auto pose = urdf::Pose();
@@ -31,8 +31,7 @@ public:
     pose.position.z = *begin;
     ++begin;
     pose.rotation.setFromRPY(*begin, *(begin + 1), *(begin + 2));
-    CacheUtilizedRobotModel::set_base_pose(
-        pose); // TODO: why CacheUtilizedRobotModel:: ?
+    KinematicsModel::set_base_pose(pose);
   }
 
   void set_base_pose(const std::vector<double> &xyzrpy) {
@@ -204,25 +203,25 @@ PYBIND11_MODULE(_tinyfk, m) {
       .value("RPY", RotationType::RPY)
       .value("XYZW", RotationType::XYZW);
 
-  py::class_<RobotModelPyWrapper>(m, "RobotModel")
+  py::class_<KinematicsModelPyWrapper>(m, "RobotModel")
       .def(py::init<std::string &>())
-      .def("get_root_link_name", &RobotModelPyWrapper::get_root_link_name)
+      .def("get_root_link_name", &KinematicsModelPyWrapper::get_root_link_name)
       .def("solve_forward_kinematics",
-           &RobotModelPyWrapper::solve_forward_kinematics)
-      .def("get_joint_angles", &RobotModelPyWrapper::get_joint_angles)
-      .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)
+           &KinematicsModelPyWrapper::solve_forward_kinematics)
+      .def("get_joint_angles", &KinematicsModelPyWrapper::get_joint_angles)
+      .def("set_joint_angles", &KinematicsModelPyWrapper::set_joint_angles)
       .def("solve_com_forward_kinematics",
-           &RobotModelPyWrapper::solve_com_forward_kinematics)
-      .def("get_joint_names", &RobotModelPyWrapper::get_joint_names)
-      .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
-      .def("get_joint_limits", &RobotModelPyWrapper::get_joint_limits)
-      .def("get_base_pose", &RobotModelPyWrapper::get_base_pose)
+           &KinematicsModelPyWrapper::solve_com_forward_kinematics)
+      .def("get_joint_names", &KinematicsModelPyWrapper::get_joint_names)
+      .def("get_joint_ids", &KinematicsModelPyWrapper::get_joint_ids)
+      .def("get_joint_limits", &KinematicsModelPyWrapper::get_joint_limits)
+      .def("get_base_pose", &KinematicsModelPyWrapper::get_base_pose)
       .def("set_base_pose", py::overload_cast<const std::vector<double> &>(
-                                &RobotModelPyWrapper::set_base_pose))
-      .def("get_link_ids", &RobotModelPyWrapper::get_link_ids)
-      .def("get_link_names", &RobotModelPyWrapper::get_link_names)
-      .def("add_new_link", &RobotModelPyWrapper::add_new_link)
+                                &KinematicsModelPyWrapper::set_base_pose))
+      .def("get_link_ids", &KinematicsModelPyWrapper::get_link_ids)
+      .def("get_link_names", &KinematicsModelPyWrapper::get_link_names)
+      .def("add_new_link", &KinematicsModelPyWrapper::add_new_link)
       .def("compute_inter_link_squared_dists",
-           &RobotModelPyWrapper::compute_inter_link_squared_dists)
-      .def("clear_cache", &RobotModelPyWrapper::clear_cache);
+           &KinematicsModelPyWrapper::compute_inter_link_squared_dists)
+      .def("clear_cache", &KinematicsModelPyWrapper::clear_cache);
 }

@@ -45,7 +45,7 @@ struct LinkIdAndPose {
 
 enum class RotationType { IGNORE, RPY, XYZW };
 
-class RobotModelBase {
+class KinematicsModel {
 public: // members
   // change them all to private later
   urdf::ModelInterfaceSharedPtr robot_urdf_interface_;
@@ -69,9 +69,9 @@ public: // members
   mutable SizedCache<urdf::Pose> transform_cache_;
 
 public: // functions
-  RobotModelBase(const std::string &xml_string);
+  KinematicsModel(const std::string &xml_string);
 
-  virtual ~RobotModelBase() {}
+  virtual ~KinematicsModel() {}
 
   void set_joint_angles( // this will clear all the cache stored
       const std::vector<size_t> &joint_ids,
@@ -117,13 +117,13 @@ public: // functions
     return link_names;
   }
 
-  virtual void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                             bool usebase) const = 0;
+  void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
+                     bool usebase) const;
 
-  virtual Eigen::MatrixXd
-  get_jacobian(size_t elink_id, const std::vector<size_t> &joint_ids,
-               RotationType rot_type = RotationType::IGNORE,
-               bool with_base = false) = 0;
+  Eigen::MatrixXd get_jacobian(size_t elink_id,
+                               const std::vector<size_t> &joint_ids,
+                               RotationType rot_type = RotationType::IGNORE,
+                               bool with_base = false);
 
   urdf::Vector3 get_com(bool with_base);
 
@@ -139,24 +139,9 @@ public: // functions
                     std::array<double, 3> rotation);
 
 private:
-  void update_rptable();
-};
-
-class CacheUtilizedRobotModel : public RobotModelBase {
-public:
-  using RobotModelBase::RobotModelBase;
-
-  void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                     bool usebase) const;
-
-  Eigen::MatrixXd get_jacobian(size_t elink_id,
-                               const std::vector<size_t> &joint_ids,
-                               RotationType rot_type = RotationType::IGNORE,
-                               bool with_base = false);
-
-private:
   void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                            bool usebase) const;
+  void update_rptable();
 };
 
 std::string load_urdf(const std::string &urdf_path);
