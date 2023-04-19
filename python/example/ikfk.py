@@ -17,20 +17,22 @@ rarm_joint_names = [
 rarm_joint_ids = kin_solver.get_joint_ids(rarm_joint_names)
 end_link_id = kin_solver.get_link_ids(["r_gripper_tool_frame"])[0]
 
-angle_vector_init = np.array([0.564, 0.35, -0.74, -0.7, -0.7, -0.17, -0.63])
+angle_vector_init = np.array([[0.564, 0.35, -0.74, -0.7, -0.7, -0.17, -0.63]]) * 0.0
 
 # if you set 3 dim vector instead, just rpy componenent is not considered
 # and point-ik will be solved
 desired_xyzrpy = [0.7, -0.5, 0.6, 0.0, 0.0, 0.0]
 
-av_sol = kin_solver.solve_inverse_kinematics(
-    desired_xyzrpy, angle_vector_init, end_link_id, rarm_joint_ids, with_base=False
-)
-
-# When with_rot = True, fk will be solved about rotation not only about the position.
-# If you need only position-fk, set it to False, makes computation about 2x faster
-# Set with_jacobian=False if you don't need jacobian. This leads jac=None, and it's 2x faster.
 xyzrpy, jac = kin_solver.solve_forward_kinematics(
-    [av_sol], [end_link_id], rarm_joint_ids, with_rot=True, with_jacobian=False
+    angle_vector_init,
+    [end_link_id],
+    rarm_joint_ids,
+    tinyfk.RotationType.IGNORE,
+    tinyfk.BaseType.FIXED,
 )
-print(np.linalg.norm(xyzrpy - desired_xyzrpy))
+print(xyzrpy)
+
+ret = kin_solver.solve_com_forward_kinematics(
+    angle_vector_init, rarm_joint_ids, tinyfk.BaseType.FIXED
+)
+print(ret)
