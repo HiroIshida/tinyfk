@@ -142,6 +142,7 @@ class RobotModel:
         joint_angles_sequence,
         joint_ids,
         base_type: BaseType = BaseType.FIXED,
+        with_jacobian=False,
     ):
         if not isinstance(joint_angles_sequence, np.ndarray):
             joint_angles_sequence = np.array(joint_angles_sequence)
@@ -163,8 +164,10 @@ class RobotModel:
             assert False
 
         with_base = base_type != BaseType.FIXED
-        P = self._robot.solve_com_forward_kinematics(joint_angles_sequence, joint_ids, with_base)
-        return P
+        P, J = self._robot.solve_com_forward_kinematics(
+            joint_angles_sequence, joint_ids, with_base, with_jacobian
+        )
+        return P, J
 
     def get_joint_names(self):
         return self._robot.get_joint_names()

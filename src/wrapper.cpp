@@ -121,14 +121,15 @@ public:
     return std::array<Eigen::MatrixXd, 2>{P.transpose(), J};
   }
 
-  Eigen::MatrixXd
+  std::array<Eigen::MatrixXd, 2>
   solve_com_forward_kinematics(const std::vector<std::vector<double>> qs,
                                const std::vector<size_t> &joint_ids,
-                               bool with_base) {
+                               bool with_base, bool with_jacobian) {
     const size_t n_wp = qs.size();
-    // const size_t n_joint = joint_ids.size() + with_base * 6;
+    const size_t n_dof = joint_ids.size() + with_base * 6;
 
     Eigen::MatrixXd coms = Eigen::MatrixXd::Zero(3, n_wp);
+    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(3 * n_wp, n_dof);
     for (size_t i = 0; i < n_wp; ++i) {
       this->_set_joint_angles(joint_ids, qs[i]);
       if (with_base) {
@@ -140,8 +141,13 @@ public:
       coms(0, i) = com.x;
       coms(1, i) = com.y;
       coms(2, i) = com.z;
+
+      if (with_jacobian) {
+        J.block(3 * i, 0, 3, n_dof) =
+            this->get_com_jacobian(joint_ids, with_base);
+      }
     }
-    return coms.transpose();
+    return std::array<Eigen::MatrixXd, 2>{coms.transpose(), J};
   }
 
   std::pair<Eigen::VectorXd, Eigen::MatrixXd>

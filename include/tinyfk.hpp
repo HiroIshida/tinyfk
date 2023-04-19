@@ -54,6 +54,7 @@ public: // members
   size_t root_link_id_;
   std::vector<urdf::LinkSharedPtr> links_;
   std::unordered_map<std::string, int> link_ids_;
+  std::vector<urdf::LinkSharedPtr> com_dummy_links_;
 
   std::vector<urdf::JointSharedPtr> joints_;
   std::unordered_map<std::string, int> joint_ids_;
@@ -127,16 +128,16 @@ public: // functions
 
   urdf::Vector3 get_com(bool with_base);
 
-  urdf::Vector3 get_com_jacobian(const std::vector<size_t> &joint_ids,
-                                 bool with_base);
+  Eigen::MatrixXd get_com_jacobian(const std::vector<size_t> &joint_ids,
+                                   bool with_base);
 
   void set_joint_angle(size_t joint_id, double angle) {
     joint_angles_[joint_id] = angle;
   }
 
-  void add_new_link(std::string link_name, size_t parent_id,
-                    std::array<double, 3> position,
-                    std::array<double, 3> rotation);
+  urdf::LinkSharedPtr add_new_link(std::string link_name, size_t parent_id,
+                                   std::array<double, 3> position,
+                                   std::array<double, 3> rotation);
 
 private:
   void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,

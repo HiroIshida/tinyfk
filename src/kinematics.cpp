@@ -260,13 +260,21 @@ urdf::Vector3 KinematicsModel::get_com(bool with_base) {
   return com_average;
 }
 
-urdf::Vector3
+Eigen::MatrixXd
 KinematicsModel::get_com_jacobian(const std::vector<size_t> &joint_ids,
                                   bool with_base) {
   constexpr size_t jac_rank = 3;
   const size_t dim_dof = joint_ids.size() + with_base * 6;
-  Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(jac_rank, dim_dof);
-  // now implementing
+  Eigen::MatrixXd jac_average = Eigen::MatrixXd::Zero(jac_rank, dim_dof);
+  double mass_total = 0.0;
+  for (const auto &com_link : com_dummy_links_) {
+    mass_total += com_link->inertial->mass;
+    auto jac = this->get_jacobian(com_link->id, joint_ids, RotationType::IGNORE,
+                                  with_base);
+    jac_average += com_link->inertial->mass * jac;
+  }
+  jac_average /= mass_total;
+  return jac_average;
 }
 
 }; // namespace tinyfk
