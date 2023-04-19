@@ -241,4 +241,43 @@ CacheUtilizedRobotModel::get_jacobian(size_t elink_id,
   return jacobian;
 }
 
+urdf::Vector3 RobotModelBase::get_com(bool with_base) {
+  urdf::Vector3 com_average;
+  double mass_total = 0.0;
+
+  for (const auto &link : links_) {
+
+    if (link->inertial == nullptr) {
+      continue;
+    }
+
+    mass_total += link->inertial->mass;
+
+    urdf::Pose tf_base_to_link, tf_link_to_com;
+    this->get_link_pose(link->id, tf_base_to_link, with_base);
+    tf_link_to_com.position.x = link->inertial->origin.position.x;
+    tf_link_to_com.position.y = link->inertial->origin.position.y;
+    tf_link_to_com.position.z = link->inertial->origin.position.z;
+    const auto tf_base_to_com =
+        urdf::pose_transform(tf_base_to_link, tf_link_to_com);
+
+    com_average.x += link->inertial->mass * tf_base_to_com.position.x;
+    com_average.y += link->inertial->mass * tf_base_to_com.position.y;
+    com_average.z += link->inertial->mass * tf_base_to_com.position.z;
+  }
+  com_average.x = com_average.x / mass_total;
+  com_average.y = com_average.y / mass_total;
+  com_average.z = com_average.z / mass_total;
+  return com_average;
+}
+
+urdf::Vector3
+RobotModelBase::get_com_jacobian(const std::vector<size_t> &joint_ids,
+                                 bool with_base) {
+  constexpr size_t jac_rank = 3;
+  const size_t dim_dof = joint_ids.size() + with_base * 6;
+  Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(jac_rank, dim_dof);
+  // now implementing
+}
+
 }; // namespace tinyfk

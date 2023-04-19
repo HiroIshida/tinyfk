@@ -122,6 +122,29 @@ public:
     return std::array<Eigen::MatrixXd, 2>{P.transpose(), J};
   }
 
+  Eigen::MatrixXd
+  solve_com_forward_kinematics(const std::vector<std::vector<double>> qs,
+                               const std::vector<size_t> &joint_ids,
+                               bool with_base) {
+    const size_t n_wp = qs.size();
+    // const size_t n_joint = joint_ids.size() + with_base * 6;
+
+    Eigen::MatrixXd coms = Eigen::MatrixXd::Zero(3, n_wp);
+    for (size_t i = 0; i < n_wp; ++i) {
+      this->_set_joint_angles(joint_ids, qs[i]);
+      if (with_base) {
+        auto xyzrpy_begin = std::prev(qs[i].end(), 6);
+        set_base_pose(xyzrpy_begin);
+      }
+
+      const auto com = this->get_com(with_base);
+      coms(0, i) = com.x;
+      coms(1, i) = com.y;
+      coms(2, i) = com.z;
+    }
+    return coms.transpose();
+  }
+
   std::pair<Eigen::VectorXd, Eigen::MatrixXd>
   compute_inter_link_squared_dists(const std::vector<std::vector<double>> &qs,
                                    const std::vector<size_t> &link_ids1,
@@ -188,6 +211,8 @@ PYBIND11_MODULE(_tinyfk, m) {
            &RobotModelPyWrapper::solve_forward_kinematics)
       .def("get_joint_angles", &RobotModelPyWrapper::get_joint_angles)
       .def("set_joint_angles", &RobotModelPyWrapper::set_joint_angles)
+      .def("solve_com_forward_kinematics",
+           &RobotModelPyWrapper::solve_com_forward_kinematics)
       .def("get_joint_names", &RobotModelPyWrapper::get_joint_names)
       .def("get_joint_ids", &RobotModelPyWrapper::get_joint_ids)
       .def("get_joint_limits", &RobotModelPyWrapper::get_joint_limits)
