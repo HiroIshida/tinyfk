@@ -178,9 +178,8 @@ TEST(KINEMATICS, AllTest) {
   kin2.set_base_pose(base_pose);
 
   kin.transform_cache_.clear();
-  // std::vector<RotationType> rot_types = {RotationType::IGNORE,
-  // RotationType::RPY, RotationType::XYZW};
-  std::vector<RotationType> rot_types = {RotationType::XYZW};
+  std::vector<RotationType> rot_types = {RotationType::IGNORE,
+                                         RotationType::RPY, RotationType::XYZW};
   for (auto rot_type : rot_types) {
     for (size_t i = link_names.size() - 1; i < link_names.size(); i++) {
       size_t link_id = link_ids[i];
