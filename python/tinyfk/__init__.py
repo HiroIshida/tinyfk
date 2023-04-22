@@ -1,6 +1,8 @@
+import copy
 import os
 from enum import Enum
 from pathlib import Path
+from typing import Any, List
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -38,6 +40,10 @@ class RotationType(Enum):
 
 # higher layer wrap
 class RobotModel:
+    # these histories will be used in de-pickling
+    _add_new_link_history: List[Any] = []
+    _set_joint_angles_history: List[Any] = []
+
     def __init__(self, urdfpath=None, xml_text=None):
         assert (urdfpath is None) ^ (xml_text is None)
         if not xml_text:
@@ -45,6 +51,9 @@ class RobotModel:
                 xml_text = reader.read()
         self._xml_text = xml_text  # solely for pickling & unpickling
         self._robot = _tinyfk.RobotModel(xml_text)
+
+        self._add_new_link_history = []
+        self._set_joint_angles_history = []
 
     @property
     def root_link_name(self) -> str:
@@ -64,6 +73,9 @@ class RobotModel:
         return q
 
     def set_joint_angles(self, joint_ids, q, base_type: BaseType = BaseType.FIXED):
+        args = [joint_ids, q, base_type]
+        self._set_joint_angles_history.append(args)
+
         if base_type == BaseType.PLANER:
             assert len(q) == len(joint_ids) + 3
             joint_angles, base_xytheta = q[:-3], q[-3:]
@@ -192,9 +204,12 @@ class RobotModel:
         return limits
 
     def add_new_link(self, link_name, parent_id, position, rotation=None):
+        args = [link_name, parent_id, position, rotation]
+        self._add_new_link_history.append(args)
+
         if rotation is None:
             rotation = [0, 0, 0]
-        return self._robot.add_new_link(link_name, parent_id, position, rotation)
+        self._robot.add_new_link(link_name, parent_id, position, rotation)
 
     def compute_inter_link_sqdists(
         self,
@@ -233,11 +248,19 @@ class RobotModel:
     def clear_cache(self):
         self._robot.clear_cache()
 
-    # for pickling and unpickling
-    # https://stackoverflow.com/questions/1939058/simple-example-of-use-of-setstate-and-getstate
     def __getstate__(self):  # pickling
-        return {"_xml_text": self._xml_text}
+        state = self.__dict__.copy()
+        state["_robot"] = None
+        return state
 
-    def __setstate__(self, d):  # unpickling
-        self._xml_text = d["_xml_text"]
+    def __setstate__(self, state):  # unpickling
+        self.__dict__.update(state)
         self._robot = _tinyfk.RobotModel(self._xml_text)
+
+        for arg in copy.deepcopy(self._add_new_link_history):
+            self.add_new_link(*arg)
+
+        for arg in copy.deepcopy(self._set_joint_angles_history):
+            self.set_joint_angles(*arg)
+        self._add_new_link_history = []
+        self._set_joint_angles_history = []
