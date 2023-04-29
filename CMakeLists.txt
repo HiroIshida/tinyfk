@@ -11,10 +11,14 @@ add_subdirectory("urdf_parser")
 include_directories("third_party" "urdf_parser/include")
 
 set(BUILD_SHARED_LIBS OFF)
-set(ASSIMP_BUILD_TESTS ON)
-add_subdirectory("assimp")
+set(ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_INSTALL OFF)
+add_subdirectory("third_party/assimp")
 
-find_package(fcl REQUIRED)
+set(FCL_STATIC_LIBRARY ON)
+set(FCL_WITH_OCTOMAP OFF)
+set(BUILD_TESTING OFF)
+add_subdirectory("third_party/fcl")
 
 find_package(Eigen3 REQUIRED)
 ADD_DEFINITIONS(-DEIGEN_NO_DEBUG)
@@ -25,9 +29,6 @@ include_directories(include/)
 add_library(loadmesh STATIC src/mesh.cpp)
 target_link_libraries(loadmesh assimp fcl)
 
-add_executable(main main.cpp)
-target_link_libraries(main loadmesh)
-    
 set(TINYFK_SRC src/tinyfk.cpp src/kinematics.cpp)
 add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk loadmesh urdfdom_model)
