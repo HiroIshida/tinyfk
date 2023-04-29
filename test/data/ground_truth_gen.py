@@ -25,11 +25,11 @@ joint_angles = [0.564, 0.35, -0.74, -0.7, -0.7, -0.17, -0.63]
 for j, a in zip(joint_list, joint_angles):
     j.joint_angle(a)
 
-x, y, theta = 0.3, 0.5, 0.7
-co = Coordinates(pos=[x, y, 0.0], rot=rpy_matrix(theta, 0.0, 0.0))
+x, y, z, r, p, y = 0.3, 0.5, 0.7, 0.1, 0.2, 0.3
+co = Coordinates(pos=[x, y, z], rot=rpy_matrix(y, p, r))
 robot_model.newcoords(co)
 
-angle_vector = joint_angles + [x, y, theta]
+angle_vector = joint_angles + [x, y, z, r, p, y]
 
 # compute pose of links
 world_coordinate = CascadedCoords()

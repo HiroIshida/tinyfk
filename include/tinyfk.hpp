@@ -38,47 +38,41 @@ struct RelevancePredicateTable {
   }
 };
 
-struct BasePose {
-  std::array<double, 3> pose3d_;
-  urdf::Pose pose_;
-  void set(double x, double y, double theta) {
-    pose_.position = urdf::Vector3(x, y, 0.0);
-    pose_.rotation =
-        urdf::Rotation(0.0, 0.0, 1.0 * sin(0.5 * theta), cos(0.5 * theta));
-    pose3d_[0] = x;
-    pose3d_[1] = y;
-    pose3d_[2] = theta;
-  }
-};
-
 struct LinkIdAndPose {
   size_t id;
   urdf::Pose pose;
 };
 
-class RobotModelBase {
+enum class RotationType { IGNORE, RPY, XYZW };
+
+class KinematicModel {
 public: // members
   // change them all to private later
   urdf::ModelInterfaceSharedPtr robot_urdf_interface_;
 
   urdf::LinkSharedPtr root_link_;
+  size_t root_link_id_;
   std::vector<urdf::LinkSharedPtr> links_;
   std::unordered_map<std::string, int> link_ids_;
+  std::vector<urdf::LinkSharedPtr> com_dummy_links_;
 
   std::vector<urdf::JointSharedPtr> joints_;
   std::unordered_map<std::string, int> joint_ids_;
   std::vector<double> joint_angles_;
+
+  urdf::Pose base_pose_;
+  Eigen::Matrix3d base_rotmat_; // must be set when base_pose is set
+
   RelevancePredicateTable rptable_;
-  BasePose base_pose_;
   int num_dof_;
 
   mutable SizedStack<LinkIdAndPose> transform_stack_;
   mutable SizedCache<urdf::Pose> transform_cache_;
 
 public: // functions
-  RobotModelBase(const std::string &xml_string);
+  KinematicModel(const std::string &xml_string);
 
-  virtual ~RobotModelBase() {}
+  virtual ~KinematicModel() {}
 
   void set_joint_angles( // this will clear all the cache stored
       const std::vector<size_t> &joint_ids,
@@ -88,8 +82,11 @@ public: // functions
       const std::vector<size_t> &joint_ids,
       const std::vector<double> &joint_angles);
 
-  void set_base_pose(double x, double y, double theta);
-  void _set_base_pose(double x, double y, double theta);
+  void set_base_pose(urdf::Pose pose) {
+    this->_set_base_pose(pose);
+    this->clear_cache();
+  }
+  void _set_base_pose(urdf::Pose pose);
 
   void clear_cache();
 
@@ -121,52 +118,31 @@ public: // functions
     return link_names;
   }
 
-  virtual void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                             bool usebase) const = 0;
-
-  virtual Eigen::MatrixXd get_jacobian(size_t elink_id,
-                                       const std::vector<size_t> &joint_ids,
-                                       bool with_rpy = false,
-                                       bool with_base = false) = 0;
-
-  void set_joint_angle(size_t joint_id, double angle) {
-    joint_angles_[joint_id] = angle;
-  }
-
-  void add_new_link(std::string link_name, size_t parent_id,
-                    std::array<double, 3> position,
-                    std::array<double, 3> rotation);
-
-private:
-  void update_rptable();
-};
-
-class CacheUtilizedRobotModel : public RobotModelBase {
-public:
-  using RobotModelBase::RobotModelBase;
-
   void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                      bool usebase) const;
 
   Eigen::MatrixXd get_jacobian(size_t elink_id,
                                const std::vector<size_t> &joint_ids,
-                               bool with_rpy = false, bool with_base = false);
+                               RotationType rot_type = RotationType::IGNORE,
+                               bool with_base = false);
+
+  urdf::Vector3 get_com(bool with_base);
+
+  Eigen::MatrixXd get_com_jacobian(const std::vector<size_t> &joint_ids,
+                                   bool with_base);
+
+  void set_joint_angle(size_t joint_id, double angle) {
+    joint_angles_[joint_id] = angle;
+  }
+
+  urdf::LinkSharedPtr add_new_link(std::string link_name, size_t parent_id,
+                                   std::array<double, 3> position,
+                                   std::array<double, 3> rotation);
 
 private:
   void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,
                            bool usebase) const;
-};
-
-class NaiveRobotModel : public RobotModelBase {
-public:
-  using RobotModelBase::RobotModelBase;
-
-  void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                     bool with_base) const;
-
-  Eigen::MatrixXd get_jacobian(size_t elink_id,
-                               const std::vector<size_t> &joint_ids,
-                               bool with_rpy = false, bool with_base = false);
+  void update_rptable();
 };
 
 std::string load_urdf(const std::string &urdf_path);

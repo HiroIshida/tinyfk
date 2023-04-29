@@ -6,13 +6,14 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 #include "tinyfk.hpp"
 #include "urdf_model/pose.h"
+#include <Eigen/Geometry>
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
 
 namespace tinyfk {
 
-RobotModelBase::RobotModelBase(const std::string &xml_string) {
+KinematicModel::KinematicModel(const std::string &xml_string) {
   if (xml_string.empty()) {
     throw std::runtime_error("xml string is empty");
   }
@@ -68,22 +69,48 @@ RobotModelBase::RobotModelBase(const std::string &xml_string) {
   transform_stack_ = SizedStack<LinkIdAndPose>(N_link);
   transform_cache_ = SizedCache<urdf::Pose>(N_link);
   root_link_ = robot_urdf_interface->root_link_;
+  root_link_id_ = link_ids[root_link_->name];
   links_ = links;
   link_ids_ = link_ids;
   joints_ = joints;
   joint_ids_ = joint_ids;
   num_dof_ = num_dof;
   joint_angles_ = joint_angles;
-  this->update_rptable(); // update _rptable
+
+  // add COM of each link as new link
+  {
+    // NOTE: due to my bad design (add_new_link update internal state)
+    // this procedure must come after initialization of member variables
+    std::vector<urdf::LinkSharedPtr> com_dummy_links;
+    for (const auto &link : links) {
+      if (link->inertial == nullptr) {
+        continue;
+      }
+      const auto com_dummy_link_name = link->name + "_com";
+      std::array<double, 3> pos{link->inertial->origin.position.x,
+                                link->inertial->origin.position.y,
+                                link->inertial->origin.position.z};
+      const auto new_link = this->add_new_link(
+          com_dummy_link_name, link->id, pos, std::array<double, 3>{0, 0, 0});
+      // set new link's inertial as the same as the parent
+      // except its origin is zero
+      new_link->inertial = link->inertial;
+      new_link->inertial->origin = urdf::Pose();
+      com_dummy_links.push_back(new_link);
+    }
+    this->com_dummy_links_ = com_dummy_links;
+  }
+
+  this->set_base_pose(urdf::Pose()); // initial base pose
 }
 
-void RobotModelBase::set_joint_angles(const std::vector<size_t> &joint_ids,
+void KinematicModel::set_joint_angles(const std::vector<size_t> &joint_ids,
                                       const std::vector<double> &joint_angles) {
   this->_set_joint_angles(joint_ids, joint_angles);
   transform_cache_.clear();
 }
 
-void RobotModelBase::_set_joint_angles(
+void KinematicModel::_set_joint_angles(
     const std::vector<size_t> &joint_ids,
     const std::vector<double> &joint_angles) {
   for (size_t i = 0; i < joint_ids.size(); i++) {
@@ -91,24 +118,23 @@ void RobotModelBase::_set_joint_angles(
   }
 }
 
-void RobotModelBase::set_base_pose(double x, double y, double theta) {
-  _set_base_pose(x, y, theta);
-  transform_cache_.clear();
-}
-void RobotModelBase::_set_base_pose(double x, double y, double theta) {
-  base_pose_.set(x, y, theta);
+void KinematicModel::_set_base_pose(urdf::Pose pose) {
+  this->base_pose_ = pose;
+  const auto &tmp = pose.rotation;
+  Eigen::Quaterniond q(tmp.w, tmp.x, tmp.y, tmp.z);
+  this->base_rotmat_ = q.toRotationMatrix();
 }
 
-void RobotModelBase::clear_cache() { transform_cache_.clear(); }
+void KinematicModel::clear_cache() { transform_cache_.clear(); }
 
-void RobotModelBase::set_init_angles() {
+void KinematicModel::set_init_angles() {
   std::vector<double> joint_angles(num_dof_, 0.0);
   joint_angles_ = joint_angles;
   transform_cache_.clear();
 }
 
 std::vector<double>
-RobotModelBase::get_joint_angles(const std::vector<size_t> &joint_ids) const {
+KinematicModel::get_joint_angles(const std::vector<size_t> &joint_ids) const {
   std::vector<double> angles(joint_ids.size());
   for (size_t i = 0; i < joint_ids.size(); i++) {
     int idx = joint_ids[i];
@@ -118,7 +144,7 @@ RobotModelBase::get_joint_angles(const std::vector<size_t> &joint_ids) const {
 }
 
 std::vector<size_t>
-RobotModelBase::get_joint_ids(std::vector<std::string> joint_names) const {
+KinematicModel::get_joint_ids(std::vector<std::string> joint_names) const {
   int n_joint = joint_names.size();
   std::vector<size_t> joint_ids(n_joint);
   for (int i = 0; i < n_joint; i++) {
@@ -132,7 +158,7 @@ RobotModelBase::get_joint_ids(std::vector<std::string> joint_names) const {
 }
 
 std::vector<AngleLimit>
-RobotModelBase::get_joint_limits(const std::vector<size_t> &joint_ids) const {
+KinematicModel::get_joint_limits(const std::vector<size_t> &joint_ids) const {
   const size_t n_joint = joint_ids.size();
   std::vector<AngleLimit> limits(n_joint, AngleLimit());
   for (size_t i = 0; i < n_joint; i++) {
@@ -146,7 +172,7 @@ RobotModelBase::get_joint_limits(const std::vector<size_t> &joint_ids) const {
 }
 
 std::vector<size_t>
-RobotModelBase::get_link_ids(std::vector<std::string> link_names) const {
+KinematicModel::get_link_ids(std::vector<std::string> link_names) const {
   int n_link = link_names.size();
   std::vector<size_t> link_ids(n_link);
   for (int i = 0; i < n_link; i++) {
@@ -159,9 +185,10 @@ RobotModelBase::get_link_ids(std::vector<std::string> link_names) const {
   return link_ids;
 }
 
-void RobotModelBase::add_new_link(std::string link_name, size_t parent_id,
-                                  std::array<double, 3> position,
-                                  std::array<double, 3> rotation) {
+urdf::LinkSharedPtr
+KinematicModel::add_new_link(std::string link_name, size_t parent_id,
+                             std::array<double, 3> position,
+                             std::array<double, 3> rotation) {
   bool link_name_exists = (link_ids_.find(link_name) != link_ids_.end());
   if (link_name_exists) {
     std::string message = "link name " + link_name + " already exists";
@@ -190,9 +217,11 @@ void RobotModelBase::add_new_link(std::string link_name, size_t parent_id,
   transform_cache_.extend();
 
   this->update_rptable(); // set _rptable
+
+  return new_link;
 }
 
-void RobotModelBase::update_rptable() {
+void KinematicModel::update_rptable() {
   // this function usually must come in the end of a function
 
   // we must recreate from scratch

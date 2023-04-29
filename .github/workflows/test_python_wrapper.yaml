@@ -29,10 +29,13 @@ jobs:
 
             - name: pip install tinyfk from source
               run: |
-                  pip install numpy pytest
+                  pip install numpy pytest mypy
                   pip install . -v
 
             - name: Test python wrapper
               run: |
                   cd python
                   pytest
+            - name: Run mypy
+              run: |
+                  mypy python
