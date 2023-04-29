@@ -2,12 +2,12 @@ import copy
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional, Tuple, Union
 from urllib.request import urlretrieve
 
 import numpy as np
 
-from . import _tinyfk
+from . import _tinyfk  # type: ignore
 
 _cache_dir = Path("~/.tinyfk").expanduser()
 if not _cache_dir.exists():
@@ -59,8 +59,8 @@ class KinematicModel:
     def root_link_name(self) -> str:
         return self._robot.get_root_link_name()
 
-    def get_q(self, joint_ids, base_type: BaseType = BaseType.FIXED):
-        base_pose_vec = None
+    def get_q(self, joint_ids: List[int], base_type: BaseType = BaseType.FIXED) -> np.ndarray:
+        base_pose_vec: np.ndarray
         if base_type == BaseType.FIXED:
             base_pose_vec = np.array([])
         elif base_type == BaseType.PLANER:
@@ -68,11 +68,15 @@ class KinematicModel:
             base_pose_vec = np.array([xyzrpy[0], xyzrpy[1], xyzrpy[-1]])
         elif base_type == BaseType.FLOATING:
             base_pose_vec = self._robot.get_base_pose()
+        else:
+            assert False
         joint_angles = self._robot.get_joint_angles(joint_ids)
         q = np.hstack([joint_angles, base_pose_vec])
         return q
 
-    def set_q(self, joint_ids, q, base_type: BaseType = BaseType.FIXED):
+    def set_q(
+        self, joint_ids: List[int], q: np.ndarray, base_type: BaseType = BaseType.FIXED
+    ) -> None:
         args = [joint_ids, q, base_type]
         self._set_joint_angles_history.append(args)
 
@@ -99,32 +103,36 @@ class KinematicModel:
 
     def solve_fk(
         self,
-        joint_angles_sequence,
-        elink_ids,
-        joint_ids,
+        qs: Union[List[np.ndarray], np.ndarray],
+        elink_ids: Union[List[int], int],
+        joint_ids: List[int],
         rot_type: RotationType = RotationType.IGNORE,
         base_type: BaseType = BaseType.FIXED,
-        with_jacobian=False,
-        use_cache=False,
-    ):
+        with_jacobian: bool = False,
+        use_cache: bool = False,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         if use_cache is False, before solving FK, internal caches in the tinyfk side will be
         cleared. If True, pre-exisiting cache will be took advantaged.
         Setting use_cache=True is potentially dangeroud feature for developers who
         understand the caching mechanism of the tinyfk side.
         """
-        if not isinstance(joint_angles_sequence, np.ndarray):
-            joint_angles_sequence = np.array(joint_angles_sequence)
-            if joint_angles_sequence.ndim == 1:
-                joint_angles_sequence = np.expand_dims(joint_angles_sequence, axis=0)
-        n_seq, n_dof = joint_angles_sequence.shape
+        if isinstance(qs, np.ndarray):
+            if qs.ndim == 1:
+                qs = np.expand_dims(qs, axis=0)
+        else:
+            qs = np.array(qs)
+        assert isinstance(qs, np.ndarray)
+        n_seq, n_dof = qs.shape
+
+        if isinstance(elink_ids, int):
+            elink_ids = [elink_ids]
+        assert isinstance(elink_ids, List)
 
         n_joint = len(joint_ids)
         if base_type == BaseType.PLANER:
             assert n_dof == n_joint + 3
-            joint_angles_sequence = self._modify_input_with_3dof_base(
-                n_joint, joint_angles_sequence
-            )
+            qs = self._modify_input_with_3dof_base(n_joint, qs)
         elif base_type == BaseType.FLOATING:
             assert n_dof == n_joint + 6
         elif base_type == BaseType.FIXED:
@@ -134,7 +142,7 @@ class KinematicModel:
 
         with_base = base_type != BaseType.FIXED
         P, J = self._robot.solve_forward_kinematics(
-            joint_angles_sequence,
+            qs,
             elink_ids,
             joint_ids,
             rot_type.value,
@@ -151,23 +159,23 @@ class KinematicModel:
 
     def solve_com_fk(
         self,
-        joint_angles_sequence,
-        joint_ids,
+        qs: Union[List[np.ndarray], np.ndarray],
+        joint_ids: List[int],
         base_type: BaseType = BaseType.FIXED,
-        with_jacobian=False,
-    ):
-        if not isinstance(joint_angles_sequence, np.ndarray):
-            joint_angles_sequence = np.array(joint_angles_sequence)
-            if joint_angles_sequence.ndim == 1:
-                joint_angles_sequence = np.expand_dims(joint_angles_sequence, axis=0)
-        n_seq, n_dof = joint_angles_sequence.shape
+        with_jacobian: bool = False,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+
+        if not isinstance(qs, np.ndarray):
+            qs = np.array(qs)
+            if qs.ndim == 1:
+                qs = np.expand_dims(qs, axis=0)
+        assert isinstance(qs, np.ndarray)
+        n_seq, n_dof = qs.shape
 
         n_joint = len(joint_ids)
         if base_type == BaseType.PLANER:
             assert n_dof == n_joint + 3
-            joint_angles_sequence = self._modify_input_with_3dof_base(
-                n_joint, joint_angles_sequence
-            )
+            qs = self._modify_input_with_3dof_base(n_joint, qs)
         elif base_type == BaseType.FLOATING:
             assert n_dof == n_joint + 6
         elif base_type == BaseType.FIXED:
@@ -176,59 +184,60 @@ class KinematicModel:
             assert False
 
         with_base = base_type != BaseType.FIXED
-        P, J = self._robot.solve_com_forward_kinematics(
-            joint_angles_sequence, joint_ids, with_base, with_jacobian
-        )
+        P, J = self._robot.solve_com_forward_kinematics(qs, joint_ids, with_base, with_jacobian)
         return P, J
 
-    def get_joint_names(self):
+    def get_joint_names(self) -> List[str]:
         return self._robot.get_joint_names()
 
-    def get_joint_ids(self, joint_names):
+    def get_joint_ids(self, joint_names) -> List[int]:
         return self._robot.get_joint_ids(joint_names)
 
-    def get_link_ids(self, link_names):
+    def get_link_ids(self, link_names) -> List[int]:
         return self._robot.get_link_ids(link_names)
 
-    def get_joint_limits(self, joint_ids):
+    def get_joint_limits(self, joint_ids) -> List[Tuple[Optional[float], Optional[float]]]:
         ret = self._robot.get_joint_limits(joint_ids)
-        limits = []
+        limits: List[Tuple[Optional[float], Optional[float]]] = []
         for lower, upper in ret:
             if lower == 0.0 and upper == 0.0:
                 # NOTE: if no limit is set, the value is set to 0.0 in urdfdom
                 # TODO: I assume that if joint limit is not set, both lower and upper
                 # are not set. Is this assumption correct?
-                limits.append([None, None])
+                limits.append((None, None))
             else:
-                limits.append([lower, upper])
+                limits.append((lower, upper))
         return limits
 
-    def add_new_link(self, link_name, parent_id, position, rotation=None):
-        args = [link_name, parent_id, position, rotation]
+    def add_new_link(
+        self, link_name: str, parent_id: int, position: np.ndarray, rpy: Optional[np.ndarray] = None
+    ):
+        args = [link_name, parent_id, position, rpy]
         self._add_new_link_history.append(args)
 
-        if rotation is None:
-            rotation = [0, 0, 0]
-        self._robot.add_new_link(link_name, parent_id, position, rotation)
+        if rpy is None:
+            rpy = np.zeros(3)
+        self._robot.add_new_link(link_name, parent_id, position, rpy)
 
     def compute_inter_link_sqdists(
         self,
-        angle_vectors,
-        link_id_pairs,
-        joint_ids,
+        qs: Union[List[np.ndarray], np.ndarray],
+        link_id_pairs: List[Tuple[int, int]],
+        joint_ids: List[int],
         base_type: BaseType = BaseType.FIXED,
-        with_jacobian=False,
-        use_cache=False,
-    ):
+        with_jacobian: bool = False,
+        use_cache: bool = False,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+
         if base_type == BaseType.PLANER:
-            if isinstance(angle_vectors, list):
-                angle_vectors = np.array(angle_vectors)
-            angle_vectors = self._modify_input_with_3dof_base(len(joint_ids), angle_vectors)
+            if isinstance(qs, list):
+                qs = np.array(qs)
+            qs = self._modify_input_with_3dof_base(len(joint_ids), qs)
 
         with_base = base_type != BaseType.FIXED
         link_ids1, link_ids2 = zip(*link_id_pairs)
         V, J = self._robot.compute_inter_link_squared_dists(
-            angle_vectors,
+            qs,
             list(link_ids1),
             list(link_ids2),
             joint_ids,
@@ -245,7 +254,7 @@ class KinematicModel:
             J = J[:, extrac_indices]
         return V, J
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         self._robot.clear_cache()
 
     def __getstate__(self):  # pickling
