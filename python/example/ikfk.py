@@ -3,7 +3,7 @@ import numpy as np
 import tinyfk
 
 urdf_model_path = tinyfk.pr2_urdfpath()
-kin_solver = tinyfk.RobotModel(urdf_model_path)
+kin_solver = tinyfk.KinematicModel(urdf_model_path)
 rarm_joint_names = [
     "r_shoulder_pan_joint",
     "r_shoulder_lift_joint",
@@ -23,7 +23,7 @@ angle_vector_init = np.array([[0.564, 0.35, -0.74, -0.7, -0.7, -0.17, -0.63]]) *
 # and point-ik will be solved
 desired_xyzrpy = [0.7, -0.5, 0.6, 0.0, 0.0, 0.0]
 
-xyzrpy, jac = kin_solver.solve_forward_kinematics(
+xyzrpy, jac = kin_solver.solve_fk(
     angle_vector_init,
     [end_link_id],
     rarm_joint_ids,
@@ -32,7 +32,5 @@ xyzrpy, jac = kin_solver.solve_forward_kinematics(
 )
 print(xyzrpy)
 
-ret = kin_solver.solve_com_forward_kinematics(
-    angle_vector_init, rarm_joint_ids, tinyfk.BaseType.FIXED
-)
+ret = kin_solver.solve_com_fk(angle_vector_init, rarm_joint_ids, tinyfk.BaseType.FIXED)
 print(ret)

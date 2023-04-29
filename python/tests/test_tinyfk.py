@@ -27,7 +27,7 @@ def test_data():
 
     # load fkmodel
     urdf_model_path = tinyfk.pr2_urdfpath()
-    fksolver = tinyfk.RobotModel(urdf_model_path)
+    fksolver = tinyfk.KinematicModel(urdf_model_path)
 
     # adding new link `mylink` to `r_upper_arm_link`
     parent_id = fksolver.get_link_ids(["r_upper_arm_link"])[0]
@@ -42,7 +42,7 @@ def test_data():
 
 def test_root_link_id():
     urdf_model_path = tinyfk.pr2_urdfpath()
-    fksolver = tinyfk.RobotModel(urdf_model_path)
+    fksolver = tinyfk.KinematicModel(urdf_model_path)
     assert fksolver.root_link_name == "base_footprint"
 
 
@@ -65,7 +65,7 @@ def test_forward_kinematics(test_data):
     rot_type = RotationType.RPY
     base_type = tinyfk.BaseType.FLOATING
     with_jacobian = True  # If true, jacobian is computed, otherewise returns J = None.
-    P, _ = fksolver.solve_forward_kinematics(
+    P, _ = fksolver.solve_fk(
         [angle_vector], link_ids, joint_ids, rot_type, base_type, with_jacobian
     )
     testing.assert_almost_equal(P, gt_pose_list)
@@ -74,12 +74,10 @@ def test_forward_kinematics(test_data):
     # check resulting jacbian J_analytical coincides with J_numerical witch is
     # computed via numerical differentiation.
     for link_id in link_ids:
-        P_tmp, J_analytical = fksolver.solve_forward_kinematics(
+        P_tmp, J_analytical = fksolver.solve_fk(
             [angle_vector], [link_id], joint_ids, rot_type, base_type, True
         )
-        P0, _ = fksolver.solve_forward_kinematics(
-            [angle_vector], [link_id], joint_ids, rot_type, base_type, False
-        )
+        P0, _ = fksolver.solve_fk([angle_vector], [link_id], joint_ids, rot_type, base_type, False)
         testing.assert_almost_equal(P_tmp, P0)  # P computed with and without jacobian must match
 
 
@@ -88,7 +86,7 @@ def test_jacobian(test_data):
     rot_type = RotationType.RPY
     base_type = tinyfk.BaseType.FLOATING
     for link_id in link_ids:
-        P0, J_analytical = fksolver.solve_forward_kinematics(
+        P0, J_analytical = fksolver.solve_fk(
             [angle_vector], [link_id], joint_ids, rot_type, base_type, True
         )
         eps = 1e-7
@@ -96,7 +94,7 @@ def test_jacobian(test_data):
         for i in range(len(angle_vector)):
             angle_vector_p = copy.copy(angle_vector)
             angle_vector_p[i] += eps
-            P1, _ = fksolver.solve_forward_kinematics(
+            P1, _ = fksolver.solve_fk(
                 [angle_vector_p], [link_id], joint_ids, rot_type, base_type, False
             )
             P_diff = (P1 - P0) / eps
@@ -116,7 +114,7 @@ def test_jacobian_3dof_base(test_data):
     base_type = tinyfk.BaseType.PLANER
 
     for link_id in link_ids:
-        P0, J_analytical = fksolver.solve_forward_kinematics(
+        P0, J_analytical = fksolver.solve_fk(
             [angle_vector_3dof_base], [link_id], joint_ids, rot_type, base_type, True
         )
         eps = 1e-7
@@ -124,7 +122,7 @@ def test_jacobian_3dof_base(test_data):
         for i in range(len(angle_vector_3dof_base)):
             angle_vector_p = copy.copy(angle_vector_3dof_base)
             angle_vector_p[i] += eps
-            P1, _ = fksolver.solve_forward_kinematics(
+            P1, _ = fksolver.solve_fk(
                 [angle_vector_p], [link_id], joint_ids, rot_type, base_type, False
             )
             P_diff = (P1 - P0) / eps
@@ -142,9 +140,7 @@ def test_trajectory_fk(test_data):
     base_type = tinyfk.BaseType.FLOATING
 
     angle_vectors = [angle_vector + np.random.randn(n_dof) * 0.1 for _ in range(n_wp)]
-    P, J = fksolver.solve_forward_kinematics(
-        angle_vectors, link_ids, joint_ids, rot_type, base_type, True
-    )
+    P, J = fksolver.solve_fk(angle_vectors, link_ids, joint_ids, rot_type, base_type, True)
     assert P.shape == (n_wp * len(link_ids), 6)
     assert J.shape == (n_wp * len(link_ids) * 6, n_dof)
 
@@ -153,9 +149,7 @@ def test_trajectory_fk(test_data):
 
     # check if multiple av cases is consistent with the single av case
     for i, av in enumerate(angle_vectors):
-        P_single, J_single = fksolver.solve_forward_kinematics(
-            [av], link_ids, joint_ids, rot_type, base_type, True
-        )
+        P_single, J_single = fksolver.solve_fk([av], link_ids, joint_ids, rot_type, base_type, True)
         np.testing.assert_almost_equal(Ps[i], P_single)
         np.testing.assert_almost_equal(Js[i], J_single)
 

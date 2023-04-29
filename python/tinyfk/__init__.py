@@ -39,7 +39,7 @@ class RotationType(Enum):
 
 
 # higher layer wrap
-class RobotModel:
+class KinematicModel:
     # these histories will be used in de-pickling
     _add_new_link_history: List[Any] = []
     _set_joint_angles_history: List[Any] = []
@@ -59,7 +59,7 @@ class RobotModel:
     def root_link_name(self) -> str:
         return self._robot.get_root_link_name()
 
-    def get_joint_angles(self, joint_ids, base_type: BaseType = BaseType.FIXED):
+    def get_q(self, joint_ids, base_type: BaseType = BaseType.FIXED):
         base_pose_vec = None
         if base_type == BaseType.FIXED:
             base_pose_vec = np.array([])
@@ -72,7 +72,7 @@ class RobotModel:
         q = np.hstack([joint_angles, base_pose_vec])
         return q
 
-    def set_joint_angles(self, joint_ids, q, base_type: BaseType = BaseType.FIXED):
+    def set_q(self, joint_ids, q, base_type: BaseType = BaseType.FIXED):
         args = [joint_ids, q, base_type]
         self._set_joint_angles_history.append(args)
 
@@ -97,7 +97,7 @@ class RobotModel:
         joint_angles_sequence_modified[:, -1] = joint_angles_sequence[:, n_joint + 2]
         return joint_angles_sequence_modified
 
-    def solve_forward_kinematics(
+    def solve_fk(
         self,
         joint_angles_sequence,
         elink_ids,
@@ -149,7 +149,7 @@ class RobotModel:
             J = J[:, extrac_indices]
         return P, J
 
-    def solve_com_forward_kinematics(
+    def solve_com_fk(
         self,
         joint_angles_sequence,
         joint_ids,
@@ -261,6 +261,6 @@ class RobotModel:
             self.add_new_link(*arg)
 
         for arg in copy.deepcopy(self._set_joint_angles_history):
-            self.set_joint_angles(*arg)
+            self.set_q(*arg)
         self._add_new_link_history = []
         self._set_joint_angles_history = []
