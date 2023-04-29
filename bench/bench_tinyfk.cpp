@@ -5,7 +5,7 @@
 
 using namespace tinyfk;
 
-void benchmark_fk(KinematicsModel &kin, size_t n_iter,
+void benchmark_fk(KinematicModel &kin, size_t n_iter,
                   const std::string &bench_name) {
   std::vector<std::string> link_names = {
       "l_gripper_finger_link", "r_gripper_finger_link", "wrist_flex_link",
@@ -53,7 +53,7 @@ void benchmark_fk(KinematicsModel &kin, size_t n_iter,
 int main() {
   const std::string urdf_file = "../data/fetch.urdf";
   const auto urdf_string = load_urdf(urdf_file);
-  auto kin = KinematicsModel(urdf_string);
+  auto kin = KinematicModel(urdf_string);
 
   const size_t N = 100000;
   benchmark_fk(kin, N, "with_cache");

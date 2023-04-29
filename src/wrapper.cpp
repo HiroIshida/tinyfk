@@ -17,10 +17,10 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 namespace py = pybind11;
 using namespace tinyfk;
 
-class KinematicsModelPyWrapper : public KinematicsModel {
+class KinematicsModelPyWrapper : public KinematicModel {
 
 public:
-  using KinematicsModel::KinematicsModel;
+  using KinematicModel::KinematicModel;
 
   void set_base_pose(std::vector<double>::const_iterator begin) {
     auto pose = urdf::Pose();
@@ -31,7 +31,7 @@ public:
     pose.position.z = *begin;
     ++begin;
     pose.rotation.setFromRPY(*begin, *(begin + 1), *(begin + 2));
-    KinematicsModel::set_base_pose(pose);
+    KinematicModel::set_base_pose(pose);
   }
 
   void set_base_pose(const std::vector<double> &xyzrpy) {
@@ -203,7 +203,7 @@ public:
   void add_new_link(std::string link_name, size_t parent_id,
                     std::array<double, 3> position,
                     std::array<double, 3> rotation) {
-    KinematicsModel::add_new_link(link_name, parent_id, position, rotation);
+    KinematicModel::add_new_link(link_name, parent_id, position, rotation);
   }
 };
 

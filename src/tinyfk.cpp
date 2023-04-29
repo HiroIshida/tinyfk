@@ -13,7 +13,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 namespace tinyfk {
 
-KinematicsModel::KinematicsModel(const std::string &xml_string) {
+KinematicModel::KinematicModel(const std::string &xml_string) {
   if (xml_string.empty()) {
     throw std::runtime_error("xml string is empty");
   }
@@ -104,14 +104,13 @@ KinematicsModel::KinematicsModel(const std::string &xml_string) {
   this->set_base_pose(urdf::Pose()); // initial base pose
 }
 
-void KinematicsModel::set_joint_angles(
-    const std::vector<size_t> &joint_ids,
-    const std::vector<double> &joint_angles) {
+void KinematicModel::set_joint_angles(const std::vector<size_t> &joint_ids,
+                                      const std::vector<double> &joint_angles) {
   this->_set_joint_angles(joint_ids, joint_angles);
   transform_cache_.clear();
 }
 
-void KinematicsModel::_set_joint_angles(
+void KinematicModel::_set_joint_angles(
     const std::vector<size_t> &joint_ids,
     const std::vector<double> &joint_angles) {
   for (size_t i = 0; i < joint_ids.size(); i++) {
@@ -119,23 +118,23 @@ void KinematicsModel::_set_joint_angles(
   }
 }
 
-void KinematicsModel::_set_base_pose(urdf::Pose pose) {
+void KinematicModel::_set_base_pose(urdf::Pose pose) {
   this->base_pose_ = pose;
   const auto &tmp = pose.rotation;
   Eigen::Quaterniond q(tmp.w, tmp.x, tmp.y, tmp.z);
   this->base_rotmat_ = q.toRotationMatrix();
 }
 
-void KinematicsModel::clear_cache() { transform_cache_.clear(); }
+void KinematicModel::clear_cache() { transform_cache_.clear(); }
 
-void KinematicsModel::set_init_angles() {
+void KinematicModel::set_init_angles() {
   std::vector<double> joint_angles(num_dof_, 0.0);
   joint_angles_ = joint_angles;
   transform_cache_.clear();
 }
 
 std::vector<double>
-KinematicsModel::get_joint_angles(const std::vector<size_t> &joint_ids) const {
+KinematicModel::get_joint_angles(const std::vector<size_t> &joint_ids) const {
   std::vector<double> angles(joint_ids.size());
   for (size_t i = 0; i < joint_ids.size(); i++) {
     int idx = joint_ids[i];
@@ -145,7 +144,7 @@ KinematicsModel::get_joint_angles(const std::vector<size_t> &joint_ids) const {
 }
 
 std::vector<size_t>
-KinematicsModel::get_joint_ids(std::vector<std::string> joint_names) const {
+KinematicModel::get_joint_ids(std::vector<std::string> joint_names) const {
   int n_joint = joint_names.size();
   std::vector<size_t> joint_ids(n_joint);
   for (int i = 0; i < n_joint; i++) {
@@ -159,7 +158,7 @@ KinematicsModel::get_joint_ids(std::vector<std::string> joint_names) const {
 }
 
 std::vector<AngleLimit>
-KinematicsModel::get_joint_limits(const std::vector<size_t> &joint_ids) const {
+KinematicModel::get_joint_limits(const std::vector<size_t> &joint_ids) const {
   const size_t n_joint = joint_ids.size();
   std::vector<AngleLimit> limits(n_joint, AngleLimit());
   for (size_t i = 0; i < n_joint; i++) {
@@ -173,7 +172,7 @@ KinematicsModel::get_joint_limits(const std::vector<size_t> &joint_ids) const {
 }
 
 std::vector<size_t>
-KinematicsModel::get_link_ids(std::vector<std::string> link_names) const {
+KinematicModel::get_link_ids(std::vector<std::string> link_names) const {
   int n_link = link_names.size();
   std::vector<size_t> link_ids(n_link);
   for (int i = 0; i < n_link; i++) {
@@ -187,9 +186,9 @@ KinematicsModel::get_link_ids(std::vector<std::string> link_names) const {
 }
 
 urdf::LinkSharedPtr
-KinematicsModel::add_new_link(std::string link_name, size_t parent_id,
-                              std::array<double, 3> position,
-                              std::array<double, 3> rotation) {
+KinematicModel::add_new_link(std::string link_name, size_t parent_id,
+                             std::array<double, 3> position,
+                             std::array<double, 3> rotation) {
   bool link_name_exists = (link_ids_.find(link_name) != link_ids_.end());
   if (link_name_exists) {
     std::string message = "link name " + link_name + " already exists";
@@ -222,7 +221,7 @@ KinematicsModel::add_new_link(std::string link_name, size_t parent_id,
   return new_link;
 }
 
-void KinematicsModel::update_rptable() {
+void KinematicModel::update_rptable() {
   // this function usually must come in the end of a function
 
   // we must recreate from scratch

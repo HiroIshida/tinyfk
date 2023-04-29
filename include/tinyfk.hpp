@@ -45,7 +45,7 @@ struct LinkIdAndPose {
 
 enum class RotationType { IGNORE, RPY, XYZW };
 
-class KinematicsModel {
+class KinematicModel {
 public: // members
   // change them all to private later
   urdf::ModelInterfaceSharedPtr robot_urdf_interface_;
@@ -70,9 +70,9 @@ public: // members
   mutable SizedCache<urdf::Pose> transform_cache_;
 
 public: // functions
-  KinematicsModel(const std::string &xml_string);
+  KinematicModel(const std::string &xml_string);
 
-  virtual ~KinematicsModel() {}
+  virtual ~KinematicModel() {}
 
   void set_joint_angles( // this will clear all the cache stored
       const std::vector<size_t> &joint_ids,
