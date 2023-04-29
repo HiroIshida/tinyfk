@@ -5,15 +5,21 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 */
 
 #include "tinyfk.hpp"
+#include "mesh.hpp"
+#include "urdf_model/link.h"
 #include "urdf_model/pose.h"
 #include <Eigen/Geometry>
 #include <cmath>
+#include <fcl/geometry/collision_geometry.h>
+#include <fcl/geometry/shape/box.h>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
 
 namespace tinyfk {
 
-KinematicModel::KinematicModel(const std::string &xml_string) {
+KinematicModel::KinematicModel(const std::string &urdf_path) {
+  const auto xml_string = load_urdf(urdf_path);
   if (xml_string.empty()) {
     throw std::runtime_error("xml string is empty");
   }
@@ -33,6 +39,36 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
     lid++;
   }
   size_t N_link = lid; // starting from 0 and finally ++ increment, so it'S ok
+
+  // loading meshes
+  std::vector<std::shared_ptr<fcl::CollisionGeometryf>> coll_geoms;
+  for (const auto &link : links) {
+    std::shared_ptr<fcl::CollisionGeometryf> coll_geom;
+    if (link->collision != nullptr) {
+      const auto urdf_geometry = link->collision->geometry;
+      if (urdf_geometry->type == urdf::Geometry::BOX) {
+        const auto box = urdf::dynamic_pointer_cast<urdf::Box>(urdf_geometry);
+        coll_geom =
+            std::make_shared<fcl::Boxf>(box->dim.x, box->dim.y, box->dim.z);
+
+      } else if (urdf_geometry->type == urdf::Geometry::SPHERE) {
+        const auto sphere =
+            urdf::dynamic_pointer_cast<urdf::Sphere>(urdf_geometry);
+        coll_geom = std::make_shared<fcl::Spheref>(sphere->radius);
+
+      } else if (urdf_geometry->type == urdf::Geometry::CYLINDER) {
+        const auto cylinder =
+            urdf::dynamic_pointer_cast<urdf::Cylinder>(urdf_geometry);
+        coll_geom = std::make_shared<fcl::Cylinderf>(cylinder->radius,
+                                                     cylinder->length);
+
+      } else if (urdf_geometry->type == urdf::Geometry::MESH) {
+        const auto mesh = urdf::dynamic_pointer_cast<urdf::Mesh>(urdf_geometry);
+        coll_geom = load_fcl_geometry(urdf_path, mesh->filename);
+      }
+    }
+    coll_geoms.push_back(coll_geom);
+  }
 
   // construct joints and joint_ids, and numbering joint id
   std::vector<urdf::JointSharedPtr> joints;
@@ -72,6 +108,7 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
   root_link_id_ = link_ids[root_link_->name];
   links_ = links;
   link_ids_ = link_ids;
+  coll_geoms_ = coll_geoms;
   joints_ = joints;
   joint_ids_ = joint_ids;
   num_dof_ = num_dof;
