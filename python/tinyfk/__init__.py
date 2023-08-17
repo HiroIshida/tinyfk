@@ -92,6 +92,7 @@ class KinematicModel:
             self._robot.set_joint_angles(joint_ids, joint_angles)
             self._robot.set_base_pose(base_pose)
         else:
+            assert len(q) == len(joint_ids)
             self._robot.set_joint_angles(joint_ids, q)
 
     def _modify_input_with_3dof_base(self, n_joint, joint_angles_sequence):
