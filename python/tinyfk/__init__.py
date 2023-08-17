@@ -81,18 +81,18 @@ class KinematicModel:
         self._set_joint_angles_history.append(args)
 
         if base_type == BaseType.PLANER:
-            assert len(q) == len(joint_ids) + 3
+            assert len(q) == len(joint_ids) + 3, "{} != {}".format(len(q), len(joint_ids) + 3)
             joint_angles, base_xytheta = q[:-3], q[-3:]
             base_pose = np.array([base_xytheta[0], base_xytheta[1], 0.0, 0.0, 0.0, base_xytheta[2]])
             self._robot.set_joint_angles(joint_ids, joint_angles)
             self._robot.set_base_pose(base_pose)
         elif base_type == BaseType.FLOATING:
-            assert len(q) == len(joint_ids) + 6
+            assert len(q) == len(joint_ids) + 6, "{} != {}".format(len(q), len(joint_ids) + 6)
             joint_angles, base_pose = q[:-6], q[-6:]
             self._robot.set_joint_angles(joint_ids, joint_angles)
             self._robot.set_base_pose(base_pose)
         else:
-            assert len(q) == len(joint_ids)
+            assert len(q) == len(joint_ids), "{} != {}".format(len(q), len(joint_ids))
             self._robot.set_joint_angles(joint_ids, q)
 
     def _modify_input_with_3dof_base(self, n_joint, joint_angles_sequence):
