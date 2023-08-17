@@ -41,6 +41,9 @@ RUN cd tinyfk && cat ../python_versions.txt | while read version; do pyenv globa
 COPY check_glibcxx.sh $HOME/
 RUN bash ./check_glibcxx.sh
 
+# NOTE: urllib 2.0 requires newer version of openssl which is bit
+# tedious to install for ubuntu 16.04
 RUN \
   pyenv global $(tail -n1 python_versions.txt) && \
-  pip install twine
+  pip install twine && \
+  pip install "urllib3<2.0"
