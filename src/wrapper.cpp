@@ -92,7 +92,7 @@ public:
       for (size_t j = 0; j < n_link; ++j) {
         const size_t head = i * n_link + j;
         urdf::Pose pose;
-        this->get_link_pose(elink_ids[j], pose, with_base);
+        this->get_link_pose(elink_ids[j], pose);
         P(0, head) = pose.position.x;
         P(1, head) = pose.position.y;
         P(2, head) = pose.position.z;
@@ -137,7 +137,7 @@ public:
         set_base_pose(xyzrpy_begin);
       }
 
-      const auto com = this->get_com(with_base);
+      const auto com = this->get_com();
       coms(0, i) = com.x;
       coms(1, i) = com.y;
       coms(2, i) = com.z;
@@ -179,8 +179,8 @@ public:
       for (size_t j = 0; j < n_check; ++j) {
         const size_t head = i * n_check + j;
         urdf::Pose pose1, pose2;
-        this->get_link_pose(link_ids1[j], pose1, with_base);
-        this->get_link_pose(link_ids2[j], pose2, with_base);
+        this->get_link_pose(link_ids1[j], pose1);
+        this->get_link_pose(link_ids2[j], pose2);
         const auto diff = pose1.position - pose2.position;
         Eigen::Vector3d diff_vec;
         diff_vec << diff.x, diff.y, diff.z;

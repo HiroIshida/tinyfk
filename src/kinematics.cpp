@@ -37,25 +37,20 @@ urdf::Rotation q_derivative(const urdf::Rotation &q,
 namespace tinyfk {
 
 void KinematicModel::get_link_pose(size_t link_id,
-                                   urdf::Pose &out_tf_rlink_to_elink,
-                                   bool usebase) const {
+                                   urdf::Pose &out_tf_rlink_to_elink) const {
   urdf::Pose const *pose_ptr = transform_cache_.get_cache(link_id);
   if (pose_ptr) {
     out_tf_rlink_to_elink = *pose_ptr;
     return;
   }
-  this->get_link_pose_inner(link_id, out_tf_rlink_to_elink, usebase);
+  this->get_link_pose_inner(link_id, out_tf_rlink_to_elink);
 }
 
-void KinematicModel::get_link_pose_inner(size_t link_id,
-                                         urdf::Pose &out_tf_rlink_to_elink,
-                                         bool usebase) const {
+void KinematicModel::get_link_pose_inner(
+    size_t link_id, urdf::Pose &out_tf_rlink_to_elink) const {
   urdf::LinkSharedPtr hlink = links_[link_id];
 
-  urdf::Pose tf_rlink_to_blink;
-  if (usebase) {
-    tf_rlink_to_blink = base_pose_;
-  }
+  urdf::Pose tf_rlink_to_blink = base_pose_;
 
   transform_stack_.reset();
   while (true) {
@@ -119,7 +114,7 @@ KinematicModel::get_jacobian(size_t elink_id,
 
   // compute values shared through the loop
   urdf::Pose tf_rlink_to_elink;
-  this->get_link_pose(elink_id, tf_rlink_to_elink, with_base);
+  this->get_link_pose(elink_id, tf_rlink_to_elink);
   urdf::Vector3 &epos = tf_rlink_to_elink.position;
   urdf::Rotation &erot = tf_rlink_to_elink.rotation;
 
@@ -135,8 +130,7 @@ KinematicModel::get_jacobian(size_t elink_id,
   urdf::Pose tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
   urdf::Vector3 rpy_rlink_to_blink;
   if (with_base) {
-    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink,
-                        true); // confusing but root_link_id -> base_link
+    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink);
     tf_blink_to_rlink = tf_rlink_to_blink.inverse();
     rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
     tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
@@ -158,7 +152,7 @@ KinematicModel::get_jacobian(size_t elink_id,
                                   // clink is ok.
 
       urdf::Pose tf_rlink_to_clink;
-      this->get_link_pose(clink->id, tf_rlink_to_clink, with_base);
+      this->get_link_pose(clink->id, tf_rlink_to_clink);
 
       urdf::Rotation &crot = tf_rlink_to_clink.rotation;
       urdf::Vector3 &&world_axis = crot * hjoint->axis; // axis w.r.t root link
@@ -242,13 +236,13 @@ KinematicModel::get_jacobian(size_t elink_id,
   return jacobian;
 }
 
-urdf::Vector3 KinematicModel::get_com(bool with_base) {
+urdf::Vector3 KinematicModel::get_com() {
   urdf::Vector3 com_average;
   double mass_total = 0.0;
   urdf::Pose tf_base_to_com;
   for (const auto &link : com_dummy_links_) {
     mass_total += link->inertial->mass;
-    this->get_link_pose(link->id, tf_base_to_com, with_base);
+    this->get_link_pose(link->id, tf_base_to_com);
     com_average.x += link->inertial->mass * tf_base_to_com.position.x;
     com_average.y += link->inertial->mass * tf_base_to_com.position.y;
     com_average.z += link->inertial->mass * tf_base_to_com.position.z;

@@ -60,7 +60,7 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
   urdf::Pose pose0, pose1;
   urdf::Vector3 rpy0, rpy1;
   set_configuration(q0);
-  kin.get_link_pose(link_id, pose0, true);
+  kin.get_link_pose(link_id, pose0);
   rpy0 = pose0.rotation.getRPY();
 
   const size_t dim_jacobi = 3 + (rot_type == RotationType::RPY) * 3 +
@@ -70,7 +70,7 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
   for (size_t idx = 0; idx < q0.size(); idx++) {
     const auto q1 = get_tweaked_q(q0, idx);
     set_configuration(q1);
-    kin.get_link_pose(link_id, pose1, true);
+    kin.get_link_pose(link_id, pose1);
     J(0, idx) = (pose1.position.x - pose0.position.x) / eps;
     J(1, idx) = (pose1.position.y - pose0.position.y) / eps;
     J(2, idx) = (pose1.position.z - pose0.position.z) / eps;
@@ -157,12 +157,11 @@ TEST(KINEMATICS, AllTest) {
   }
   kin.set_base_pose(base_pose);
 
-  bool base_also = true;
   urdf::Pose pose, pose_naive;
   for (size_t i = 0; i < n_links; i++) {
     int link_id = link_ids[i];
 
-    kin.get_link_pose(link_id, pose, base_also);
+    kin.get_link_pose(link_id, pose);
     EXPECT_TRUE(isNear(pose.position.x, pose_list[i][0]));
     EXPECT_TRUE(isNear(pose.position.y, pose_list[i][1]));
     EXPECT_TRUE(isNear(pose.position.z, pose_list[i][2]));
