@@ -118,15 +118,14 @@ public: // functions
     return link_names;
   }
 
-  void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                     bool usebase) const;
+  void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef) const;
 
   Eigen::MatrixXd get_jacobian(size_t elink_id,
                                const std::vector<size_t> &joint_ids,
                                RotationType rot_type = RotationType::IGNORE,
                                bool with_base = false);
 
-  urdf::Vector3 get_com(bool with_base);
+  urdf::Vector3 get_com();
 
   Eigen::MatrixXd get_com_jacobian(const std::vector<size_t> &joint_ids,
                                    bool with_base);
@@ -140,8 +139,7 @@ public: // functions
                                    std::array<double, 3> rotation);
 
 private:
-  void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef,
-                           bool usebase) const;
+  void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef) const;
   void update_rptable();
 };
 

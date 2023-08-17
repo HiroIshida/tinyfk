@@ -27,7 +27,7 @@ void benchmark_fk(KinematicModel &kin, size_t n_iter,
     for (size_t i = 0; i < n_iter; i++) {
       kin.set_joint_angles(joint_ids, q); // this clear cached TFs
       for (int lid : link_ids) {
-        kin.get_link_pose(lid, out, false);
+        kin.get_link_pose(lid, out);
       }
     }
     clock_t end = clock();
