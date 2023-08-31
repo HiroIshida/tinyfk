@@ -53,7 +53,9 @@ public:
     return base_vec;
   }
 
-  std::string get_root_link_name() { return this->root_link_->name; }
+  std::string get_root_link_name() {
+    return this->links_[this->root_link_id_]->name;
+  }
 
   std::array<Eigen::MatrixXd, 2> solve_forward_kinematics(
       const std::vector<std::vector<double>> joint_angles_sequence,
