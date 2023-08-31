@@ -29,12 +29,16 @@ struct RelevancePredicateTable {
   std::vector<std::vector<bool>> table_;
   RelevancePredicateTable() : RelevancePredicateTable(0, 0){};
   RelevancePredicateTable(int N_link, int N_joint) {
-    for (int i = 0; i < N_joint; i++) {
-      table_.push_back(std::vector<bool>(N_link));
+    // Jacobian computation typically iterates over all joint fixing a link,
+    // and does not iterate over all links fixing a joint.
+    // Therefore, we should put joint-related things inner for access
+    // efficiency.
+    for (int i = 0; i < N_link; i++) {
+      table_.push_back(std::vector<bool>(N_joint));
     }
   }
-  bool isRelevant(int joint_id, int link_id) const {
-    return table_[joint_id][link_id];
+  bool isRelevant(int link_id, int joint_id) const {
+    return table_[link_id][joint_id];
   }
 };
 

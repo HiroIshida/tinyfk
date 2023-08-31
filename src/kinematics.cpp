@@ -141,7 +141,7 @@ KinematicModel::get_jacobian(size_t elink_id,
 
   for (size_t i = 0; i < joint_ids.size(); i++) {
     int jid = joint_ids[i];
-    if (rptable_.isRelevant(jid, elink_id)) {
+    if (rptable_.isRelevant(elink_id, jid)) {
       const urdf::JointSharedPtr &hjoint = joints_[jid];
       size_t type = hjoint->type;
       if (type == urdf::Joint::FIXED) {

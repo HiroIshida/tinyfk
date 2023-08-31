@@ -135,10 +135,10 @@ TEST(KINEMATICS, AllTest) {
                                            "fl_caster_rotation_link"};
     auto joint_ids = kin.get_joint_ids(joint_names);
     auto link_ids = kin.get_link_ids(link_names);
-    EXPECT_TRUE(kin.rptable_.isRelevant(joint_ids[0], link_ids[0]));
-    EXPECT_FALSE(kin.rptable_.isRelevant(joint_ids[1], link_ids[0]));
-    EXPECT_TRUE(kin.rptable_.isRelevant(joint_ids[0], link_ids[1]));
-    EXPECT_FALSE(kin.rptable_.isRelevant(joint_ids[0], link_ids[2]));
+    EXPECT_TRUE(kin.rptable_.isRelevant(link_ids[0], joint_ids[0]));
+    EXPECT_FALSE(kin.rptable_.isRelevant(link_ids[0], joint_ids[1]));
+    EXPECT_TRUE(kin.rptable_.isRelevant(link_ids[1], joint_ids[0]));
+    EXPECT_FALSE(kin.rptable_.isRelevant(link_ids[2], joint_ids[0]));
   }
 
   auto joint_ids = kin.get_joint_ids(joint_names);

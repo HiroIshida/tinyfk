@@ -234,7 +234,7 @@ void KinematicModel::update_rptable() {
     while (!link_stack.empty()) {
       auto here_link = link_stack.top();
       link_stack.pop();
-      rptable.table_[joint_id][here_link->id] = true;
+      rptable.table_[here_link->id][joint_id] = true;
       for (auto &link : here_link->child_links) {
         link_stack.push(link);
       }
