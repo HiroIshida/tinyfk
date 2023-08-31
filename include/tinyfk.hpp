@@ -59,9 +59,7 @@ public: // members
   std::vector<urdf::JointSharedPtr> joints_;
   std::unordered_map<std::string, int> joint_ids_;
   std::vector<double> joint_angles_;
-
   urdf::Pose base_pose_;
-  Eigen::Matrix3d base_rotmat_; // must be set when base_pose is set
 
   RelevancePredicateTable rptable_;
   int num_dof_;
