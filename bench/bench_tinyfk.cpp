@@ -51,8 +51,10 @@ void benchmark_fk(KinematicModel &kin, size_t n_iter,
 }
 
 int main() {
-  const std::string urdf_file = "../data/fetch.urdf";
+  const std::string urdf_file =
+      "/home/h-ishida/.skrobot/fetch_description/fetch.urdf";
   const auto urdf_string = load_urdf(urdf_file);
+  std::cout << urdf_string << std::endl;
   auto kin = KinematicModel(urdf_string);
 
   const size_t N = 100000;

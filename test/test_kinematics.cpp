@@ -105,10 +105,9 @@ TEST(KINEMATICS, AllTest) {
   size_t n_links = link_names.size();
 
   // test main
-  const std::string urdf_file = "../data/pr2.urdf";
-  const auto xml_string = load_urdf(urdf_file);
-  auto kin = KinematicModel(xml_string);
-  auto kin2 = KinematicModel(xml_string);
+  const std::string urdf_file_path = "../data/pr2.urdf";
+  auto kin = KinematicModel(urdf_file_path);
+  auto kin2 = KinematicModel(urdf_file_path);
 
   { // add new link to the robot
     std::vector<std::string> strvec = {"r_upper_arm_link"};
