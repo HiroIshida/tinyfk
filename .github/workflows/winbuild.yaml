@@ -31,7 +31,13 @@ jobs:
       run: |
         choco install eigen
 
-    - name: build
+    - name: Build
       run: |
         git submodule update --init
-        pip install -e . -v
+        python setup.py bdist_wheel
+
+    - name: Upload wheel artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: wheel
+        path: dist/*.whl
