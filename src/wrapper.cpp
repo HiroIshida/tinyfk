@@ -152,6 +152,14 @@ public:
     return std::array<Eigen::MatrixXd, 2>{coms.transpose(), J};
   }
 
+  Eigen::Matrix3d
+  compute_total_inertia_matrix(const std::vector<double> &q,
+                               const std::vector<size_t> &joint_ids) {
+    // should we take vector of q as input...?
+    this->_set_joint_angles(joint_ids, q);
+    return this->get_total_inertia_matrix();
+  }
+
   std::pair<Eigen::VectorXd, Eigen::MatrixXd>
   compute_inter_link_squared_dists(const std::vector<std::vector<double>> &qs,
                                    const std::vector<size_t> &link_ids1,
@@ -226,6 +234,8 @@ PYBIND11_MODULE(_tinyfk, m) {
       .def("set_joint_angles", &KinematicsModelPyWrapper::set_joint_angles)
       .def("solve_com_forward_kinematics",
            &KinematicsModelPyWrapper::solve_com_forward_kinematics)
+      .def("compute_total_inertia_matrix",
+           &KinematicsModelPyWrapper::compute_total_inertia_matrix)
       .def("get_joint_names", &KinematicsModelPyWrapper::get_joint_names)
       .def("get_joint_ids", &KinematicsModelPyWrapper::get_joint_ids)
       .def("get_joint_limits", &KinematicsModelPyWrapper::get_joint_limits)

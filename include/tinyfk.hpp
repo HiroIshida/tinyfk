@@ -131,6 +131,8 @@ public: // functions
   Eigen::MatrixXd get_com_jacobian(const std::vector<size_t> &joint_ids,
                                    bool with_base);
 
+  Eigen::Matrix3d get_total_inertia_matrix();
+
   void set_joint_angle(size_t joint_id, double angle) {
     joint_angles_[joint_id] = angle;
   }

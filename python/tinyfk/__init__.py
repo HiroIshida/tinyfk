@@ -188,6 +188,9 @@ class KinematicModel:
         P, J = self._robot.solve_com_forward_kinematics(qs, joint_ids, with_base, with_jacobian)
         return P, J
 
+    def compute_total_inertia_matrix(self, q: np.ndarray, joint_ids: List[int]) -> np.ndarray:
+        return self._robot.compute_total_inertia_matrix(q, joint_ids)
+
     def get_joint_names(self) -> List[str]:
         return self._robot.get_joint_names()
 

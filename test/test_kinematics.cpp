@@ -91,7 +91,7 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
   return J;
 }
 
-TEST(KINEMATICS, AllTest) {
+TEST(FORWARD_KINEMATICS_TEST, AllTest) {
   // loading test data
   ifstream test_data("../test/data/test_data.json");
   nlohmann::json js;
@@ -193,6 +193,32 @@ TEST(KINEMATICS, AllTest) {
       EXPECT_TRUE(jacobian_equal);
     }
   }
+}
+
+TEST(TOTAL_INERTIA_TEST, AllTest) {
+  // loading test data
+  const std::string urdf_file = "../data/kuka.urdf";
+  const auto xml_string = load_urdf(urdf_file);
+  auto kin = KinematicModel(xml_string);
+
+  const auto imat = kin.get_total_inertia_matrix();
+  std::cout << imat << std::endl;
+
+  // The following python code is used to generate the reference data
+  // import numpy as np
+  // import pinocchio as pin
+  // robot = pin.RobotWrapper.BuildFromURDF(
+  //     filename="./data/kuka.urdf",
+  //     package_dirs=None,
+  //     root_joint=pin.JointModelFreeFlyer())
+  // q = np.zeros(robot.nq)
+  // Ag = pin.computeCentroidalMap(robot.model, robot.data, q)
+  // print(Ag[3:6, 3:6])
+  Eigen::Matrix3d imat_ref;
+  imat_ref << 2.11765803e+00, 4.59516343e-05, -2.15483177e-04, 4.59516343e-05,
+      2.08613831e+00, 2.17846493e-02, -2.15483177e-04, 2.17846493e-02,
+      1.14820264e-01;
+  EXPECT_TRUE((imat - imat_ref).array().abs().maxCoeff() < 1e-5);
 }
 
 int main(int argc, char **argv) {
