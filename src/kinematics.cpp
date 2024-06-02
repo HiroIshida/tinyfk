@@ -271,4 +271,51 @@ KinematicModel::get_com_jacobian(const std::vector<size_t> &joint_ids,
   return jac_average;
 }
 
+Eigen::Matrix3d KinematicModel::get_total_inertia_matrix() {
+  auto com = this->get_com();
+
+  Eigen::Matrix3d Imat_total = Eigen::Matrix3d::Zero();
+  for (const auto &link : com_dummy_links_) {
+    const auto inertial = link->inertial;
+    if (inertial != nullptr) {
+      double mass = inertial->mass;
+      double ixx = inertial->ixx;
+      double iyy = inertial->iyy;
+      double izz = inertial->izz;
+      double ixy = inertial->ixy;
+      double ixz = inertial->ixz;
+      double iyz = inertial->iyz;
+      Eigen::Matrix3d Imat;
+      Imat << ixx, ixy, ixz, ixy, iyy, iyz, ixz, iyz, izz;
+      size_t link_id = link->id;
+
+      urdf::Pose tf_base_to_link;
+      this->get_link_pose(link_id, tf_base_to_link);
+      const auto &trans = tf_base_to_link.position;
+      Eigen::Vector3d vec;
+      vec << trans.x - com.x, trans.y - com.y, trans.z - com.z;
+      const auto &rot = tf_base_to_link.rotation;
+      double xy2 = 2 * (rot.x * rot.y);
+      double xz2 = 2 * (rot.x * rot.z);
+      double xw2 = 2 * (rot.x * rot.w);
+      double yz2 = 2 * (rot.y * rot.z);
+      double yw2 = 2 * (rot.y * rot.w);
+      double zw2 = 2 * (rot.z * rot.w);
+      double xx2 = 2 * (rot.x * rot.x);
+      double yy2 = 2 * (rot.y * rot.y);
+      double zz2 = 2 * (rot.z * rot.z);
+
+      Eigen::Matrix3d R;
+      R << 1 - yy2 - zz2, xy2 - zw2, xz2 + yw2, xy2 + zw2, 1 - xx2 - zz2,
+          yz2 - xw2, xz2 - yw2, yz2 + xw2, 1 - xx2 - yy2;
+
+      Eigen::Matrix3d trans_term =
+          mass * (vec.norm() * vec.norm() * Eigen::Matrix3d::Identity() -
+                  vec * vec.transpose());
+      Imat_total += (R * Imat * R.transpose() + trans_term);
+    }
+  }
+  return Imat_total;
+}
+
 }; // namespace tinyfk
