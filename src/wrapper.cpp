@@ -23,7 +23,7 @@ public:
   using KinematicModel::KinematicModel;
 
   void set_base_pose(std::vector<double>::const_iterator begin) {
-    auto pose = urdf::Pose();
+    auto pose = Transform();
     pose.position.x = *begin;
     ++begin;
     pose.position.y = *begin;
@@ -93,13 +93,13 @@ public:
 
       for (size_t j = 0; j < n_link; ++j) {
         const size_t head = i * n_link + j;
-        urdf::Pose pose;
+        Transform pose;
         this->get_link_pose(elink_ids[j], pose);
         P(0, head) = pose.position.x;
         P(1, head) = pose.position.y;
         P(2, head) = pose.position.z;
         if (rot_type == RotationType::RPY) {
-          urdf::Vector3 rpy = pose.rotation.getRPY();
+          Vector3 rpy = pose.rotation.getRPY();
           P(3, head) = rpy.x;
           P(4, head) = rpy.y;
           P(5, head) = rpy.z;
@@ -188,7 +188,7 @@ public:
 
       for (size_t j = 0; j < n_check; ++j) {
         const size_t head = i * n_check + j;
-        urdf::Pose pose1, pose2;
+        Transform pose1, pose2;
         this->get_link_pose(link_ids1[j], pose1);
         this->get_link_pose(link_ids2[j], pose2);
         const auto diff = pose1.position - pose2.position;

@@ -16,14 +16,14 @@ bool isNear(double x, double y) { return (abs(x - y) < 1e-5); }
 
 Eigen::MatrixXd compute_numerical_jacobian_with_base(
     KinematicModel &kin, size_t link_id, const std::vector<size_t> &joint_ids,
-    const std::vector<double> &angle_vector, const urdf::Pose &base_pose,
+    const std::vector<double> &angle_vector, const tinyfk::Transform &base_pose,
     RotationType rot_type) {
 
   const auto set_configuration = [&](const std::vector<double> &q) {
     for (size_t i = 0; i < joint_ids.size(); ++i) {
       kin.set_joint_angle(joint_ids[i], q[i]);
     }
-    urdf::Pose pose;
+    tinyfk::Transform pose;
     pose.position.x = q[joint_ids.size()];
     pose.position.y = q[joint_ids.size() + 1];
     pose.position.z = q[joint_ids.size() + 2];
@@ -57,8 +57,8 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
     q0.push_back(rpy.z);
   }
 
-  urdf::Pose pose0, pose1;
-  urdf::Vector3 rpy0, rpy1;
+  tinyfk::Transform pose0, pose1;
+  Vector3 rpy0, rpy1;
   set_configuration(q0);
   kin.get_link_pose(link_id, pose0);
   rpy0 = pose0.rotation.getRPY();
@@ -144,7 +144,7 @@ TEST(FORWARD_KINEMATICS_TEST, AllTest) {
   auto joint_ids = kin.get_joint_ids(joint_names);
   auto link_ids = kin.get_link_ids(link_names);
 
-  auto base_pose = urdf::Pose();
+  auto base_pose = tinyfk::Transform();
   base_pose.position.x = angle_vector[n_joints + 0];
   base_pose.position.y = angle_vector[n_joints + 1];
   base_pose.position.z = angle_vector[n_joints + 2];
@@ -157,7 +157,7 @@ TEST(FORWARD_KINEMATICS_TEST, AllTest) {
   }
   kin.set_base_pose(base_pose);
 
-  urdf::Pose pose, pose_naive;
+  tinyfk::Transform pose, pose_naive;
   for (size_t i = 0; i < n_links; i++) {
     int link_id = link_ids[i];
 
