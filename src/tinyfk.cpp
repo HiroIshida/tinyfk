@@ -86,11 +86,12 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
         continue;
       }
       const auto com_dummy_link_name = link->name + "_com";
-      std::array<double, 3> pos{link->inertial->origin.position.x,
-                                link->inertial->origin.position.y,
-                                link->inertial->origin.position.z};
-      const auto new_link = this->add_new_link(
-          com_dummy_link_name, link->id, pos, std::array<double, 3>{0, 0, 0});
+      urdf::Pose new_link_pose;
+      new_link_pose.position.x = link->inertial->origin.position.x;
+      new_link_pose.position.y = link->inertial->origin.position.y;
+      new_link_pose.position.z = link->inertial->origin.position.z;
+      const auto new_link =
+          this->add_new_link(com_dummy_link_name, link->id, new_link_pose);
       // set new link's inertial as the same as the parent
       // except its origin is zero
       new_link->inertial = link->inertial;
@@ -182,9 +183,20 @@ KinematicModel::get_link_ids(std::vector<std::string> link_names) const {
 }
 
 urdf::LinkSharedPtr
-KinematicModel::add_new_link(std::string link_name, size_t parent_id,
-                             std::array<double, 3> position,
-                             std::array<double, 3> rotation) {
+KinematicModel::add_new_link(const std::string &link_name, size_t parent_id,
+                             const std::array<double, 3> &position,
+                             const std::array<double, 3> &rpy) {
+  urdf::Pose pose;
+  pose.position.x = position[0];
+  pose.position.y = position[1];
+  pose.position.z = position[2];
+  pose.rotation.setFromRPY(rpy[0], rpy[1], rpy[2]);
+  return this->add_new_link(link_name, parent_id, pose);
+}
+
+urdf::LinkSharedPtr KinematicModel::add_new_link(const std::string &link_name,
+                                                 size_t parent_id,
+                                                 const urdf::Pose &pose) {
   bool link_name_exists = (link_ids_.find(link_name) != link_ids_.end());
   if (link_name_exists) {
     std::string message = "link name " + link_name + " already exists";
@@ -192,12 +204,8 @@ KinematicModel::add_new_link(std::string link_name, size_t parent_id,
   }
 
   auto fixed_joint = std::make_shared<urdf::Joint>();
-  auto &&vec = urdf::Vector3(position[0], position[1], position[2]);
-  auto rot = urdf::Rotation();
-  rot.setFromRPY(rotation[0], rotation[1], rotation[2]);
 
-  fixed_joint->parent_to_joint_origin_transform.position = vec;
-  fixed_joint->parent_to_joint_origin_transform.rotation = rot;
+  fixed_joint->parent_to_joint_origin_transform = pose;
   fixed_joint->type = urdf::Joint::FIXED;
 
   int link_id = links_.size();
