@@ -137,9 +137,13 @@ public: // functions
     joint_angles_[joint_id] = angle;
   }
 
-  urdf::LinkSharedPtr add_new_link(std::string link_name, size_t parent_id,
-                                   std::array<double, 3> position,
-                                   std::array<double, 3> rotation);
+  urdf::LinkSharedPtr add_new_link(const std::string &link_name,
+                                   size_t parent_id,
+                                   const std::array<double, 3> &position,
+                                   const std::array<double, 3> &rpy);
+
+  urdf::LinkSharedPtr add_new_link(const std::string &link_name,
+                                   size_t parent_id, const urdf::Pose &pose);
 
 private:
   void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef) const;
