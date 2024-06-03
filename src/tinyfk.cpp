@@ -66,8 +66,8 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
   int num_dof = joint_ids.size();
   std::vector<double> joint_angles(num_dof, 0.0);
 
-  transform_stack_ = SizedStack<LinkIdAndPose>(N_link);
-  transform_cache_ = SizedCache<urdf::Pose>(N_link);
+  transform_stack_ = SizedStack<LinkIdAndTransform>(N_link);
+  transform_cache_ = SizedCache<Transform>(N_link);
   root_link_id_ = link_ids[robot_urdf_interface->root_link_->name];
   links_ = links;
   link_ids_ = link_ids;
@@ -86,7 +86,7 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
         continue;
       }
       const auto com_dummy_link_name = link->name + "_com";
-      urdf::Pose new_link_pose;
+      Transform new_link_pose;
       new_link_pose.position.x = link->inertial->origin.position.x;
       new_link_pose.position.y = link->inertial->origin.position.y;
       new_link_pose.position.z = link->inertial->origin.position.z;
@@ -95,13 +95,13 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
       // set new link's inertial as the same as the parent
       // except its origin is zero
       new_link->inertial = link->inertial;
-      new_link->inertial->origin = urdf::Pose();
+      new_link->inertial->origin = Transform();
       com_dummy_links.push_back(new_link);
     }
     this->com_dummy_links_ = com_dummy_links;
   }
 
-  this->set_base_pose(urdf::Pose()); // initial base pose
+  this->set_base_pose(Transform()); // initial base pose
 }
 
 void KinematicModel::set_joint_angles(const std::vector<size_t> &joint_ids,
@@ -118,9 +118,7 @@ void KinematicModel::_set_joint_angles(
   }
 }
 
-void KinematicModel::_set_base_pose(urdf::Pose pose) {
-  this->base_pose_ = pose;
-}
+void KinematicModel::_set_base_pose(Transform pose) { this->base_pose_ = pose; }
 
 void KinematicModel::clear_cache() { transform_cache_.clear(); }
 
@@ -186,7 +184,7 @@ urdf::LinkSharedPtr
 KinematicModel::add_new_link(const std::string &link_name, size_t parent_id,
                              const std::array<double, 3> &position,
                              const std::array<double, 3> &rpy) {
-  urdf::Pose pose;
+  Transform pose;
   pose.position.x = position[0];
   pose.position.y = position[1];
   pose.position.z = position[2];
@@ -196,7 +194,7 @@ KinematicModel::add_new_link(const std::string &link_name, size_t parent_id,
 
 urdf::LinkSharedPtr KinematicModel::add_new_link(const std::string &link_name,
                                                  size_t parent_id,
-                                                 const urdf::Pose &pose) {
+                                                 const Transform &pose) {
   bool link_name_exists = (link_ids_.find(link_name) != link_ids_.end());
   if (link_name_exists) {
     std::string message = "link name " + link_name + " already exists";

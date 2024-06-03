@@ -24,6 +24,9 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 namespace tinyfk {
 
 using AngleLimit = std::pair<double, double>;
+using Transform = urdf::Pose;
+using Vector3 = urdf::Vector3;
+using Rotation = urdf::Rotation;
 
 struct RelevancePredicateTable {
   std::vector<std::vector<bool>> table_;
@@ -42,9 +45,9 @@ struct RelevancePredicateTable {
   }
 };
 
-struct LinkIdAndPose {
+struct LinkIdAndTransform {
   size_t id;
-  urdf::Pose pose;
+  Transform pose;
 };
 
 enum class RotationType { IGNORE, RPY, XYZW };
@@ -62,13 +65,13 @@ public: // members
   std::vector<urdf::JointSharedPtr> joints_;
   std::unordered_map<std::string, int> joint_ids_;
   std::vector<double> joint_angles_;
-  urdf::Pose base_pose_;
+  Transform base_pose_;
 
   RelevancePredicateTable rptable_;
   int num_dof_;
 
-  mutable SizedStack<LinkIdAndPose> transform_stack_;
-  mutable SizedCache<urdf::Pose> transform_cache_;
+  mutable SizedStack<LinkIdAndTransform> transform_stack_;
+  mutable SizedCache<Transform> transform_cache_;
 
 public: // functions
   KinematicModel(const std::string &xml_string);
@@ -83,11 +86,11 @@ public: // functions
       const std::vector<size_t> &joint_ids,
       const std::vector<double> &joint_angles);
 
-  void set_base_pose(urdf::Pose pose) {
+  void set_base_pose(Transform pose) {
     this->_set_base_pose(pose);
     this->clear_cache();
   }
-  void _set_base_pose(urdf::Pose pose);
+  void _set_base_pose(Transform pose);
 
   void clear_cache();
 
@@ -119,14 +122,14 @@ public: // functions
     return link_names;
   }
 
-  void get_link_pose(size_t link_id, urdf::Pose &out_tf_root_to_ef) const;
+  void get_link_pose(size_t link_id, Transform &out_tf_root_to_ef) const;
 
   Eigen::MatrixXd get_jacobian(size_t elink_id,
                                const std::vector<size_t> &joint_ids,
                                RotationType rot_type = RotationType::IGNORE,
                                bool with_base = false);
 
-  urdf::Vector3 get_com();
+  Vector3 get_com();
 
   Eigen::MatrixXd get_com_jacobian(const std::vector<size_t> &joint_ids,
                                    bool with_base);
@@ -143,10 +146,10 @@ public: // functions
                                    const std::array<double, 3> &rpy);
 
   urdf::LinkSharedPtr add_new_link(const std::string &link_name,
-                                   size_t parent_id, const urdf::Pose &pose);
+                                   size_t parent_id, const Transform &pose);
 
 private:
-  void get_link_pose_inner(size_t link_id, urdf::Pose &out_tf_root_to_ef) const;
+  void get_link_pose_inner(size_t link_id, Transform &out_tf_root_to_ef) const;
   void update_rptable();
 };
 
