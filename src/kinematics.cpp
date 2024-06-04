@@ -108,7 +108,7 @@ KinematicModel::get_jacobian(size_t elink_id,
                              RotationType rot_type, bool with_base) {
   const size_t dim_jacobi = 3 + (rot_type == RotationType::RPY) * 3 +
                             (rot_type == RotationType::XYZW) * 4;
-  const int dim_dof = joint_ids.size() + (with_base ? 6 : 0);
+  const int dim_dof = joint_ids.size() + (with_base ? 7 : 0);
 
   // compute values shared through the loop
   Transform tf_rlink_to_elink;
@@ -180,11 +180,9 @@ KinematicModel::get_jacobian(size_t elink_id,
   }
 
   Transform tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
-  Vector3 rpy_rlink_to_blink;
   if (with_base) {
     this->get_link_pose(this->root_link_id_, tf_rlink_to_blink);
     tf_blink_to_rlink = tf_rlink_to_blink.inverse();
-    rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
     tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
   }
 
@@ -199,35 +197,40 @@ KinematicModel::get_jacobian(size_t elink_id,
     // have time)
     // TODO(HiroIshida): compute using analytical method.
     constexpr double eps = 1e-7;
-    for (size_t rpy_idx = 0; rpy_idx < 3; rpy_idx++) {
-      const size_t idx_col = dim_dof + 3 + rpy_idx;
 
-      auto rpy_tweaked = rpy_rlink_to_blink;
-      rpy_tweaked[rpy_idx] += eps;
+    // Note that translation part is fixed.
+    // So we copy the transform and modify the rotation part only.
+    Transform tf_rlink_to_blink_tweaked = tf_rlink_to_blink;
+    for (size_t quat_idx = 0; quat_idx < 4; quat_idx++) {
+      const size_t idx_col = dim_dof + 3 + quat_idx;
+      auto rot_tweaked = tf_rlink_to_blink.rotation;
+      // because Rotation object does not have operator[].
+      // we use pointer arithmetics to avoid branching.
+      *(&rot_tweaked.x + quat_idx) += eps;
+      tf_rlink_to_blink_tweaked.rotation = rot_tweaked;
 
-      Transform tf_rlink_to_blink_tweaked = tf_rlink_to_blink;
-      tf_rlink_to_blink_tweaked.rotation.setFromRPY(
-          rpy_tweaked.x, rpy_tweaked.y, rpy_tweaked.z);
-      Transform tf_rlink_to_elink_tweaked =
+      auto tf_rlink_to_elink_tweaked =
           pose_transform(tf_rlink_to_blink_tweaked, tf_blink_to_elink);
-      auto pose_out = tf_rlink_to_elink_tweaked;
+      const auto &pos_new = tf_rlink_to_elink_tweaked.position;
+      const auto &rot_new = tf_rlink_to_elink_tweaked.rotation;
 
-      const auto pos_diff = pose_out.position - tf_rlink_to_elink.position;
+      const auto pos_diff = pos_new - tf_rlink_to_elink.position;
       jacobian(0, idx_col) = pos_diff.x / eps;
       jacobian(1, idx_col) = pos_diff.y / eps;
       jacobian(2, idx_col) = pos_diff.z / eps;
+
       if (rot_type == RotationType::RPY) {
-        auto erpy_tweaked = pose_out.rotation.getRPY();
-        const auto erpy_diff = erpy_tweaked - erpy;
+        auto erpy_new = rot_new.getRPY();
+        const auto erpy_diff = erpy_new - erpy;
         jacobian(3, idx_col) = erpy_diff.x / eps;
         jacobian(4, idx_col) = erpy_diff.y / eps;
         jacobian(5, idx_col) = erpy_diff.z / eps;
       }
       if (rot_type == RotationType::XYZW) {
-        jacobian(3, idx_col) = (pose_out.rotation.x - erot.x) / eps;
-        jacobian(4, idx_col) = (pose_out.rotation.y - erot.y) / eps;
-        jacobian(5, idx_col) = (pose_out.rotation.z - erot.z) / eps;
-        jacobian(6, idx_col) = (pose_out.rotation.w - erot.w) / eps;
+        jacobian(3, idx_col) = (rot_new.x - erot.x) / eps;
+        jacobian(4, idx_col) = (rot_new.y - erot.y) / eps;
+        jacobian(5, idx_col) = (rot_new.z - erot.z) / eps;
+        jacobian(6, idx_col) = (rot_new.w - erot.w) / eps;
       }
     }
   }
