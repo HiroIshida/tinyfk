@@ -125,15 +125,6 @@ KinematicModel::get_jacobian(size_t elink_id,
     erot_inverse = erot.inverse();
   }
 
-  Transform tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
-  Vector3 rpy_rlink_to_blink;
-  if (with_base) {
-    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink);
-    tf_blink_to_rlink = tf_rlink_to_blink.inverse();
-    rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
-    tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
-  }
-
   // Jacobian computation
   Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(dim_jacobi, dim_dof);
 
@@ -186,6 +177,15 @@ KinematicModel::get_jacobian(size_t elink_id,
         }
       }
     }
+  }
+
+  Transform tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
+  Vector3 rpy_rlink_to_blink;
+  if (with_base) {
+    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink);
+    tf_blink_to_rlink = tf_rlink_to_blink.inverse();
+    rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
+    tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
   }
 
   if (with_base) {
