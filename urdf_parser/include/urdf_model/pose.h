@@ -97,17 +97,17 @@ public:
     this->z *= -1;
   }
 
-  Vector3 operator+(const Vector3& vec)
+  Vector3 operator+(const Vector3& vec) const
   {
     return Vector3(this->x+vec.x,this->y+vec.y,this->z+vec.z);
   };
 
-  Vector3 operator-(const Vector3& vec)
+  Vector3 operator-(const Vector3& vec) const
   {
     return Vector3(this->x-vec.x,this->y-vec.y,this->z-vec.z);
   };
 
-  Vector3 operator/(double deno)
+  Vector3 operator/(double deno) const
   {
     return Vector3(this->x/deno,this->y/deno,this->z/deno);
   };
@@ -298,7 +298,7 @@ public:
     return q;
   };
 
-  Rotation inverse(){
+  Rotation inverse() const{
     double norm = this->w*this->w+this->x*this->x+this->y*this->y+this->z*this->z;
     return Rotation(-x/norm, -y/norm, -z/norm, w/norm);
   }
@@ -332,7 +332,7 @@ public:
     this->position = this->rotation * this->position;
   }
 
-  Pose inverse(){
+  Pose inverse() const{
     Pose pose_out = *this;
     pose_out.inverse_inplace();
     return pose_out;
