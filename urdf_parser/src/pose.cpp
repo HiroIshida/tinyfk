@@ -137,11 +137,9 @@ bool exportPose(Pose &pose, TiXmlElement* xml)
 }
 
 Pose pose_transform(const Pose& pose12, const Pose& pose23){
-  Rotation quaternion_new = pose12.rotation * pose23.rotation;
-  Vector3 position_new = pose12.rotation * pose23.position + pose12.position;
   Pose pose_new;
-  pose_new.position = position_new;
-  pose_new.rotation = quaternion_new;
+  pose_new.position = pose12.rotation * pose23.position + pose12.position;
+  pose_new.rotation = pose12.rotation * pose23.rotation;
   return pose_new;
 }
 
