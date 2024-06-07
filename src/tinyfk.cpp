@@ -67,7 +67,7 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
   std::vector<double> joint_angles(num_dof, 0.0);
 
   transform_stack_ = SizedStack<LinkIdAndTransform>(N_link);
-  transform_cache_ = SizedCache<Transform>(N_link);
+  transform_cache_ = SizedCache<Eigen::Affine3d>(N_link);
   root_link_id_ = link_ids[robot_urdf_interface->root_link_->name];
   links_ = links;
   link_ids_ = link_ids;
@@ -123,7 +123,10 @@ void KinematicModel::_set_joint_angles(
   }
 }
 
-void KinematicModel::_set_base_pose(Transform pose) { this->base_pose_ = pose; }
+// FIXME: remove conversion
+void KinematicModel::_set_base_pose(Transform pose) {
+  this->base_pose_ = urdf_pose_to_eigen_affine3d(pose);
+}
 
 void KinematicModel::clear_cache() { transform_cache_.clear(); }
 

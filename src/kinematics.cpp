@@ -37,9 +37,11 @@ Rotation q_derivative(const Rotation &q, const Vector3 &omega) {
 
 void KinematicModel::get_link_pose(size_t link_id,
                                    Transform &out_tf_rlink_to_elink) const {
-  Transform const *pose_ptr = transform_cache_.get_cache(link_id);
+  Eigen::Affine3d const *pose_ptr = transform_cache_.get_cache(link_id);
   if (pose_ptr) {
-    out_tf_rlink_to_elink = *pose_ptr;
+    // FIXME: remove
+    // out_tf_rlink_to_elink = *pose_ptr;
+    out_tf_rlink_to_elink = eigen_affine3d_to_urdf_pose(*pose_ptr);
     return;
   }
   this->get_link_pose_inner(link_id, out_tf_rlink_to_elink);
@@ -49,7 +51,7 @@ void KinematicModel::get_link_pose_inner(
     size_t link_id, Transform &out_tf_rlink_to_elink) const {
   urdf::LinkSharedPtr hlink = links_[link_id];
 
-  Transform tf_rlink_to_blink = base_pose_;
+  Eigen::Affine3d tf_rlink_to_blink = base_pose_;
 
   transform_stack_.reset();
   while (true) {
@@ -59,7 +61,7 @@ void KinematicModel::get_link_pose_inner(
       break;
     } // hit the root link
 
-    Transform const *tf_rlink_to_blink_ptr =
+    Eigen::Affine3d const *tf_rlink_to_blink_ptr =
         transform_cache_.get_cache(hlink->id);
     if (tf_rlink_to_blink_ptr) {
       tf_rlink_to_blink = *tf_rlink_to_blink_ptr;
@@ -93,26 +95,25 @@ void KinematicModel::get_link_pose_inner(
     }
 
     // update
-    // transform_stack_.push(LinkIdAndTransform{
-    //     hlink->id, std::move(tf_plink_to_hlink)}); // TODO(HiroIshida): move?
-    transform_stack_.push(LinkIdAndTransform{
-        hlink->id, eigen_affine3d_to_urdf_pose(tf_plink_to_hlink)});
+    transform_stack_.push(
+        LinkIdAndTransform{hlink->id, std::move(tf_plink_to_hlink)});
     hlink = plink;
   }
 
-  Transform tf_rlink_to_plink = std::move(tf_rlink_to_blink);
+  Eigen::Affine3d tf_rlink_to_plink = std::move(tf_rlink_to_blink);
   while (!transform_stack_.empty()) {
 
     const auto &pose_id_pair = transform_stack_.top();
-    const Transform &tf_plink_to_hlink = pose_id_pair.pose;
+    const Eigen::Affine3d &tf_plink_to_hlink = pose_id_pair.pose;
     const size_t hid = pose_id_pair.id;
     transform_stack_.pop();
-    Transform tf_rlink_to_hlink =
-        pose_transform(tf_rlink_to_plink, tf_plink_to_hlink);
+    Eigen::Affine3d tf_rlink_to_hlink = tf_rlink_to_plink * tf_plink_to_hlink;
     transform_cache_.set_cache(hid, tf_rlink_to_hlink);
     tf_rlink_to_plink = std::move(tf_rlink_to_hlink);
   }
-  out_tf_rlink_to_elink = std::move(tf_rlink_to_plink);
+  // FIXME
+  // out_tf_rlink_to_elink = std::move(tf_rlink_to_plink);
+  out_tf_rlink_to_elink = eigen_affine3d_to_urdf_pose(tf_rlink_to_plink);
 }
 
 Eigen::MatrixXd

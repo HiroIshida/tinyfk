@@ -48,7 +48,7 @@ struct RelevancePredicateTable {
 
 struct LinkIdAndTransform {
   size_t id;
-  Transform pose;
+  Eigen::Affine3d pose;
 };
 
 enum class RotationType { IGNORE, RPY, XYZW };
@@ -66,13 +66,13 @@ public: // members
   std::vector<urdf::JointSharedPtr> joints_;
   std::unordered_map<std::string, int> joint_ids_;
   std::vector<double> joint_angles_;
-  Transform base_pose_;
+  Eigen::Affine3d base_pose_;
 
   RelevancePredicateTable rptable_;
   int num_dof_;
 
   mutable SizedStack<LinkIdAndTransform> transform_stack_;
-  mutable SizedCache<Transform> transform_cache_;
+  mutable SizedCache<Eigen::Affine3d> transform_cache_;
 
 public: // functions
   KinematicModel(const std::string &xml_string);
