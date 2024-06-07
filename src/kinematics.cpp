@@ -77,16 +77,12 @@ void KinematicModel::get_link_pose_inner(
         tf_plink_to_hlink = tf_plink_to_pjoint;
       } else if (pjoint->type == urdf::Joint::PRISMATIC) {
         double angle = joint_angles_[pjoint->id];
-        Eigen::Translation3d tf_pjoint_to_hlink{
-            Eigen::Vector3d{pjoint->axis.x, pjoint->axis.y, pjoint->axis.z} *
-            angle};
+        Eigen::Translation3d tf_pjoint_to_hlink{pjoint->axis * angle};
         tf_plink_to_hlink = tf_plink_to_pjoint * tf_pjoint_to_hlink;
       } else if (pjoint->type == urdf::Joint::REVOLUTE ||
                  pjoint->type == urdf::Joint::CONTINUOUS) {
         double angle = joint_angles_[pjoint->id];
-        Eigen::AngleAxisd&& tf_pjoint_to_hlink{
-            angle,
-            Eigen::Vector3d{pjoint->axis.x, pjoint->axis.y, pjoint->axis.z}};
+        Eigen::AngleAxisd &&tf_pjoint_to_hlink{angle, pjoint->axis};
         tf_plink_to_hlink = tf_plink_to_pjoint * tf_pjoint_to_hlink;
       } else {
         assert(false && "unknown joint type");
