@@ -42,6 +42,7 @@
 //#include <console_bridge/console.h>
 #include <tinyxml.h>
 #include <urdf_parser/urdf_parser.h>
+#include <Eigen/Geometry>
 
 namespace urdf_export_helpers {
 
@@ -93,8 +94,9 @@ void cross_product(const Vector3& a, const Vector3& b, Vector3& out){
   out.z = a.x * b.y - a.y * b.x;
 }
 
-bool parsePose(Pose &pose, TiXmlElement* xml)
+bool parsePose(Eigen::Affine3d &pose_, TiXmlElement* xml)
 {
+  Pose pose;
   pose.clear();
   if (xml)
   {
@@ -122,6 +124,11 @@ bool parsePose(Pose &pose, TiXmlElement* xml)
       }
     }
   }
+  // convert 
+  Eigen::Vector3d position(pose.position.x, pose.position.y, pose.position.z);
+  Eigen::Quaterniond rotation(pose.rotation.w, pose.rotation.x, pose.rotation.y,
+                              pose.rotation.z);
+  pose_ = Eigen::Translation3d(position) * rotation;
   return true;
 }
 

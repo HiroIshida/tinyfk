@@ -40,6 +40,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <Eigen/Geometry>
 
 #include "urdf_model/pose.h"
 #include "urdf_model/types.h"
@@ -196,7 +197,7 @@ public:
   ///   origin specifies the transform from Parent Link to Joint Frame
   std::string parent_link_name;
   /// transform from Parent Link frame to Joint frame
-  Pose  parent_to_joint_origin_transform;
+  Eigen::Affine3d parent_to_joint_origin_transform;
 
   /// Joint Dynamics
   JointDynamicsSharedPtr dynamics;
@@ -263,7 +264,7 @@ public:
     this->axis.clear();
     this->child_link_name.clear();
     this->parent_link_name.clear();
-    this->parent_to_joint_origin_transform.clear();
+    this->parent_to_joint_origin_transform.setIdentity();
     this->dynamics.reset();
     this->limits.reset();
     this->safety.reset();
