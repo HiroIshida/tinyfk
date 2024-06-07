@@ -46,11 +46,12 @@
 #include <vector>
 #include <algorithm>
 #include <tinyxml.h>
+#include <Eigen/Geometry>
 //#include <console_bridge/console.h>
 
 namespace urdf{
 
-bool parsePose(Pose &pose, TiXmlElement* xml);
+bool parsePose(Eigen::Affine3d &pose, TiXmlElement* xml);
 
 bool parseMaterial(Material &material, TiXmlElement *config, bool only_name_is_ok)
 {
@@ -578,72 +579,75 @@ bool exportGeometry(GeometrySharedPtr &geom, TiXmlElement *xml)
 
 bool exportInertial(Inertial &i, TiXmlElement *xml)
 {
-  // adds <inertial>
-  //        <mass value="1"/>
-  //        <pose xyz="0 0 0" rpy="0 0 0"/>
-  //        <inertia ixx="1" ixy="0" />
-  //      </inertial>
-  TiXmlElement *inertial_xml = new TiXmlElement("inertial");
+  throw std::runtime_error("Not implemented");
+  // // adds <inertial>
+  // //        <mass value="1"/>
+  // //        <pose xyz="0 0 0" rpy="0 0 0"/>
+  // //        <inertia ixx="1" ixy="0" />
+  // //      </inertial>
+  // TiXmlElement *inertial_xml = new TiXmlElement("inertial");
 
-  TiXmlElement *mass_xml = new TiXmlElement("mass");
-  mass_xml->SetAttribute("value", urdf_export_helpers::values2str(i.mass));
-  inertial_xml->LinkEndChild(mass_xml);
+  // TiXmlElement *mass_xml = new TiXmlElement("mass");
+  // mass_xml->SetAttribute("value", urdf_export_helpers::values2str(i.mass));
+  // inertial_xml->LinkEndChild(mass_xml);
 
-  exportPose(i.origin, inertial_xml);
+  // exportPose(i.origin, inertial_xml);
 
-  TiXmlElement *inertia_xml = new TiXmlElement("inertia");
-  inertia_xml->SetAttribute("ixx", urdf_export_helpers::values2str(i.ixx));
-  inertia_xml->SetAttribute("ixy", urdf_export_helpers::values2str(i.ixy));
-  inertia_xml->SetAttribute("ixz", urdf_export_helpers::values2str(i.ixz));
-  inertia_xml->SetAttribute("iyy", urdf_export_helpers::values2str(i.iyy));
-  inertia_xml->SetAttribute("iyz", urdf_export_helpers::values2str(i.iyz));
-  inertia_xml->SetAttribute("izz", urdf_export_helpers::values2str(i.izz));
-  inertial_xml->LinkEndChild(inertia_xml);
+  // TiXmlElement *inertia_xml = new TiXmlElement("inertia");
+  // inertia_xml->SetAttribute("ixx", urdf_export_helpers::values2str(i.ixx));
+  // inertia_xml->SetAttribute("ixy", urdf_export_helpers::values2str(i.ixy));
+  // inertia_xml->SetAttribute("ixz", urdf_export_helpers::values2str(i.ixz));
+  // inertia_xml->SetAttribute("iyy", urdf_export_helpers::values2str(i.iyy));
+  // inertia_xml->SetAttribute("iyz", urdf_export_helpers::values2str(i.iyz));
+  // inertia_xml->SetAttribute("izz", urdf_export_helpers::values2str(i.izz));
+  // inertial_xml->LinkEndChild(inertia_xml);
 
-  xml->LinkEndChild(inertial_xml);
+  // xml->LinkEndChild(inertial_xml);
   
   return true;
 }
 
 bool exportVisual(Visual &vis, TiXmlElement *xml)
 {
-  // <visual group="default">
-  //   <origin rpy="0 0 0" xyz="0 0 0"/>
-  //   <geometry>
-  //     <mesh filename="mesh.dae"/>
-  //   </geometry>
-  //   <material name="Grey"/>
-  // </visual>
-  TiXmlElement * visual_xml = new TiXmlElement("visual");
+  throw std::runtime_error("Not implemented");
+  // // <visual group="default">
+  // //   <origin rpy="0 0 0" xyz="0 0 0"/>
+  // //   <geometry>
+  // //     <mesh filename="mesh.dae"/>
+  // //   </geometry>
+  // //   <material name="Grey"/>
+  // // </visual>
+  // TiXmlElement * visual_xml = new TiXmlElement("visual");
 
-  exportPose(vis.origin, visual_xml);
+  // exportPose(vis.origin, visual_xml);
 
-  exportGeometry(vis.geometry, visual_xml);
+  // exportGeometry(vis.geometry, visual_xml);
 
-  if (vis.material)
-    exportMaterial(*vis.material, visual_xml);
+  // if (vis.material)
+  //   exportMaterial(*vis.material, visual_xml);
 
-  xml->LinkEndChild(visual_xml);
+  // xml->LinkEndChild(visual_xml);
 
-  return true;
+  // return true;
 }
 
 bool exportCollision(Collision &col, TiXmlElement* xml)
 {  
-  // <collision group="default">
-  //   <origin rpy="0 0 0" xyz="0 0 0"/>
-  //   <geometry>
-  //     <mesh filename="mesh.dae"/>
-  //   </geometry>
-  //   <material name="Grey"/>
-  // </collision>
-  TiXmlElement * collision_xml = new TiXmlElement("collision");
+  throw std::runtime_error("Not implemented");
+  // // <collision group="default">
+  // //   <origin rpy="0 0 0" xyz="0 0 0"/>
+  // //   <geometry>
+  // //     <mesh filename="mesh.dae"/>
+  // //   </geometry>
+  // //   <material name="Grey"/>
+  // // </collision>
+  // TiXmlElement * collision_xml = new TiXmlElement("collision");
 
-  exportPose(col.origin, collision_xml);
+  // exportPose(col.origin, collision_xml);
 
-  exportGeometry(col.geometry, collision_xml);
+  // exportGeometry(col.geometry, collision_xml);
 
-  xml->LinkEndChild(collision_xml);
+  // xml->LinkEndChild(collision_xml);
 
   return true;
 }

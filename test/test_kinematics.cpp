@@ -58,9 +58,11 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
   }
 
   tinyfk::Transform pose0, pose1;
+  Eigen::Affine3d pose0_tmp, pose1_tmp; // FIXME
   Vector3 rpy0, rpy1;
   set_configuration(q0);
-  kin.get_link_pose(link_id, pose0);
+  kin.get_link_pose(link_id, pose0_tmp);
+  pose0 = eigen_affine3d_to_urdf_pose(pose0_tmp);
   rpy0 = pose0.rotation.getRPY();
 
   const size_t dim_jacobi = 3 + (rot_type == RotationType::RPY) * 3 +
@@ -70,7 +72,8 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
   for (size_t idx = 0; idx < q0.size(); idx++) {
     const auto q1 = get_tweaked_q(q0, idx);
     set_configuration(q1);
-    kin.get_link_pose(link_id, pose1);
+    kin.get_link_pose(link_id, pose1_tmp);
+    pose1 = eigen_affine3d_to_urdf_pose(pose1_tmp);
     J(0, idx) = (pose1.position.x - pose0.position.x) / eps;
     J(1, idx) = (pose1.position.y - pose0.position.y) / eps;
     J(2, idx) = (pose1.position.z - pose0.position.z) / eps;
@@ -158,10 +161,12 @@ TEST(FORWARD_KINEMATICS_TEST, AllTest) {
   kin.set_base_pose(base_pose);
 
   tinyfk::Transform pose, pose_naive;
+  Eigen::Affine3d pose_tmp;
   for (size_t i = 0; i < n_links; i++) {
     int link_id = link_ids[i];
 
-    kin.get_link_pose(link_id, pose);
+    kin.get_link_pose(link_id, pose_tmp);
+    pose = eigen_affine3d_to_urdf_pose(pose_tmp);
     EXPECT_TRUE(isNear(pose.position.x, pose_list[i][0]));
     EXPECT_TRUE(isNear(pose.position.y, pose_list[i][1]));
     EXPECT_TRUE(isNear(pose.position.z, pose_list[i][2]));

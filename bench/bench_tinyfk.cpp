@@ -1,3 +1,4 @@
+#include <Eigen/Geometry>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -23,7 +24,7 @@ void benchmark_fk(KinematicModel &kin, size_t n_iter,
   const std::vector<double> q = {0, 0, 0, 0, 0, 0, 0, 0};
   {
     clock_t start = clock();
-    urdf::Pose out;
+    Eigen::Affine3d out;
     for (size_t i = 0; i < n_iter; i++) {
       kin.set_joint_angles(joint_ids, q); // this clear cached TFs
       for (int lid : link_ids) {
@@ -36,7 +37,7 @@ void benchmark_fk(KinematicModel &kin, size_t n_iter,
 
   {
     clock_t start = clock();
-    urdf::Pose out;
+    Eigen::Affine3d out;
     for (size_t i = 0; i < n_iter; i++) {
       kin.set_joint_angles(joint_ids, q); // this clear cached TFs
       for (size_t j = 0; j < link_ids.size(); j++) {
