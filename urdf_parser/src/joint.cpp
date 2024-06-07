@@ -428,15 +428,15 @@ bool parseJoint(Joint &joint, TiXmlElement* config)
     TiXmlElement *axis_xml = config->FirstChildElement("axis");
     if (!axis_xml){
       //CONSOLE_BRIDGE_logDebug("urdfdom: no axis elemement for Joint link [%s], defaulting to (1,0,0) axis", joint.name.c_str());
-      joint.axis = Vector3(1.0, 0.0, 0.0);
+      joint.axis.setZero();
     }
     else{
       if (axis_xml->Attribute("xyz")){
         try {
-          joint.axis.init(axis_xml->Attribute("xyz"));
+          joint.initAxis(axis_xml->Attribute("xyz"));
         }
         catch (ParseError &e) {
-          joint.axis.clear();
+          joint.axis.setZero();
           //CONSOLE_BRIDGE_logError("Malformed axis element for joint [%s]: %s", joint.name.c_str(), e.what());
           return false;
         }
