@@ -6,6 +6,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 #include "tinyfk.hpp"
 #include "urdf_model/pose.h"
+#include <Eigen/Core>
 #include <Eigen/Dense>
 #include <cmath>
 
@@ -65,25 +66,38 @@ void KinematicModel::get_link_pose_inner(
       break;
     }
 
-    Transform tf_plink_to_hlink;
+    // Transform tf_plink_to_hlink;
+    Eigen::Affine3d tf_plink_to_hlink;
     { // compute tf_plink_to_hlink
       const urdf::JointSharedPtr &pjoint = hlink->parent_joint;
-      const Transform &tf_plink_to_pjoint =
-          pjoint->parent_to_joint_origin_transform;
+      const auto &&tf_plink_to_pjoint =
+          urdf_pose_to_eigen_affine3d(pjoint->parent_to_joint_origin_transform);
 
       if (pjoint->type == urdf::Joint::FIXED) {
         tf_plink_to_hlink = tf_plink_to_pjoint;
-      } else {
+      } else if (pjoint->type == urdf::Joint::PRISMATIC) {
         double angle = joint_angles_[pjoint->id];
-        Transform tf_pjoint_to_hlink = pjoint->transform(angle);
-        tf_plink_to_hlink =
-            pose_transform(tf_plink_to_pjoint, tf_pjoint_to_hlink);
+        Eigen::Translation3d tf_pjoint_to_hlink{
+            Eigen::Vector3d{pjoint->axis.x, pjoint->axis.y, pjoint->axis.z} *
+            angle};
+        tf_plink_to_hlink = tf_plink_to_pjoint * tf_pjoint_to_hlink;
+      } else if (pjoint->type == urdf::Joint::REVOLUTE ||
+                 pjoint->type == urdf::Joint::CONTINUOUS) {
+        double angle = joint_angles_[pjoint->id];
+        Eigen::AngleAxisd tf_pjoint_to_hlink{
+            angle,
+            Eigen::Vector3d{pjoint->axis.x, pjoint->axis.y, pjoint->axis.z}};
+        tf_plink_to_hlink = tf_plink_to_pjoint * tf_pjoint_to_hlink;
+      } else {
+        assert(false && "unknown joint type");
       }
     }
 
     // update
+    // transform_stack_.push(LinkIdAndTransform{
+    //     hlink->id, std::move(tf_plink_to_hlink)}); // TODO(HiroIshida): move?
     transform_stack_.push(LinkIdAndTransform{
-        hlink->id, std::move(tf_plink_to_hlink)}); // TODO(HiroIshida): move?
+        hlink->id, eigen_affine3d_to_urdf_pose(tf_plink_to_hlink)});
     hlink = plink;
   }
 
