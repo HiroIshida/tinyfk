@@ -35,20 +35,19 @@ Rotation q_derivative(const Rotation &q, const Vector3 &omega) {
   return Rotation(dxdt, dydt, dzdt, -dwdt); // TODO: why minus????
 }
 
-void KinematicModel::get_link_pose(size_t link_id,
-                                   Transform &out_tf_rlink_to_elink) const {
+void KinematicModel::get_link_pose(
+    size_t link_id, Eigen::Affine3d &out_tf_rlink_to_elink) const {
   Eigen::Affine3d const *pose_ptr = transform_cache_.get_cache(link_id);
   if (pose_ptr) {
     // FIXME: remove
-    // out_tf_rlink_to_elink = *pose_ptr;
-    out_tf_rlink_to_elink = eigen_affine3d_to_urdf_pose(*pose_ptr);
+    out_tf_rlink_to_elink = *pose_ptr;
     return;
   }
   this->get_link_pose_inner(link_id, out_tf_rlink_to_elink);
 }
 
 void KinematicModel::get_link_pose_inner(
-    size_t link_id, Transform &out_tf_rlink_to_elink) const {
+    size_t link_id, Eigen::Affine3d &out_tf_rlink_to_elink) const {
   urdf::LinkSharedPtr hlink = links_[link_id];
 
   Eigen::Affine3d tf_rlink_to_blink = base_pose_;
@@ -85,7 +84,7 @@ void KinematicModel::get_link_pose_inner(
       } else if (pjoint->type == urdf::Joint::REVOLUTE ||
                  pjoint->type == urdf::Joint::CONTINUOUS) {
         double angle = joint_angles_[pjoint->id];
-        Eigen::AngleAxisd tf_pjoint_to_hlink{
+        Eigen::AngleAxisd&& tf_pjoint_to_hlink{
             angle,
             Eigen::Vector3d{pjoint->axis.x, pjoint->axis.y, pjoint->axis.z}};
         tf_plink_to_hlink = tf_plink_to_pjoint * tf_pjoint_to_hlink;
@@ -111,9 +110,7 @@ void KinematicModel::get_link_pose_inner(
     transform_cache_.set_cache(hid, tf_rlink_to_hlink);
     tf_rlink_to_plink = std::move(tf_rlink_to_hlink);
   }
-  // FIXME
-  // out_tf_rlink_to_elink = std::move(tf_rlink_to_plink);
-  out_tf_rlink_to_elink = eigen_affine3d_to_urdf_pose(tf_rlink_to_plink);
+  out_tf_rlink_to_elink = std::move(tf_rlink_to_plink);
 }
 
 Eigen::MatrixXd
@@ -125,8 +122,10 @@ KinematicModel::get_jacobian(size_t elink_id,
   const int dim_dof = joint_ids.size() + (with_base ? 6 : 0);
 
   // compute values shared through the loop
-  Transform tf_rlink_to_elink;
-  this->get_link_pose(elink_id, tf_rlink_to_elink);
+  Eigen::Affine3d tf_rlink_to_elink_tmp; // FIXME
+  this->get_link_pose(elink_id, tf_rlink_to_elink_tmp);
+  Transform tf_rlink_to_elink =
+      eigen_affine3d_to_urdf_pose(tf_rlink_to_elink_tmp);
   Vector3 &epos = tf_rlink_to_elink.position;
   Rotation &erot = tf_rlink_to_elink.rotation;
 
@@ -154,8 +153,11 @@ KinematicModel::get_jacobian(size_t elink_id,
           hjoint->getChildLink(); // rotation of clink and hlink is same. so
                                   // clink is ok.
 
-      Transform tf_rlink_to_clink;
-      this->get_link_pose(clink->id, tf_rlink_to_clink);
+      // FIXME
+      Eigen::Affine3d tf_rlink_to_clink_tmp;
+      this->get_link_pose(clink->id, tf_rlink_to_clink_tmp);
+      Transform tf_rlink_to_clink =
+          eigen_affine3d_to_urdf_pose(tf_rlink_to_clink_tmp);
 
       Rotation &crot = tf_rlink_to_clink.rotation;
       Vector3 &&world_axis = crot * hjoint->axis; // axis w.r.t root link
@@ -194,9 +196,11 @@ KinematicModel::get_jacobian(size_t elink_id,
   }
 
   Transform tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
+  Eigen::Affine3d tf_rlink_to_blink_tmp;
   Vector3 rpy_rlink_to_blink;
   if (with_base) {
-    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink);
+    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink_tmp);
+    tf_rlink_to_blink = eigen_affine3d_to_urdf_pose(tf_rlink_to_blink_tmp);
     tf_blink_to_rlink = tf_rlink_to_blink.inverse();
     rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
     tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
@@ -252,9 +256,11 @@ Vector3 KinematicModel::get_com() {
   Vector3 com_average;
   double mass_total = 0.0;
   Transform tf_base_to_com;
+  Eigen::Affine3d tf_base_to_com_tmp; // FIXME
   for (const auto &link : com_dummy_links_) {
     mass_total += link->inertial->mass;
-    this->get_link_pose(link->id, tf_base_to_com);
+    this->get_link_pose(link->id, tf_base_to_com_tmp);
+    tf_base_to_com = eigen_affine3d_to_urdf_pose(tf_base_to_com_tmp);
     com_average.x += link->inertial->mass * tf_base_to_com.position.x;
     com_average.y += link->inertial->mass * tf_base_to_com.position.y;
     com_average.z += link->inertial->mass * tf_base_to_com.position.z;
@@ -302,7 +308,9 @@ Eigen::Matrix3d KinematicModel::get_total_inertia_matrix() {
       size_t link_id = link->id;
 
       Transform tf_base_to_link;
-      this->get_link_pose(link_id, tf_base_to_link);
+      Eigen::Affine3d tf_base_to_link_tmp; // FIXME
+      this->get_link_pose(link_id, tf_base_to_link_tmp);
+      tf_base_to_link = eigen_affine3d_to_urdf_pose(tf_base_to_link_tmp);
       const auto &trans = tf_base_to_link.position;
       Eigen::Vector3d vec;
       vec << trans.x - com.x, trans.y - com.y, trans.z - com.z;
