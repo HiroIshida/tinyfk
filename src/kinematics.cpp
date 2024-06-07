@@ -70,8 +70,7 @@ void KinematicModel::get_link_pose_inner(
     Eigen::Affine3d tf_plink_to_hlink;
     { // compute tf_plink_to_hlink
       const urdf::JointSharedPtr &pjoint = hlink->parent_joint;
-      const auto &&tf_plink_to_pjoint =
-          urdf_pose_to_eigen_affine3d(pjoint->parent_to_joint_origin_transform);
+      const auto &tf_plink_to_pjoint = pjoint->parent_to_joint_origin_transform;
 
       if (pjoint->type == urdf::Joint::FIXED) {
         tf_plink_to_hlink = tf_plink_to_pjoint;

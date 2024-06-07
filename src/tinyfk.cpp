@@ -87,15 +87,20 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
       }
       const auto com_dummy_link_name = link->name + "_com";
       Transform new_link_pose;
-      new_link_pose.position.x = link->inertial->origin.position.x;
-      new_link_pose.position.y = link->inertial->origin.position.y;
-      new_link_pose.position.z = link->inertial->origin.position.z;
+      // new_link_pose.position.x = link->inertial->origin.position.x;
+      // new_link_pose.position.y = link->inertial->origin.position.y;
+      // new_link_pose.position.z = link->inertial->origin.position.z;
+      // FIXME: remove this conversion
+      Eigen::Vector3d origin_position = link->inertial->origin.translation();
+      new_link_pose.position.x = origin_position(0);
+      new_link_pose.position.y = origin_position(1);
+      new_link_pose.position.z = origin_position(2);
       const auto new_link =
           this->add_new_link(com_dummy_link_name, link->id, new_link_pose);
       // set new link's inertial as the same as the parent
       // except its origin is zero
       new_link->inertial = link->inertial;
-      new_link->inertial->origin = Transform();
+      new_link->inertial->origin = Eigen::Affine3d::Identity();
       com_dummy_links.push_back(new_link);
     }
     this->com_dummy_links_ = com_dummy_links;
@@ -203,7 +208,8 @@ urdf::LinkSharedPtr KinematicModel::add_new_link(const std::string &link_name,
 
   auto fixed_joint = std::make_shared<urdf::Joint>();
 
-  fixed_joint->parent_to_joint_origin_transform = pose;
+  fixed_joint->parent_to_joint_origin_transform =
+      urdf_pose_to_eigen_affine3d(pose);
   fixed_joint->type = urdf::Joint::FIXED;
 
   int link_id = links_.size();
