@@ -259,7 +259,7 @@ Eigen::MatrixXd
 KinematicModel::get_com_jacobian(const std::vector<size_t> &joint_ids,
                                  bool with_base) {
   constexpr size_t jac_rank = 3;
-  const size_t dim_dof = joint_ids.size() + with_base * 6;
+  const size_t dim_dof = joint_ids.size() + with_base * 7;
   Eigen::MatrixXd jac_average = Eigen::MatrixXd::Zero(jac_rank, dim_dof);
   double mass_total = 0.0;
   for (const auto &com_link : com_dummy_links_) {
