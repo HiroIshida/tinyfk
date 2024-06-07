@@ -118,17 +118,18 @@ KinematicModel::get_jacobian(size_t elink_id,
   const int dim_dof = joint_ids.size() + (with_base ? 6 : 0);
 
   // compute values shared through the loop
-  Eigen::Affine3d tf_rlink_to_elink_tmp; // FIXME
-  this->get_link_pose(elink_id, tf_rlink_to_elink_tmp);
-  Transform tf_rlink_to_elink =
-      eigen_affine3d_to_urdf_pose(tf_rlink_to_elink_tmp);
-  Vector3 &epos = tf_rlink_to_elink.position;
-  Rotation &erot = tf_rlink_to_elink.rotation;
+  Eigen::Affine3d tf_rlink_to_elink; // FIXME
+  this->get_link_pose(elink_id, tf_rlink_to_elink);
+  Eigen::Vector3d epos = tf_rlink_to_elink.translation();
+  Eigen::Quaterniond erot;
+  erot = tf_rlink_to_elink.rotation();
 
-  Vector3 erpy;
-  Rotation erot_inverse;
+  Eigen::Vector3d erpy;
+  Eigen::Quaterniond erot_inverse;
   if (rot_type == RotationType::RPY) {
-    erpy = erot.getRPY();
+    // erpy = erot.getRPY();
+    // convert to rpy
+    erpy = erot.toRotationMatrix().eulerAngles(0, 1, 2);
   }
   if (rot_type == RotationType::XYZW) {
     erot_inverse = erot.inverse();
@@ -150,10 +151,8 @@ KinematicModel::get_jacobian(size_t elink_id,
                                   // clink is ok.
 
       // FIXME
-      Eigen::Affine3d tf_rlink_to_clink_tmp;
-      this->get_link_pose(clink->id, tf_rlink_to_clink_tmp);
-      Transform tf_rlink_to_clink =
-          eigen_affine3d_to_urdf_pose(tf_rlink_to_clink_tmp);
+      Eigen::Affine3d tf_rlink_to_clink;
+      this->get_link_pose(clink->id, tf_rlink_to_clink);
 
       Rotation &crot = tf_rlink_to_clink.rotation;
       // FIXME
