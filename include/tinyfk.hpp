@@ -10,7 +10,8 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include "urdf_model/joint.h"
 #include "urdf_model/pose.h"
 #include "urdf_parser/urdf_parser.h"
-#include <Eigen/Core> // slow compile...
+#include <Eigen/Core>     // slow compile...
+#include <Eigen/Geometry> // slow compile...
 #include <array>
 #include <assert.h>
 #include <fstream>
@@ -154,6 +155,11 @@ private:
 };
 
 std::string load_urdf(const std::string &urdf_path);
+
+Eigen::Affine3d urdf_pose_to_eigen_affine3d(const urdf::Pose &pose);
+
+urdf::Pose eigen_affine3d_to_urdf_pose(const Eigen::Affine3d &affine);
+
 }; // namespace tinyfk
 
 #endif // include guard

@@ -260,4 +260,26 @@ std::string load_urdf(const std::string &urdf_path) {
   return xml_string;
 }
 
+Eigen::Affine3d urdf_pose_to_eigen_affine3d(const urdf::Pose &pose) {
+  Eigen::Affine3d affine;
+  Eigen::Vector3d position(pose.position.x, pose.position.y, pose.position.z);
+  Eigen::Quaterniond rotation(pose.rotation.w, pose.rotation.x, pose.rotation.y,
+                              pose.rotation.z);
+  affine = Eigen::Translation3d(position) * rotation;
+  return affine;
+}
+
+urdf::Pose eigen_affine3d_to_urdf_pose(const Eigen::Affine3d &affine) {
+  urdf::Pose pose;
+  pose.position.x = affine.translation().x();
+  pose.position.y = affine.translation().y();
+  pose.position.z = affine.translation().z();
+  Eigen::Quaterniond rotation(affine.rotation());
+  pose.rotation.w = rotation.w();
+  pose.rotation.x = rotation.x();
+  pose.rotation.y = rotation.y();
+  pose.rotation.z = rotation.z();
+  return pose;
+}
+
 }; // end namespace tinyfk
