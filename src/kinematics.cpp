@@ -156,7 +156,9 @@ KinematicModel::get_jacobian(size_t elink_id,
           eigen_affine3d_to_urdf_pose(tf_rlink_to_clink_tmp);
 
       Rotation &crot = tf_rlink_to_clink.rotation;
-      Vector3 &&world_axis = crot * hjoint->axis; // axis w.r.t root link
+      // FIXME
+      Vector3 joint_axis{hjoint->axis(0), hjoint->axis(1), hjoint->axis(2)};
+      Vector3 &&world_axis = crot * joint_axis; // axis w.r.t root link
       Vector3 dpos;
       if (type == urdf::Joint::PRISMATIC) {
         dpos = world_axis;
