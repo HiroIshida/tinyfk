@@ -61,6 +61,10 @@ endif(BENCH_KDL)
 add_executable(bench_tinyfk bench/bench_tinyfk.cpp)
 target_link_libraries(bench_tinyfk tinyfk)
 
+# benchmark (tinyfk)
+add_executable(bench_eigen bench/eigen_transform.cpp)
+target_link_libraries(bench_eigen tinyfk)
+
 option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
 if(BUILD_PYTHON_INTERFACE)
     option(INSTALL_VIA_PIP "if you install via pip install . " ON)
