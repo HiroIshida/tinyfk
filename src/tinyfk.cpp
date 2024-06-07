@@ -34,6 +34,14 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
   }
   size_t N_link = lid; // starting from 0 and finally ++ increment, so it'S ok
 
+  // compute total mass
+  double total_mass = 0.0;
+  for (const auto &link : links) {
+    if (link->inertial != nullptr) {
+      total_mass += link->inertial->mass;
+    }
+  }
+
   // construct joints and joint_ids, and numbering joint id
   std::vector<urdf::JointSharedPtr> joints;
   std::unordered_map<std::string, int> joint_ids;
@@ -74,6 +82,7 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
   joints_ = joints;
   joint_ids_ = joint_ids;
   num_dof_ = num_dof;
+  total_mass_ = total_mass;
   joint_angles_ = joint_angles;
 
   // add COM of each link as new link

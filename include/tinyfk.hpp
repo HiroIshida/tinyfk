@@ -69,6 +69,7 @@ public: // members
 
   RelevancePredicateTable rptable_;
   int num_dof_;
+  double total_mass_;
 
   mutable SizedStack<LinkIdAndTransform> transform_stack_;
   mutable SizedCache<Transform> transform_cache_;
