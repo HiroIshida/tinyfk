@@ -12,28 +12,57 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 namespace tinyfk {
 
-Vector3 rpy_derivative(const Vector3 &rpy, const Vector3 &axis) {
-  Vector3 drpy_dt;
-  double a2 = -rpy.y;
-  double a3 = -rpy.z;
-  drpy_dt.x = cos(a3) / cos(a2) * axis.x - sin(a3) / cos(a2) * axis.y;
-  drpy_dt.y = sin(a3) * axis.x + cos(a3) * axis.y;
-  drpy_dt.z = -cos(a3) * sin(a2) / cos(a2) * axis.x +
-              sin(a3) * sin(a2) / cos(a2) * axis.y + axis.z;
-  return drpy_dt;
+// Vector3 rpy_derivative(const Vector3 &rpy, const Vector3 &axis) {
+//   Vector3 drpy_dt;
+//   double a2 = -rpy.y;
+//   double a3 = -rpy.z;
+//   drpy_dt.x = cos(a3) / cos(a2) * axis.x - sin(a3) / cos(a2) * axis.y;
+//   drpy_dt.y = sin(a3) * axis.x + cos(a3) * axis.y;
+//   drpy_dt.z = -cos(a3) * sin(a2) / cos(a2) * axis.x +
+//               sin(a3) * sin(a2) / cos(a2) * axis.y + axis.z;
+//   return drpy_dt;
+// }
+Eigen::Vector3d rpy_derivative(const Eigen::Vector3d &rpy,
+                               const Eigen::Vector3d &axis) {
+  Eigen::Matrix3d mat;
+  double sinp = sin(rpy(1));
+  double cosp = cos(rpy(1));
+  double siny = sin(rpy(2));
+  double cosy = cos(rpy(2));
+  mat << cosy / cosp, -siny / cosp, 0,
+      siny, cosy, 0,
+      -cosy * sinp / cosp, siny * sinp / cosp, 1;
+  return mat * axis;
 }
 
-Rotation q_derivative(const Rotation &q, const Vector3 &omega) {
-  const double dxdt =
-      0.5 * (0 * q.x + omega.z * q.y - omega.y * q.z + omega.x * q.w);
-  const double dydt =
-      0.5 * (-omega.z * q.x + 0 * q.y + omega.x * q.z + omega.y * q.w);
-  const double dzdt =
-      0.5 * (omega.y * q.x - omega.x * q.y + 0 * q.z + omega.z * q.w);
-  const double dwdt =
-      0.5 * (-omega.x * q.x - omega.y * q.y - omega.z * q.z + 0 * q.w);
-  return Rotation(dxdt, dydt, dzdt, -dwdt); // TODO: why minus????
+// Rotation q_derivative(const Rotation &q, const Vector3 &omega) {
+//   const double dxdt =
+//       0.5 * (0 * q.x + omega.z * q.y - omega.y * q.z + omega.x * q.w);
+//   const double dydt =
+//       0.5 * (-omega.z * q.x + 0 * q.y + omega.x * q.z + omega.y * q.w);
+//   const double dzdt =
+//       0.5 * (omega.y * q.x - omega.x * q.y + 0 * q.z + omega.z * q.w);
+//   const double dwdt =
+//       0.5 * (-omega.x * q.x - omega.y * q.y - omega.z * q.z + 0 * q.w);
+//   return Rotation(dxdt, dydt, dzdt, -dwdt); // TODO: why minus????
+// }
+
+Eigen::Vector4d q_derivative(const Eigen::Quaterniond &q,
+                             const Eigen::Vector3d &omega) {
+  double ox = omega(0);
+  double oy = omega(1);
+  double oz = omega(2);
+  Eigen::Matrix4d mat;
+  mat << 0, oz, -oy, ox,
+      -oz, 0, ox, oy,
+      oy, -ox, 0, oz,
+      -ox, -oy, -oz, 0;
+  Eigen::Vector4d dqdt = 0.5 * mat * q.coeffs();
+  // TODO: why minus????
+  dqdt(3) = -dqdt(3);
+  return dqdt;
 }
+
 
 void KinematicModel::get_link_pose(
     size_t link_id, Eigen::Affine3d &out_tf_rlink_to_elink) const {
@@ -154,53 +183,54 @@ KinematicModel::get_jacobian(size_t elink_id,
       Eigen::Affine3d tf_rlink_to_clink;
       this->get_link_pose(clink->id, tf_rlink_to_clink);
 
-      Rotation &crot = tf_rlink_to_clink.rotation;
       // FIXME
-      Vector3 joint_axis{hjoint->axis(0), hjoint->axis(1), hjoint->axis(2)};
-      Vector3 &&world_axis = crot * joint_axis; // axis w.r.t root link
-      Vector3 dpos;
+      Eigen::Vector3d world_axis = tf_rlink_to_clink * hjoint->axis; // axis w.r.t root link
+      Eigen::Vector3d dpos;
       if (type == urdf::Joint::PRISMATIC) {
         dpos = world_axis;
       } else { // revolute or continuous
-        Vector3 &cpos = tf_rlink_to_clink.position;
-        Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y,
-                                      epos.z - cpos.z};
-        cross_product(world_axis, vec_clink_to_elink, dpos);
+        // Vector3 &cpos = tf_rlink_to_clink.position;
+        // Vector3 vec_clink_to_elink = {epos.x - cpos.x, epos.y - cpos.y,
+        //                               epos.z - cpos.z};
+        // cross_product(world_axis, vec_clink_to_elink, dpos);
+        dpos = world_axis.cross(epos - tf_rlink_to_clink.translation());
       }
-      jacobian(0, i) = dpos.x;
-      jacobian(1, i) = dpos.y;
-      jacobian(2, i) = dpos.z;
+      // jacobian(0, i) = dpos.x;
+      // jacobian(1, i) = dpos.y;
+      // jacobian(2, i) = dpos.z;
+      jacobian.block(0, i, 3, 1) = dpos;
       if (type == urdf::Joint::PRISMATIC) {
         // jacobian for rotation is all zero
       } else {
 
         if (rot_type == RotationType::RPY) { // (compute rpy jacobian)
-          Vector3 drpy_dt = rpy_derivative(erpy, world_axis);
-          jacobian(3, i) = drpy_dt.x;
-          jacobian(4, i) = drpy_dt.y;
-          jacobian(5, i) = drpy_dt.z;
+          Eigen::Vector3d drpy_dt = rpy_derivative(erpy, world_axis);
+          jacobian.block(3, i, 3, 1) = drpy_dt;
+          // jacobian(3, i) = drpy_dt.x;
+          // jacobian(4, i) = drpy_dt.y;
+          // jacobian(5, i) = drpy_dt.z;
         }
 
         if (rot_type == RotationType::XYZW) { // (compute quat jacobian)
-          Rotation dq_dt = q_derivative(erot_inverse, world_axis);
-          jacobian(3, i) = dq_dt.x;
-          jacobian(4, i) = dq_dt.y;
-          jacobian(5, i) = dq_dt.z;
-          jacobian(6, i) = dq_dt.w;
+          // Rotation dq_dt = q_derivative(erot_inverse, world_axis);
+          Eigen::Vector4d dq_dt = q_derivative(erot_inverse, world_axis);
+          jacobian.block(3, i, 4, 1) = dq_dt;
+          // jacobian(3, i) = dq_dt.x;
+          // jacobian(4, i) = dq_dt.y;
+          // jacobian(5, i) = dq_dt.z;
+          // jacobian(6, i) = dq_dt.w;
         }
       }
     }
   }
 
-  Transform tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
-  Eigen::Affine3d tf_rlink_to_blink_tmp;
-  Vector3 rpy_rlink_to_blink;
+  Eigen::Affine3d tf_rlink_to_blink, tf_blink_to_rlink, tf_blink_to_elink;
+  Eigen::Vector3d rpy_rlink_to_blink;
   if (with_base) {
-    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink_tmp);
-    tf_rlink_to_blink = eigen_affine3d_to_urdf_pose(tf_rlink_to_blink_tmp);
+    this->get_link_pose(this->root_link_id_, tf_rlink_to_blink);
     tf_blink_to_rlink = tf_rlink_to_blink.inverse();
-    rpy_rlink_to_blink = tf_rlink_to_blink.rotation.getRPY();
-    tf_blink_to_elink = pose_transform(tf_blink_to_rlink, tf_rlink_to_elink);
+    rpy_rlink_to_blink = tf_rlink_to_blink.rotation().eulerAngles(0, 1, 2);
+    tf_blink_to_elink = tf_blink_to_rlink * tf_rlink_to_elink;
   }
 
   if (with_base) {
@@ -220,29 +250,41 @@ KinematicModel::get_jacobian(size_t elink_id,
       auto rpy_tweaked = rpy_rlink_to_blink;
       rpy_tweaked[rpy_idx] += eps;
 
-      Transform tf_rlink_to_blink_tweaked = tf_rlink_to_blink;
-      tf_rlink_to_blink_tweaked.rotation.setFromRPY(
-          rpy_tweaked.x, rpy_tweaked.y, rpy_tweaked.z);
-      Transform tf_rlink_to_elink_tweaked =
-          pose_transform(tf_rlink_to_blink_tweaked, tf_blink_to_elink);
-      auto pose_out = tf_rlink_to_elink_tweaked;
+      // Transform tf_rlink_to_blink_tweaked = tf_rlink_to_blink;
+      Eigen::Affine3d tf_rlink_to_blink_tweaked = tf_rlink_to_blink;
+      Eigen::Quaterniond quaternion = Eigen::AngleAxisd(rpy_tweaked(2), Eigen::Vector3d::UnitZ()) *
+                                      Eigen::AngleAxisd(rpy_tweaked(1), Eigen::Vector3d::UnitY()) *
+                                      Eigen::AngleAxisd(rpy_tweaked(0), Eigen::Vector3d::UnitX());
+      tf_rlink_to_blink_tweaked.linear() = quaternion.toRotationMatrix();
+      Eigen::Affine3d tf_rlink_to_elink_tweaked = tf_rlink_to_blink_tweaked * tf_blink_to_elink;
 
-      const auto pos_diff = pose_out.position - tf_rlink_to_elink.position;
-      jacobian(0, idx_col) = pos_diff.x / eps;
-      jacobian(1, idx_col) = pos_diff.y / eps;
-      jacobian(2, idx_col) = pos_diff.z / eps;
+      const auto pose_diff = tf_rlink_to_elink_tweaked.translation() - tf_rlink_to_elink.translation();
+      // jacobian(0, idx_col) = pos_diff.x / eps;
+      // jacobian(1, idx_col) = pos_diff.y / eps;
+      // jacobian(2, idx_col) = pos_diff.z / eps;
+      jacobian.block(0, idx_col, 3, 1) = pose_diff / eps;
       if (rot_type == RotationType::RPY) {
-        auto erpy_tweaked = pose_out.rotation.getRPY();
-        const auto erpy_diff = erpy_tweaked - erpy;
-        jacobian(3, idx_col) = erpy_diff.x / eps;
-        jacobian(4, idx_col) = erpy_diff.y / eps;
-        jacobian(5, idx_col) = erpy_diff.z / eps;
+        auto erpy_twaked = tf_rlink_to_elink_tweaked.rotation().eulerAngles(0, 1, 2);
+        // const auto erpy_diff = erpy_tweaked - erpy;
+        // jacobian(3, idx_col) = erpy_diff.x / eps;
+        // jacobian(4, idx_col) = erpy_diff.y / eps;
+        // jacobian(5, idx_col) = erpy_diff.z / eps;
+        jacobian.block(3, idx_col, 3, 1) = (erpy_twaked - erpy) / eps;
       }
       if (rot_type == RotationType::XYZW) {
-        jacobian(3, idx_col) = (pose_out.rotation.x - erot.x) / eps;
-        jacobian(4, idx_col) = (pose_out.rotation.y - erot.y) / eps;
-        jacobian(5, idx_col) = (pose_out.rotation.z - erot.z) / eps;
-        jacobian(6, idx_col) = (pose_out.rotation.w - erot.w) / eps;
+        // Eigen::Vector4d erot{tf_rlink_to_elink_tweaked.rotation().x(),
+        //                               tf_rlink_to_elink_tweaked.rotation().y(),
+        //                               tf_rlink_to_elink_tweaked.rotation().z(),
+        //                               tf_rlink_to_elink_tweaked.rotation().w()};
+        // Eigen::Vector4d erot_twaked{tf_rlink_to_elink_tweaked.rotation().x(),
+        //                               tf_rlink_to_elink_tweaked.rotation().y(),
+        //                               tf_rlink_to_elink_tweaked.rotation().z(),
+        //                               tf_rlink_to_elink_tweaked.rotation().w()};
+        // jacobian.block(3, idx_col, 4, 1) = (erot_twaked - erot) / eps;
+        // jacobian(3, idx_col) = (pose_out.rotation.x - erot.x) / eps;
+        // jacobian(4, idx_col) = (pose_out.rotation.y - erot.y) / eps;
+        // jacobian(5, idx_col) = (pose_out.rotation.z - erot.z) / eps;
+        // jacobian(6, idx_col) = (pose_out.rotation.w - erot.w) / eps;
       }
     }
   }
