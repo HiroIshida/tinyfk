@@ -204,7 +204,7 @@ class KinematicModel:
         ret = self._robot.get_joint_limits(joint_ids)
         limits: List[Tuple[Optional[float], Optional[float]]] = []
         for lower, upper in ret:
-            if lower == 0.0 and upper == 0.0:
+            if lower == -np.inf and upper == np.inf:
                 # NOTE: if no limit is set, the value is set to 0.0 in urdfdom
                 # TODO: I assume that if joint limit is not set, both lower and upper
                 # are not set. Is this assumption correct?
