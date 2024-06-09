@@ -23,7 +23,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 namespace tinyfk {
 
-using AngleLimit = std::pair<double, double>;
+using Bound = std::pair<double, double>;
 using Transform = urdf::Pose;
 using Vector3 = urdf::Vector3;
 using Rotation = urdf::Rotation;
@@ -101,8 +101,8 @@ public: // functions
 
   std::vector<size_t> get_joint_ids(std::vector<std::string> joint_names) const;
 
-  std::vector<AngleLimit>
-  get_joint_limits(const std::vector<size_t> &joint_ids) const;
+  std::vector<Bound>
+  get_joint_position_limits(const std::vector<size_t> &joint_ids) const;
 
   std::vector<std::string> get_joint_names() const {
     std::vector<std::string> joint_names;
