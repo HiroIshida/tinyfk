@@ -152,16 +152,19 @@ KinematicModel::get_joint_ids(std::vector<std::string> joint_names) const {
   return joint_ids;
 }
 
-std::vector<AngleLimit>
-KinematicModel::get_joint_limits(const std::vector<size_t> &joint_ids) const {
+std::vector<Bound> KinematicModel::get_joint_position_limits(
+    const std::vector<size_t> &joint_ids) const {
   const size_t n_joint = joint_ids.size();
-  std::vector<AngleLimit> limits(n_joint, AngleLimit());
+  std::vector<Bound> limits(n_joint, Bound());
   for (size_t i = 0; i < n_joint; i++) {
-
     const auto &joint = joints_[joint_ids[i]];
-    auto &limit = limits[i];
-    limit.first = joint->limits->lower;
-    limit.second = joint->limits->upper;
+    if (joint->type == urdf::Joint::CONTINUOUS) {
+      limits[i].first = -std::numeric_limits<double>::infinity();
+      limits[i].second = std::numeric_limits<double>::infinity();
+    } else {
+      limits[i].first = joint->limits->lower;
+      limits[i].second = joint->limits->upper;
+    }
   }
   return limits;
 }

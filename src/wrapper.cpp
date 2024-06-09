@@ -238,7 +238,12 @@ PYBIND11_MODULE(_tinyfk, m) {
            &KinematicsModelPyWrapper::compute_total_inertia_matrix)
       .def("get_joint_names", &KinematicsModelPyWrapper::get_joint_names)
       .def("get_joint_ids", &KinematicsModelPyWrapper::get_joint_ids)
-      .def("get_joint_limits", &KinematicsModelPyWrapper::get_joint_limits)
+      .def("get_joint_limits",
+           &KinematicsModelPyWrapper::
+               get_joint_position_limits) // rename to
+                                          // get_joint_position_limits?
+                                          // but breaking
+                                          // change
       .def("get_base_pose", &KinematicsModelPyWrapper::get_base_pose)
       .def("set_base_pose", py::overload_cast<const std::vector<double> &>(
                                 &KinematicsModelPyWrapper::set_base_pose))
