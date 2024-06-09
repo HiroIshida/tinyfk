@@ -169,6 +169,28 @@ std::vector<Bound> KinematicModel::get_joint_position_limits(
   return limits;
 }
 
+std::vector<double> KinematicModel::get_joint_velocity_limits(
+    const std::vector<size_t> &joint_ids) const {
+  const size_t n_joint = joint_ids.size();
+  std::vector<double> limits(n_joint);
+  for (size_t i = 0; i < n_joint; i++) {
+    const auto &joint = joints_[joint_ids[i]];
+    limits[i] = joint->limits->velocity;
+  }
+  return limits;
+}
+
+std::vector<double> KinematicModel::get_joint_effort_limits(
+    const std::vector<size_t> &joint_ids) const {
+  const size_t n_joint = joint_ids.size();
+  std::vector<double> limits(n_joint);
+  for (size_t i = 0; i < n_joint; i++) {
+    const auto &joint = joints_[joint_ids[i]];
+    limits[i] = joint->limits->effort;
+  }
+  return limits;
+}
+
 std::vector<size_t>
 KinematicModel::get_link_ids(std::vector<std::string> link_names) const {
   int n_link = link_names.size();

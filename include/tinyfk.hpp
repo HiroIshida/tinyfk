@@ -104,6 +104,12 @@ public: // functions
   std::vector<Bound>
   get_joint_position_limits(const std::vector<size_t> &joint_ids) const;
 
+  std::vector<double>
+  get_joint_velocity_limits(const std::vector<size_t> &joint_ids) const;
+
+  std::vector<double>
+  get_joint_effort_limits(const std::vector<size_t> &joint_ids) const;
+
   std::vector<std::string> get_joint_names() const {
     std::vector<std::string> joint_names;
     for (auto &joint : joints_) {
