@@ -9,10 +9,12 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 #include "urdf_model/joint.h"
 #include "urdf_model/pose.h"
+#include "urdf_model/types.h"
 #include "urdf_parser/urdf_parser.h"
 #include <Eigen/Core> // slow compile...
 #include <array>
 #include <assert.h>
+#include <fcl/narrowphase/collision.h>
 #include <fstream>
 #include <iostream>
 #include <stack>
@@ -61,6 +63,7 @@ public: // members
   std::vector<urdf::LinkSharedPtr> links_;
   std::unordered_map<std::string, int> link_ids_;
   std::vector<urdf::LinkSharedPtr> com_dummy_links_;
+  std::vector<std::shared_ptr<fcl::CollisionGeometryf>> coll_geoms_;
 
   std::vector<urdf::JointSharedPtr> joints_;
   std::unordered_map<std::string, int> joint_ids_;
@@ -74,7 +77,7 @@ public: // members
   mutable SizedCache<Transform> transform_cache_;
 
 public: // functions
-  KinematicModel(const std::string &xml_string);
+  KinematicModel(const std::string &urdf_path);
 
   virtual ~KinematicModel() {}
 
