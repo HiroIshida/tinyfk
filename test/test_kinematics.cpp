@@ -27,10 +27,9 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
     pose.position.x = q[joint_ids.size()];
     pose.position.y = q[joint_ids.size() + 1];
     pose.position.z = q[joint_ids.size() + 2];
-
-    pose.rotation.setFromRPY(q[joint_ids.size() + 3], q[joint_ids.size() + 4],
-                             q[joint_ids.size() + 5]);
-
+    for (size_t j = 0; j < 4; ++j) {
+      *(&pose.rotation.x + j) = q[joint_ids.size() + 3 + j];
+    }
     kin.set_base_pose(pose);
   };
 
@@ -51,10 +50,10 @@ Eigen::MatrixXd compute_numerical_jacobian_with_base(
     q0.push_back(base_pose.position.y);
     q0.push_back(base_pose.position.z);
 
-    const auto rpy = base_pose.rotation.getRPY();
-    q0.push_back(rpy.x);
-    q0.push_back(rpy.y);
-    q0.push_back(rpy.z);
+    q0.push_back(base_pose.rotation.x);
+    q0.push_back(base_pose.rotation.y);
+    q0.push_back(base_pose.rotation.z);
+    q0.push_back(base_pose.rotation.w);
   }
 
   tinyfk::Transform pose0, pose1;
