@@ -49,6 +49,7 @@ poses, jacobians = kin.solve_fk(
     with_jacobian=True,
 )
 ```
+Also, simple inverse-kinematics demo is available in `python/example/ik.py`.
 
 ### For debugging
 For debugging or developing, it's better using cmake directly rather than using `pip`. In this case, please use
