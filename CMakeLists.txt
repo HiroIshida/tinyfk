@@ -14,6 +14,12 @@ find_package(Eigen3 REQUIRED)
 ADD_DEFINITIONS(-DEIGEN_NO_DEBUG)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
+option(BUILD_COLLISION_FEATURE "build collision feature" ON)
+add_compile_definitions(BUILD_COLLISION_FEATURE)
+if(BUILD_COLLISION_FEATURE)
+  find_package(hpp-fcl REQUIRED)
+endif()
+
 set(TINYFK_SRC src/tinyfk.cpp src/kinematics.cpp)
 include_directories(include/)
 add_library(tinyfk STATIC ${TINYFK_SRC})

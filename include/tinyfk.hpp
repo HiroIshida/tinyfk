@@ -21,6 +21,9 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <unordered_map>
 
 #include "data_structure.hpp"
+#ifdef BUILD_COLLISION_FEATURE
+#include <hpp/fcl/collision.h>
+#endif
 
 namespace tinyfk {
 
@@ -75,6 +78,9 @@ public: // members
 
   mutable SizedStack<LinkIdAndTransform> transform_stack_;
   mutable SizedCache<Transform> transform_cache_;
+#ifdef BUILD_COLLISION_FEATURE
+  std::shared_ptr<hpp::fcl::CollisionObject> collision_objects_;
+#endif
 
 public: // functions
   KinematicModel(const std::filesystem::path &urdf_path);
@@ -157,6 +163,9 @@ public: // functions
 
   urdf::LinkSharedPtr add_new_link(const std::string &link_name,
                                    size_t parent_id, const Transform &pose);
+#ifdef BUILD_COLLISION_FEATURE
+  void load_collision_objects();
+#endif
 
 private:
   void get_link_pose_inner(size_t link_id, Transform &out_tf_root_to_ef) const;
