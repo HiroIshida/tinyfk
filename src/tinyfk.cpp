@@ -13,6 +13,11 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 
 namespace tinyfk {
 
+KinematicModel::KinematicModel(const std::filesystem::path &urdf_path)
+    : KinematicModel(load_urdf(urdf_path.string())) {
+  urdf_path_ = urdf_path;
+}
+
 KinematicModel::KinematicModel(const std::string &xml_string) {
   if (xml_string.empty()) {
     throw std::runtime_error("xml string is empty");

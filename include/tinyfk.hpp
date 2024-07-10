@@ -13,6 +13,7 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include <Eigen/Core> // slow compile...
 #include <array>
 #include <assert.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stack>
@@ -55,6 +56,7 @@ enum class RotationType { IGNORE, RPY, XYZW };
 class KinematicModel {
 public: // members
   // change them all to private later
+  std::optional<std::filesystem::path> urdf_path_;
   urdf::ModelInterfaceSharedPtr robot_urdf_interface_;
 
   size_t root_link_id_;
@@ -75,6 +77,7 @@ public: // members
   mutable SizedCache<Transform> transform_cache_;
 
 public: // functions
+  KinematicModel(const std::filesystem::path &urdf_path);
   KinematicModel(const std::string &xml_string);
 
   virtual ~KinematicModel() {}
