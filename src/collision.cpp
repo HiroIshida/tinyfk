@@ -1,8 +1,51 @@
 #include "tinyfk.hpp"
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+#include <hpp/fcl/BVH/BVH_model.h>
+#include <hpp/fcl/mesh_loader/assimp.h>
 #include <regex>
 #include <stdexcept>
 
 namespace tinyfk {
+
+std::shared_ptr<hpp::fcl::BVHModel<hpp::fcl::OBBRSS>>
+loadMesh(const std::string &filePath) {
+  Assimp::Importer importer;
+  const aiScene *scene = importer.ReadFile(filePath, aiProcess_Triangulate);
+  if (!scene) {
+    std::cerr << "Error: " << importer.GetErrorString() << std::endl;
+    return nullptr;
+  }
+
+  auto model = std::make_shared<hpp::fcl::BVHModel<hpp::fcl::OBBRSS>>();
+  for (unsigned int i = 0; i < scene->mNumMeshes; ++i) {
+    const aiMesh *mesh = scene->mMeshes[i];
+
+    std::vector<hpp::fcl::Triangle> triangles;
+    std::vector<hpp::fcl::Vec3f> vertices;
+
+    for (unsigned int j = 0; j < mesh->mNumVertices; ++j) {
+      aiVector3D vertex = mesh->mVertices[j];
+      vertices.emplace_back(vertex.x, vertex.y, vertex.z);
+    }
+
+    for (unsigned int j = 0; j < mesh->mNumFaces; ++j) {
+      const aiFace &face = mesh->mFaces[j];
+      if (face.mNumIndices != 3)
+        continue; // Skip non-triangle faces
+      triangles.emplace_back(face.mIndices[0], face.mIndices[1],
+                             face.mIndices[2]);
+    }
+
+    model->beginModel();
+    model->addSubModel(vertices, triangles);
+    model->endModel();
+  }
+
+  model->computeLocalAABB();
+  return model;
+}
 
 void KinematicModel::load_collision_objects() {
   // urdf_path_ is None
@@ -54,7 +97,7 @@ void KinematicModel::load_collision_objects() {
         }
         std::string mesh_fullpath = urdf_path_.value().parent_path() /
                                     std::filesystem::path(matches[0]);
-        std::cout << mesh_fullpath << std::endl;
+        auto mesh_model = loadMesh(mesh_fullpath);
       } else {
         throw std::runtime_error("unsupported geometry type");
       }

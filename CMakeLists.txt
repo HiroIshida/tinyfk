@@ -18,6 +18,8 @@ option(BUILD_COLLISION_FEATURE "build collision feature" ON)
 add_compile_definitions(BUILD_COLLISION_FEATURE)
 if(BUILD_COLLISION_FEATURE)
   find_package(hpp-fcl REQUIRED)
+  find_package(assimp REQUIRED)
+  include_directories(${HPP_FCL_INCLUDE_DIRS} ${ASSIMP_INCLUDE_DIRS})
 endif()
 
 set(TINYFK_SRC src/tinyfk.cpp src/kinematics.cpp)
@@ -27,6 +29,9 @@ endif()
 include_directories(include/)
 add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk urdfdom_model)
+if(BUILD_COLLISION_FEATURE)
+  target_link_libraries(tinyfk ${HPP_FCL_LIBRARIES} ${ASSIMP_LIBRARIES})
+endif()
 
 # testing
 option(BUILD_TEST "build google test" OFF)
