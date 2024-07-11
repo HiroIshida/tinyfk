@@ -126,6 +126,8 @@ public:
   std::array<Eigen::MatrixXd, 2>
   solve_com_forward_kinematics(const std::vector<std::vector<double>> qs,
                                const std::vector<size_t> &joint_ids,
+                               const std::vector<size_t> &action_link_ids,
+                               const std::vector<double> &forces,
                                bool with_base, bool with_jacobian) {
     const size_t n_wp = qs.size();
     const size_t n_dof = joint_ids.size() + with_base * 6;
@@ -143,10 +145,34 @@ public:
       coms(0, i) = com.x;
       coms(1, i) = com.y;
       coms(2, i) = com.z;
-
       if (with_jacobian) {
         J.block(3 * i, 0, 3, n_dof) =
             this->get_com_jacobian(joint_ids, with_base);
+      }
+
+      if (action_link_ids.size() > 0) {
+        double vertical_force_sum = 1.0;
+        tinyfk::Transform pose;
+        for (size_t j = 0; j < action_link_ids.size(); ++j) {
+          double force = forces[j] / total_mass_;
+          vertical_force_sum += force;
+          this->get_link_pose(action_link_ids[j], pose);
+          coms(0, i) += force * pose.position.x;
+          coms(1, i) += force * pose.position.y;
+          coms(2, i) += force * pose.position.z;
+
+          if (with_jacobian) {
+            auto jac = this->get_jacobian(action_link_ids[j], joint_ids,
+                                          RotationType::IGNORE, with_base);
+            J.block(3 * i, 0, 3, n_dof) += force * jac;
+          }
+        }
+        coms(0, i) /= vertical_force_sum;
+        coms(1, i) /= vertical_force_sum;
+        coms(2, i) /= vertical_force_sum;
+        if (with_jacobian) {
+          J.block(3 * i, 0, 3, n_dof) /= vertical_force_sum;
+        }
       }
     }
     return std::array<Eigen::MatrixXd, 2>{coms.transpose(), J};

@@ -162,6 +162,8 @@ class KinematicModel:
         self,
         qs: Union[List[np.ndarray], np.ndarray],
         joint_ids: List[int],
+        action_link_ids: Optional[List[int]] = None,
+        action_forces: Optional[List[float]] = None,
         base_type: BaseType = BaseType.FIXED,
         with_jacobian: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
@@ -185,7 +187,12 @@ class KinematicModel:
             assert False
 
         with_base = base_type != BaseType.FIXED
-        P, J = self._robot.solve_com_forward_kinematics(qs, joint_ids, with_base, with_jacobian)
+        if action_link_ids is None:
+            action_link_ids = []
+            action_forces = []
+        P, J = self._robot.solve_com_forward_kinematics(
+            qs, joint_ids, action_link_ids, action_forces, with_base, with_jacobian
+        )
         return P, J
 
     def compute_total_inertia_matrix(self, q: np.ndarray, joint_ids: List[int]) -> np.ndarray:
