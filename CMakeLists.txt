@@ -4,7 +4,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif(NOT CMAKE_BUILD_TYPE)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS_INIT} -Wall -fPIC")
 
 add_subdirectory("urdf_parser")
@@ -14,10 +14,24 @@ find_package(Eigen3 REQUIRED)
 ADD_DEFINITIONS(-DEIGEN_NO_DEBUG)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
+option(BUILD_COLLISION_FEATURE "build collision feature" ON)
+add_compile_definitions(BUILD_COLLISION_FEATURE)
+if(BUILD_COLLISION_FEATURE)
+  find_package(hpp-fcl REQUIRED)
+  find_package(assimp REQUIRED)
+  include_directories(${HPP_FCL_INCLUDE_DIRS} ${ASSIMP_INCLUDE_DIRS})
+endif()
+
 set(TINYFK_SRC src/tinyfk.cpp src/kinematics.cpp)
+if(BUILD_COLLISION_FEATURE)
+  list(APPEND TINYFK_SRC src/collision.cpp)
+endif()
 include_directories(include/)
 add_library(tinyfk STATIC ${TINYFK_SRC})
 target_link_libraries(tinyfk urdfdom_model)
+if(BUILD_COLLISION_FEATURE)
+  target_link_libraries(tinyfk ${HPP_FCL_LIBRARIES} ${ASSIMP_LIBRARIES})
+endif()
 
 # testing
 option(BUILD_TEST "build google test" OFF)

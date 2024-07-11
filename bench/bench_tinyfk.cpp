@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -51,9 +52,12 @@ void benchmark_fk(KinematicModel &kin, size_t n_iter,
 }
 
 int main() {
-  const std::string urdf_file = "../data/fetch.urdf";
-  const auto urdf_string = load_urdf(urdf_file);
-  auto kin = KinematicModel(urdf_string);
+  const std::string urdf_file =
+      "/home/h-ishida/.skrobot/fetch_description/fetch.urdf";
+  const std::filesystem::path path(urdf_file);
+  // const auto urdf_string = load_urdf(path);
+  auto kin = KinematicModel(path);
+  kin.load_collision_objects();
 
   const size_t N = 100000;
   benchmark_fk(kin, N, "with_cache");
