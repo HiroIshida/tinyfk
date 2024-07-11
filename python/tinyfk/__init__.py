@@ -261,6 +261,10 @@ class KinematicModel:
     def clear_cache(self) -> None:
         self._robot.clear_cache()
 
+    @property
+    def total_mass(self) -> float:
+        return self._robot.total_mass_
+
     def __getstate__(self):  # pickling
         state = self.__dict__.copy()
         state["_robot"] = None

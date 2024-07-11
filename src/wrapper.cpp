@@ -227,6 +227,7 @@ PYBIND11_MODULE(_tinyfk, m) {
 
   py::class_<KinematicsModelPyWrapper>(m, "RobotModel")
       .def(py::init<std::string &>())
+      .def_readonly("total_mass_", &KinematicsModelPyWrapper::total_mass_)
       .def("get_root_link_name", &KinematicsModelPyWrapper::get_root_link_name)
       .def("solve_forward_kinematics",
            &KinematicsModelPyWrapper::solve_forward_kinematics)
