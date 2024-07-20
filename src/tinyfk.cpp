@@ -75,7 +75,7 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
   std::vector<double> joint_angles(num_dof, 0.0);
 
   transform_stack_ = SizedStack<LinkIdAndTransform>(N_link);
-  transform_cache_ = SizedCache<Transform>(N_link);
+  transform_cache_ = SizedCache<Eigen::Affine3d>(N_link);
   root_link_id_ = link_ids[robot_urdf_interface->root_link_->name];
   links_ = links;
   link_ids_ = link_ids;
@@ -96,15 +96,20 @@ KinematicModel::KinematicModel(const std::string &xml_string) {
       }
       const auto com_dummy_link_name = link->name + "_com";
       Transform new_link_pose;
-      new_link_pose.position.x = link->inertial->origin.position.x;
-      new_link_pose.position.y = link->inertial->origin.position.y;
-      new_link_pose.position.z = link->inertial->origin.position.z;
+      // new_link_pose.position.x = link->inertial->origin.position.x;
+      // new_link_pose.position.y = link->inertial->origin.position.y;
+      // new_link_pose.position.z = link->inertial->origin.position.z;
+      // FIXME: remove this conversion
+      Eigen::Vector3d origin_position = link->inertial->origin.translation();
+      new_link_pose.position.x = origin_position(0);
+      new_link_pose.position.y = origin_position(1);
+      new_link_pose.position.z = origin_position(2);
       const auto new_link =
           this->add_new_link(com_dummy_link_name, link->id, new_link_pose);
       // set new link's inertial as the same as the parent
       // except its origin is zero
       new_link->inertial = link->inertial;
-      new_link->inertial->origin = Transform();
+      new_link->inertial->origin = Eigen::Affine3d::Identity();
       com_dummy_links.push_back(new_link);
     }
     this->com_dummy_links_ = com_dummy_links;
@@ -127,7 +132,10 @@ void KinematicModel::_set_joint_angles(
   }
 }
 
-void KinematicModel::_set_base_pose(Transform pose) { this->base_pose_ = pose; }
+// FIXME: remove conversion
+void KinematicModel::_set_base_pose(Transform pose) {
+  this->base_pose_ = urdf_pose_to_eigen_affine3d(pose);
+}
 
 void KinematicModel::clear_cache() { transform_cache_.clear(); }
 
@@ -237,7 +245,8 @@ urdf::LinkSharedPtr KinematicModel::add_new_link(const std::string &link_name,
 
   auto fixed_joint = std::make_shared<urdf::Joint>();
 
-  fixed_joint->parent_to_joint_origin_transform = pose;
+  fixed_joint->parent_to_joint_origin_transform =
+      urdf_pose_to_eigen_affine3d(pose);
   fixed_joint->type = urdf::Joint::FIXED;
 
   int link_id = links_.size();
@@ -292,6 +301,28 @@ std::string load_urdf(const std::string &urdf_path) {
   }
   xml_file.close();
   return xml_string;
+}
+
+Eigen::Affine3d urdf_pose_to_eigen_affine3d(const urdf::Pose &pose) {
+  Eigen::Affine3d affine;
+  Eigen::Vector3d position(pose.position.x, pose.position.y, pose.position.z);
+  Eigen::Quaterniond rotation(pose.rotation.w, pose.rotation.x, pose.rotation.y,
+                              pose.rotation.z);
+  affine = Eigen::Translation3d(position) * rotation;
+  return affine;
+}
+
+urdf::Pose eigen_affine3d_to_urdf_pose(const Eigen::Affine3d &affine) {
+  urdf::Pose pose;
+  pose.position.x = affine.translation().x();
+  pose.position.y = affine.translation().y();
+  pose.position.z = affine.translation().z();
+  Eigen::Quaterniond rotation(affine.rotation());
+  pose.rotation.w = rotation.w();
+  pose.rotation.x = rotation.x();
+  pose.rotation.y = rotation.y();
+  pose.rotation.z = rotation.z();
+  return pose;
 }
 
 }; // end namespace tinyfk

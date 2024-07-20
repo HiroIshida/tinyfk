@@ -7,12 +7,13 @@ endif(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS_INIT} -Wall -fPIC")
 
-add_subdirectory("urdf_parser")
-include_directories("third_party" "urdf_parser/include")
-
 find_package(Eigen3 REQUIRED)
 ADD_DEFINITIONS(-DEIGEN_NO_DEBUG)
 include_directories(${EIGEN3_INCLUDE_DIR})
+
+add_subdirectory("urdf_parser")
+include_directories("third_party" "urdf_parser/include")
+
 
 set(TINYFK_SRC src/tinyfk.cpp src/kinematics.cpp)
 include_directories(include/)
@@ -62,6 +63,10 @@ endif(BENCH_KDL)
 # benchmark (tinyfk)
 add_executable(bench_tinyfk bench/bench_tinyfk.cpp)
 target_link_libraries(bench_tinyfk tinyfk)
+
+# benchmark (tinyfk)
+add_executable(bench_eigen bench/eigen_transform.cpp)
+target_link_libraries(bench_eigen tinyfk)
 
 option(BUILD_PYTHON_INTERFACE "Set when you want to build python interface" ON)
 if(BUILD_PYTHON_INTERFACE)

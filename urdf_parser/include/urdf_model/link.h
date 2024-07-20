@@ -44,6 +44,7 @@
 #include "joint.h"
 #include "color.h"
 #include "types.h"
+#include <Eigen/Geometry>
 
 namespace urdf{
 
@@ -132,13 +133,13 @@ class Inertial
 {
 public:
   Inertial() { this->clear(); };
-  Pose origin;
+  Eigen::Affine3d origin;
   double mass;
   double ixx,ixy,ixz,iyy,iyz,izz;
 
   void clear()
   {
-    origin.clear();
+    origin.setIdentity();
     mass = 0;
     ixx = ixy = ixz = iyy = iyz = izz = 0;
   };
@@ -148,7 +149,7 @@ class Visual
 {
 public:
   Visual() { this->clear(); };
-  Pose origin;
+  Eigen::Affine3d origin;
   GeometrySharedPtr geometry;
 
   std::string material_name;
@@ -156,7 +157,7 @@ public:
 
   void clear()
   {
-    origin.clear();
+    origin.setIdentity();
     material_name.clear();
     material.reset();
     geometry.reset();
@@ -170,12 +171,12 @@ class Collision
 {
 public:
   Collision() { this->clear(); };
-  Pose origin;
+  Eigen::Affine3d origin;
   GeometrySharedPtr geometry;
 
   void clear()
   {
-    origin.clear();
+    origin.setIdentity();
     geometry.reset();
     name.clear();
   };

@@ -10,7 +10,8 @@ tinyfk: https://github.com/HiroIshida/tinyfk
 #include "urdf_model/joint.h"
 #include "urdf_model/pose.h"
 #include "urdf_parser/urdf_parser.h"
-#include <Eigen/Core> // slow compile...
+#include <Eigen/Core>     // slow compile...
+#include <Eigen/Geometry> // slow compile...
 #include <array>
 #include <assert.h>
 #include <fstream>
@@ -47,7 +48,7 @@ struct RelevancePredicateTable {
 
 struct LinkIdAndTransform {
   size_t id;
-  Transform pose;
+  Eigen::Affine3d pose;
 };
 
 enum class RotationType { IGNORE, RPY, XYZW };
@@ -65,14 +66,14 @@ public: // members
   std::vector<urdf::JointSharedPtr> joints_;
   std::unordered_map<std::string, int> joint_ids_;
   std::vector<double> joint_angles_;
-  Transform base_pose_;
+  Eigen::Affine3d base_pose_;
 
   RelevancePredicateTable rptable_;
   int num_dof_;
   double total_mass_;
 
   mutable SizedStack<LinkIdAndTransform> transform_stack_;
-  mutable SizedCache<Transform> transform_cache_;
+  mutable SizedCache<Eigen::Affine3d> transform_cache_;
 
 public: // functions
   KinematicModel(const std::string &xml_string);
@@ -129,7 +130,7 @@ public: // functions
     return link_names;
   }
 
-  void get_link_pose(size_t link_id, Transform &out_tf_root_to_ef) const;
+  void get_link_pose(size_t link_id, Eigen::Affine3d &out_tf_root_to_ef) const;
 
   Eigen::MatrixXd get_jacobian(size_t elink_id,
                                const std::vector<size_t> &joint_ids,
@@ -156,11 +157,17 @@ public: // functions
                                    size_t parent_id, const Transform &pose);
 
 private:
-  void get_link_pose_inner(size_t link_id, Transform &out_tf_root_to_ef) const;
+  void get_link_pose_inner(size_t link_id,
+                           Eigen::Affine3d &out_tf_root_to_ef) const;
   void update_rptable();
 };
 
 std::string load_urdf(const std::string &urdf_path);
+
+Eigen::Affine3d urdf_pose_to_eigen_affine3d(const urdf::Pose &pose);
+
+urdf::Pose eigen_affine3d_to_urdf_pose(const Eigen::Affine3d &affine);
+
 }; // namespace tinyfk
 
 #endif // include guard
